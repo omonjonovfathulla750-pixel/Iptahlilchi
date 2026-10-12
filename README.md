@@ -1,16 +1,20 @@
-## Hi there 👋
+# Tarmoq Qurilmalarini Aniq va Chuqur Tahlil Qilish Tizimi
 
-<!--
-**omonjonovfathulla750-pixel/omonjonovfathulla750-pixel** is a ✨ _special_ ✨ repository because its `README.md` (this file) appears on your GitHub profile.
+IPv4 va IPv6 tarmoq manzillarini tahlil qiluvchi va monitoring qiluvchi veb-ilova (FastAPI & Zamonaviy Web UI).
 
-Here are some ideas to get you started:
+## Loyihani ishga tushirish
 
-- 🔭 I’m currently working on ...
-- 🌱 I’m currently learning ...
-- 👯 I’m looking to collaborate on ...
-- 🤔 I’m looking for help with ...
-- 💬 Ask me about ...
-- 📫 How to reach me: ...
-- 😄 Pronouns: ...
-- ⚡ Fun fact: ...
--->
+1. Kutubxonalarni o'rnatish:
+```bash
+pip install -r requirements.txt
+```
+
+2. Serverni ishga tushirish:
+```bash
+python main.py
+```
+
+3. Brauzerda ochish:
+```text
+http://127.0.0.1:8000
+```
