@@ -9,12 +9,11 @@ import threading
 import subprocess
 from datetime import datetime, timedelta
 from concurrent.futures import ThreadPoolExecutor
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Query, Response
 from fastapi.responses import HTMLResponse, JSONResponse
 import uvicorn
-
-app = FastAPI(title="Tarmoq Qurilmalarini Aniq va Chuqur Tahlil Qilish Tizimi")
 
 # Global holat
 active_devices_lock = threading.Lock()
@@ -50,7 +49,7 @@ def get_local_ip_and_gateway():
         return "192.168.0.107", "192.168.0.1"
 
 
-# Windows native Layer-2 SendARP chaqiruvi
+# Windows native Layer-2 SendARP chaqiruvi (Tarmoqdagi real apparat darajasidagi tekshiruv)
 def send_arp_probe(ip_str: str):
     try:
         inet_addr = struct.unpack("!I", socket.inet_aton(ip_str))[0]
@@ -100,8 +99,9 @@ def classify_device(ip_str: str, mac_str: str, local_ip: str, gw_ip: str):
         is_random_mac = False
 
     hostname = resolve_hostname(ip_str)
+    upper_host = (hostname or "").upper()
 
-    # 1. Asosiy Wi-Fi Router
+    # 1. Asosiy Wi-Fi Router (Shlyuz)
     if ip_str == gw_ip or ip_str.endswith(".1") or ip_str.endswith(".254") or "C0:4A:00" in prefix:
         return {
             "name": "Asosiy Wi-Fi Router / Shlyuz",
@@ -119,18 +119,42 @@ def classify_device(ip_str: str, mac_str: str, local_ip: str, gw_ip: str):
         pc_name = hostname or "DESKTOP-A82U46C"
         return {
             "name": f"Ushbu Kompyuter ({pc_name})",
-            "device_name": f"{pc_name} — Asosiy Boshqaruv Kompyuteri",
+            "device_name": f"{pc_name} — Boshqaruv Kompyuteri (Host)",
             "category": "Kompyuter (Host PC)",
             "source": "Ethernet LAN Kabel / Wi-Fi",
             "type_icon": "💻",
             "owner": "Siz (Administrator)",
-            "location": "Asosiy Ish O'rningiz",
-            "description": "Hozirgi dastur va monitoring tizimi ishlayotgan shaxsiy kompyuter.",
+            "location": "Asosiy Ishchi O'rningiz",
+            "description": "Hozirgi server va tarmoq monitoring tizimi ishlayotgan shaxsiy kompyuter.",
         }
 
-    # 3. Android Smart TV / Televizorlar
+    # 3. Kompyuterlar (Windows, Linux, Noutbuklar - LAN kabel yoki Wi-Fi)
+    is_pc = bool(upper_host and (
+        upper_host.startswith("WIN-") or 
+        upper_host.startswith("DESKTOP-") or 
+        upper_host.startswith("LAPTOP-") or 
+        "HOME-PC" in upper_host or
+        re.search(r'\bPC\b|\bLAPTOP\b', upper_host)
+    ))
+    if is_pc:
+        return {
+            "name": f"{hostname} (Simli LAN / Wi-Fi Kompyuter)",
+            "device_name": f"{hostname} — Ishchi Kompyuter / Noutbuk",
+            "category": "Kompyuter (LAN kabel / Noutbuk)",
+            "source": "Ethernet LAN Kabel orqali (Simli)",
+            "type_icon": "🖥️",
+            "owner": "Ofis / Ishchi O'rin Foydalanuvchisi",
+            "location": "Lokal Ishchi Zonasida",
+            "description": "Tarmoqqa sim orqali (LAN kabel) yoki Wi-Fi adapter orqali ulangan ishchi kompyuter.",
+        }
+
+    # 4. Android Smart TV / Televizorlar
     tv_prefixes = ["84:C8:A0", "00:08:22", "64:1C:67", "50:85:69", "AC:C1:EE"]
-    is_tv = any(p in prefix for p in tv_prefixes) or (hostname and any(k in hostname.upper() for k in ["TV", "BRAVIA", "HISENSE", "TCL", "SKYWORTH", "SHARP", "MI-TV"]))
+    is_tv = any(p in prefix for p in tv_prefixes) or bool(upper_host and (
+        "SMART-TV" in upper_host or "ANDROIDTV" in upper_host or "BRAVIA" in upper_host or
+        "HISENSE" in upper_host or "TCL" in upper_host or "SKYWORTH" in upper_host or
+        "MI-TV" in upper_host or re.search(r'\bTV\b', upper_host)
+    ))
     if is_tv:
         return {
             "name": f"Android Smart TV / Televizor (IP: {ip_str})",
@@ -143,7 +167,7 @@ def classify_device(ip_str: str, mac_str: str, local_ip: str, gw_ip: str):
             "description": "Android TV / Smart tizimida ishlovchi televizor. Wi-Fi orqali media oqimiga ulangan.",
         }
 
-    # 4. Android Smartfonlar va Apple iOS
+    # 5. Smartfonlar (Android / Apple iOS - Maxfiy MAC)
     if is_random_mac:
         return {
             "name": f"Smartfon / Mobil Gadjet (Android / iOS)",
@@ -153,25 +177,13 @@ def classify_device(ip_str: str, mac_str: str, local_ip: str, gw_ip: str):
             "type_icon": "📱",
             "owner": "Mobil Foydalanuvchi",
             "location": "Wi-Fi Qamrovi Hududida",
-            "description": "Android yoki Apple tizimidagi mobil smartfon. Wi-Fi tarmog'iga himoyalangan MAC bilan ulangan.",
+            "description": "Android yoki Apple tizimidagi mobil smartfon. Wi-Fi tarmog'iga himoyalangan xususiy MAC bilan ulangan.",
         }
 
-    # 5. Sim orqali (LAN kabel) ulangan boshqa kompyuterlar
-    if hostname and any(k in hostname.upper() for k in ["WIN-", "DESKTOP-", "HOME-PC", "PC", "LAPTOP"]):
-        return {
-            "name": f"{hostname} (Simli LAN Kompyuter)",
-            "device_name": f"{hostname} — Ishchi Kompyuter (LAN kabel)",
-            "category": "Kompyuter (LAN kabel / Noutbuk)",
-            "source": "Ethernet LAN Kabel orqali (Simli)",
-            "type_icon": "🖥️",
-            "owner": "Ofis yoki Oila Foydalanuvchisi",
-            "location": "Qo'shimcha Stol / Xona",
-            "description": "Routerga sim orqali (LAN kabel) yoki Wi-Fi adapter orqali ulangan ishchi kompyuter.",
-        }
-
-    # 6. Umumiy tarmoq qurilmasi
+    # 6. Umumiy boshqa qurilma
+    dev_title = hostname or f"Qurilma ({ip_str})"
     return {
-        "name": f"Tarmoq Qurilmasi (IP: {ip_str})",
+        "name": f"{dev_title} (Lokal Tarmoq)",
         "device_name": f"Lokal Tarmoq Tuguni ({ip_str})",
         "category": "Lokal Tarmoq Qurilmasi",
         "source": "Wi-Fi / Ethernet LAN",
@@ -266,10 +278,18 @@ def background_scanner_thread():
         time.sleep(3.5)
 
 
-@app.on_event("startup")
-def startup_event():
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Fon skanerni darhol ishga tushirish
     t = threading.Thread(target=background_scanner_thread, daemon=True)
     t.start()
+    yield
+
+
+app = FastAPI(
+    title="Tarmoq Qurilmalarini Aniq va Chuqur Tahlil Qilish Tizimi",
+    lifespan=lifespan
+)
 
 
 # ========================================================
