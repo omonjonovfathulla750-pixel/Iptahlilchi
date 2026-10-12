@@ -212,25 +212,32 @@ def scan_subnet_once():
 
     now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    for ip, mac in results:
-        if mac:
-            meta = classify_device(ip, mac, local_ip, gw_ip)
-            detected_now[ip] = {
-                "ip": ip,
-                "mac": mac,
-                "name": meta["name"],
-                "device_name": meta["device_name"],
-                "category": meta["category"],
-                "source": meta["source"],
-                "type_icon": meta["type_icon"],
-                "owner": meta["owner"],
-                "location": meta["location"],
-                "description": meta["description"],
-                "status": "Faol (Online)",
-                "status_time": f"{now_str} (Faol)",
-                "connected_time": now_str,
-                "online": True,
-            }
+    found_devices = [(ip, mac) for ip, mac in results if mac]
+    def classify_worker(item):
+        ip, mac = item
+        meta = classify_device(ip, mac, local_ip, gw_ip)
+        return (ip, mac, meta)
+
+    with ThreadPoolExecutor(max_workers=30) as meta_executor:
+        classified_list = list(meta_executor.map(classify_worker, found_devices))
+
+    for ip, mac, meta in classified_list:
+        detected_now[ip] = {
+            "ip": ip,
+            "mac": mac,
+            "name": meta["name"],
+            "device_name": meta["device_name"],
+            "category": meta["category"],
+            "source": meta["source"],
+            "type_icon": meta["type_icon"],
+            "owner": meta["owner"],
+            "location": meta["location"],
+            "description": meta["description"],
+            "status": "Faol (Online)",
+            "status_time": f"{now_str} (Faol)",
+            "connected_time": now_str,
+            "online": True,
+        }
 
     with active_devices_lock:
         old_ips = set(current_active_devices.keys())
@@ -390,7 +397,8 @@ def api_scan():
 
     with active_devices_lock:
         devices = list(current_active_devices.values())
-        events = list(events_log[:15])
+        events = list(events_log[:20])
+        disconnected = list(disconnected_history.values())
 
     return {
         "success": True,
@@ -398,8 +406,32 @@ def api_scan():
         "total_devices": f"{len(devices)} ta real qurilma ayni vaqtda ulangan",
         "subnet": subnet_desc,
         "devices": devices,
+        "disconnected": disconnected,
         "events": events,
     }
+
+
+@app.get("/api/device/disconnect")
+def api_disconnect_device(ip: str = Query(...)):
+    ip = ip.strip()
+    with active_devices_lock:
+        if ip in current_active_devices:
+            dev = current_active_devices.pop(ip)
+            now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            disconnected_history[ip] = {
+                **dev,
+                "status": "Tarmoqdan uzildi (Offline)",
+                "status_time": f"{now_str} (Uzilgan)",
+                "online": False,
+            }
+            events_log.insert(0, {
+                "time": now_str,
+                "type": "disconnected",
+                "message": f"⚠️ {dev['name']} ({ip}) tarmoqdan uzildi",
+                "ip": ip,
+            })
+            return {"success": True, "message": f"{ip} uzildi"}
+    return {"success": False, "message": "Qurilma topilmadi"}
 
 
 # ========================================================

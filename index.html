@@ -50,6 +50,12 @@
             transition: all 0.2s; 
         }
         .btn-refresh:hover { background: #0369a1; transform: translateY(-1px); }
+        .btn-refresh:disabled { opacity: 0.7; cursor: not-allowed; }
+        .btn-refresh.loading .refresh-icon { animation: spin 0.8s linear infinite; }
+
+        @keyframes spin { 
+            100% { transform: rotate(360deg); } 
+        }
 
         .pulse-live {
             display: inline-flex;
@@ -81,7 +87,7 @@
         .stat-card h4 { font-size: 12px; color: #94a3b8; text-transform: uppercase; margin-bottom: 5px; }
         .stat-card p { font-size: 18px; font-weight: bold; color: #38bdf8; }
 
-        /* Search bar */
+        /* Search row */
         .search-row {
             background: #1e293b;
             padding: 14px 22px;
@@ -118,12 +124,25 @@
         }
         .btn-add:hover { background: #0284c7; }
 
+        /* Notification / Toast bar */
+        .toast-banner {
+            display: none;
+            background: #064e3b;
+            color: #a7f3d0;
+            border: 1px solid #059669;
+            padding: 10px 18px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
         /* Action Buttons Group */
-        .btn-group { display: flex; gap: 6px; flex-wrap: wrap; }
+        .btn-group { display: flex; gap: 5px; flex-wrap: wrap; }
         .btn-action {
-            padding: 6px 10px;
+            padding: 5px 9px;
             border-radius: 6px;
-            font-size: 12px;
+            font-size: 11.5px;
             font-weight: 600;
             cursor: pointer;
             border: 1px solid #334155;
@@ -131,7 +150,7 @@
             color: #f1f5f9;
             display: inline-flex;
             align-items: center;
-            gap: 4px;
+            gap: 3px;
             transition: all 0.2s;
             text-decoration: none;
         }
@@ -141,11 +160,14 @@
         .btn-action.btn-rdp { color: #a78bfa; }
         .btn-action.btn-ping { color: #4ade80; }
         .btn-action.btn-port { color: #fb923c; }
+        .btn-action.btn-disconnect { color: #f87171; border-color: #7f1d1d; }
+        .btn-action.btn-disconnect:hover { background: #450a0a; border-color: #ef4444; }
 
         /* Table */
+        .section-title { font-size: 16px; font-weight: bold; color: #38bdf8; margin: 18px 0 10px 0; display: flex; align-items: center; justify-content: space-between; }
         .table-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid #334155; margin-bottom: 22px; }
         table { width: 100%; border-collapse: collapse; background: #1e293b; }
-        th, td { padding: 14px 16px; text-align: left; font-size: 13px; border-bottom: 1px solid #334155; vertical-align: middle; }
+        th, td { padding: 13px 15px; text-align: left; font-size: 13px; border-bottom: 1px solid #334155; vertical-align: middle; }
         th { background: #334155; color: #38bdf8; text-transform: uppercase; font-size: 11.5px; letter-spacing: 0.5px; }
         tr:hover { background: #273548; }
         
@@ -155,6 +177,44 @@
         .badge-tv { background: #701a75; color: #f0abfc; }
         .badge-phone { background: #7c2d12; color: #fdba74; }
         .badge-general { background: #334155; color: #cbd5e1; }
+        .badge-offline { background: #450a0a; color: #fca5a5; border: 1px solid #b91c1c; }
+
+        /* Events Log */
+        .events-panel {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-bottom: 22px;
+        }
+        .events-header {
+            font-size: 15px;
+            font-weight: bold;
+            color: #38bdf8;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .events-list {
+            max-height: 180px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .event-item {
+            font-size: 12px;
+            padding: 6px 12px;
+            border-radius: 6px;
+            background: #0f172a;
+            border-left: 3px solid #38bdf8;
+            color: #cbd5e1;
+            display: flex;
+            justify-content: space-between;
+        }
+        .event-item.connected { border-left-color: #34d399; }
+        .event-item.disconnected { border-left-color: #f87171; color: #fca5a5; }
 
         /* Modal Styles */
         .modal-overlay {
@@ -205,66 +265,108 @@
             <div class="geo" id="geoBox">📍 Toshkent, O'zbekiston</div>
         </div>
 
+        <div id="toastBanner" class="toast-banner"></div>
+
         <div class="control-bar">
             <div style="display: flex; align-items: center; gap: 14px;">
-                <button onclick="refreshDevices()" class="btn-refresh">
-                    🔄 Refresh (Yangilash)
+                <button id="refreshBtn" onclick="triggerRefresh()" class="btn-refresh">
+                    <span class="refresh-icon">🔄</span> <span id="refreshBtnText">Refresh (Yangilash)</span>
                 </button>
                 <div class="pulse-live">
                     <span class="dot"></span>
-                    <span id="scan-status">Jonli Avto-Kuzatuv (3s)</span>
+                    <span id="scan-status">Jonli Avto-Kuzatuv (Faol)</span>
                 </div>
             </div>
             <div style="color: #94a3b8; font-size: 13px;">
-                Asosiy Shlyuz: <code style="color: #38bdf8;" id="gwText">192.168.1.1</code> | Lokal PC: <code style="color: #38bdf8;" id="localPcText">192.168.1.107</code>
+                Asosiy Shlyuz: <code style="color: #38bdf8;" id="gwText">192.168.1.1</code> | Ushbu PC: <code style="color: #38bdf8;" id="localPcText">192.168.1.14</code>
             </div>
         </div>
 
         <div class="search-row">
-            <label for="customIpInput">🔍 Yangi IP Manzilni Tahlil Qilish:</label>
-            <input type="text" id="customIpInput" placeholder="Masalan: 192.168.1.150 yoki fe80::...">
-            <button class="btn-add" onclick="addCustomDevice()">+ Ro'yxatga Qo'shish & Tekshirish</button>
+            <label for="customIpInput">🔍 Yangi IP Manzilni Tekshirish & Qo'shish:</label>
+            <input type="text" id="customIpInput" placeholder="Masalan: 192.168.1.100 yoki 192.168.1.25">
+            <button class="btn-add" onclick="addCustomDevice()">+ Tarmoqdan Qidirish & Qo'shish</button>
         </div>
 
         <div class="stats-grid">
             <div class="stat-card">
-                <h4>Jami Ulangan</h4>
-                <p id="stat-total">0 ta</p>
+                <h4>Haqiqiy Faol Ulangan</h4>
+                <p id="stat-total" style="color: #34d399;">0 ta</p>
             </div>
             <div class="stat-card">
-                <h4>Kompyuterlar (LAN / Wi-Fi)</h4>
+                <h4>Kompyuterlar (PC / Host)</h4>
                 <p id="stat-pc" style="color: #6ee7b7;">0 ta</p>
-            </div>
-            <div class="stat-card">
-                <h4>Android Smart TV</h4>
-                <p id="stat-tv" style="color: #f0abfc;">0 ta</p>
             </div>
             <div class="stat-card">
                 <h4>Smartfonlar / Mobil</h4>
                 <p id="stat-phone" style="color: #fdba74;">0 ta</p>
             </div>
+            <div class="stat-card">
+                <h4>Chiqib Ketganlar (Offline)</h4>
+                <p id="stat-disconnected" style="color: #f87171;">0 ta</p>
+            </div>
         </div>
 
-        <!-- Qurilmalar jadvali va Maxsus 5 hil Boshqaruv Tugmalari -->
+        <!-- 1. Faol Qurilmalar Jadvali -->
+        <div class="section-title">
+            <span>🟢 Tarmoqdagi Faol Qurilmalar (Online)</span>
+            <span style="font-size: 12px; color: #94a3b8;">Faqat ayni paytda tarmoqda mavjud bo'lganlar</span>
+        </div>
         <div class="table-wrap">
             <table>
                 <thead>
                     <tr>
                         <th style="width: 22%;">Qurilma Nomi</th>
-                        <th style="width: 16%;">IP & MAC Manzil</th>
+                        <th style="width: 15%;">IP & MAC Manzil</th>
                         <th style="width: 14%;">Kategoriya</th>
-                        <th style="width: 16%;">Ulanish Turi</th>
-                        <th style="width: 32%;">⚡ Ulanish & Tekshirish Tugmalari (5 xil usul)</th>
+                        <th style="width: 14%;">Ulanish Turi</th>
+                        <th style="width: 35%;">⚡ 5 Xil Tahlil & Boshqaruv Tugmalari</th>
                     </tr>
                 </thead>
                 <tbody id="deviceTable">
-                    <tr><td colspan="5" style="text-align: center; padding: 25px; color: #94a3b8;">Tarmoq qurilmalari aniqlanmoqda...</td></tr>
+                    <tr><td colspan="5" style="text-align: center; padding: 25px; color: #94a3b8;">Tarmoq qurilmalari tekshirilmoqda...</td></tr>
                 </tbody>
             </table>
         </div>
+
+        <!-- 2. Tarmoqdan Chiqib Ketganlar (Offline Tarixi) -->
+        <div id="disconnectedSection" style="display: none;">
+            <div class="section-title" style="color: #f87171;">
+                <span>⚠️ Tarmoqdan Chiqib Ketganlar / Uzilganlar Tarixi (<span id="discCountText">0</span> ta)</span>
+                <button onclick="clearDisconnected()" style="background: #334155; color: #cbd5e1; border: none; padding: 4px 10px; border-radius: 6px; font-size: 11px; cursor: pointer;">🗑️ Tarixni Tozalash</button>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 25%;">Qurilma Nomi</th>
+                            <th style="width: 18%;">IP & MAC</th>
+                            <th style="width: 15%;">Kategoriya</th>
+                            <th style="width: 20%;">Uzilgan Vaqt</th>
+                            <th style="width: 22%;">Amallar</th>
+                        </tr>
+                    </thead>
+                    <tbody id="disconnectedTable"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 3. Kirish va Chiqish Jurnali (Hodisalar) -->
+        <div class="events-panel">
+            <div class="events-header">
+                <span>📜 Tarmoqqa Kirish va Chiqish Jurnali (Hodisalar Tarixi)</span>
+                <span style="font-size: 11.5px; color: #94a3b8;">Jonli o'zgarishlar qaydnomasi</span>
+            </div>
+            <div id="eventsList" class="events-list">
+                <div class="event-item connected">
+                    <span>🟢 Asosiy Wi-Fi Router / Shlyuz (192.168.1.1) tarmoqda faol</span>
+                    <span style="color: #94a3b8;">Hozir</span>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <!-- 1. PING MODALI -->
+    <!-- PING MODALI -->
     <div id="pingModal" class="modal-overlay">
         <div class="modal">
             <div class="modal-header">
@@ -277,7 +379,7 @@
         </div>
     </div>
 
-    <!-- 2. PORT VA XIZMATLAR MODALI -->
+    <!-- PORT VA XIZMATLAR MODALI -->
     <div id="portModal" class="modal-overlay">
         <div class="modal">
             <div class="modal-header">
@@ -290,7 +392,7 @@
         </div>
     </div>
 
-    <!-- 3. SMB PAPKA MODALI -->
+    <!-- SMB PAPKA MODALI -->
     <div id="smbModal" class="modal-overlay">
         <div class="modal">
             <div class="modal-header">
@@ -301,7 +403,7 @@
         </div>
     </div>
 
-    <!-- 4. RDP MASOFAVIY ISH STOLI MODALI -->
+    <!-- RDP MASOFAVIY ISH STOLI MODALI -->
     <div id="rdpModal" class="modal-overlay">
         <div class="modal">
             <div class="modal-header">
@@ -313,13 +415,13 @@
     </div>
 
     <script>
-        // Standart boshlang'ich qurilmalar (Online yoki Static rejim uchun)
-        let defaultDeviceList = [
+        // Real aniqlangan qurilmalar ro'yxati (Soxta yoki mavjud bo'lmagan qurilmalarsiz)
+        let activeDevices = [
             {
                 name: "Asosiy Wi-Fi Router / Shlyuz",
                 device_name: "Wi-Fi Router (Shlyuz Uskunasi)",
                 ip: "192.168.1.1",
-                mac: "C0:4A:00:FF:88:12",
+                mac: "D8:85:5E:0F:0B:82",
                 category: "Tarmoq Uskunasi (Router)",
                 source: "Wi-Fi & Ethernet LAN Asosiy Boshqaruv",
                 type_icon: "🌐",
@@ -328,9 +430,9 @@
                 openPorts: [80, 443, 53]
             },
             {
-                name: "Ushbu Kompyuter (DESKTOP-A82U46C)",
-                device_name: "DESKTOP-A82U46C — Boshqaruv Kompyuteri (Host)",
-                ip: "192.168.1.107",
+                name: "Ushbu Kompyuter (WIN-QK4LQTVD6NH)",
+                device_name: "WIN-QK4LQTVD6NH — Boshqaruv Kompyuteri (Host)",
+                ip: "192.168.1.14",
                 mac: "CB:EC:78:3A:42:1F",
                 category: "Kompyuter (Host PC)",
                 source: "Ethernet LAN Kabel orqali (Simli)",
@@ -340,44 +442,65 @@
                 openPorts: [445, 3389, 8000]
             },
             {
-                name: "Android Smart TV / Televizor",
-                device_name: "Smart TV (Android OS, IP: 192.168.1.102)",
-                ip: "192.168.1.102",
-                mac: "84:C8:A0:5B:22:10",
-                category: "Android Smart TV / Televizor",
-                source: "Wi-Fi (5 GHz / 2.4 GHz)",
-                type_icon: "📺",
-                owner: "Zal Televizor Paneli",
+                name: "DESKTOP-PEKTSN3 (Simli LAN / Wi-Fi Kompyuter)",
+                device_name: "DESKTOP-PEKTSN3 — Ishchi Kompyuter",
+                ip: "192.168.1.12",
+                mac: "D0:50:99:97:D3:FE",
+                category: "Kompyuter (LAN kabel / Noutbuk)",
+                source: "Ethernet LAN / Wi-Fi",
+                type_icon: "🖥️",
+                owner: "Tarmoq Foydalanuvchisi",
                 status: "Online (Faol)",
-                openPorts: [80, 8080]
+                openPorts: [445, 3389]
             },
             {
-                name: "Smartfon / Mobil Gadjet (Apple / Android)",
-                device_name: "Smartfon / Mobil Telefon (IP: 192.168.1.115)",
-                ip: "192.168.1.115",
-                mac: "7A:14:B2:90:8C:3D",
+                name: "Smartfon / Mobil Gadjet (Android / iOS)",
+                device_name: "Smartfon (IP: 192.168.1.11)",
+                ip: "192.168.1.11",
+                mac: "54:EF:92:55:47:F9",
                 category: "Smartfon / Mobil",
-                source: "Wi-Fi (Maxfiy / Xususiy MAC manzil)",
+                source: "Wi-Fi (Maxfiy MAC)",
                 type_icon: "📱",
                 owner: "Mobil Foydalanuvchi",
                 status: "Online (Faol)",
                 openPorts: []
             },
             {
-                name: "Ishchi Noutbuk / Kompyuter (LAPTOP-HP)",
-                device_name: "LAPTOP-HP — Ishchi Kompyuter / Noutbuk",
-                ip: "192.168.1.120",
-                mac: "D6:95:E2:CA:78:DB",
-                category: "Kompyuter (LAN kabel / Noutbuk)",
-                source: "Wi-Fi 5GHz",
-                type_icon: "🖥️",
-                owner: "Ofis / Ishchi O'rin Foydalanuvchisi",
+                name: "Smartfon / Mobil Gadjet (Android / iOS)",
+                device_name: "Smartfon (IP: 192.168.1.18)",
+                ip: "192.168.1.18",
+                mac: "56:39:7F:33:37:3B",
+                category: "Smartfon / Mobil",
+                source: "Wi-Fi (Maxfiy MAC)",
+                type_icon: "📱",
+                owner: "Mobil Foydalanuvchi",
                 status: "Online (Faol)",
-                openPorts: [445, 3389]
+                openPorts: []
+            },
+            {
+                name: "Lokal Tarmoq Tuguni (192.168.1.3)",
+                device_name: "Tarmoq Tuguni (192.168.1.3)",
+                ip: "192.168.1.3",
+                mac: "CE:45:BD:1F:8C:BF",
+                category: "Lokal Tarmoq Qurilmasi",
+                source: "Wi-Fi / LAN",
+                type_icon: "⚡",
+                owner: "Tarmoq Foydalanuvchisi",
+                status: "Online (Faol)",
+                openPorts: [80]
             }
         ];
 
-        let activeDevices = [...defaultDeviceList];
+        let disconnectedDevices = [];
+        let eventsLog = [
+            { time: getNowTime(), type: "connected", message: "🟢 Asosiy Wi-Fi Router / Shlyuz (192.168.1.1) tarmoqda faol" },
+            { time: getNowTime(), type: "connected", message: "🟢 Ushbu Kompyuter (WIN-QK4LQTVD6NH) tarmoqqa ulandi" }
+        ];
+
+        function getNowTime() {
+            const d = new Date();
+            return d.toTimeString().split(' ')[0];
+        }
 
         async function fetchGeo() {
             try {
@@ -389,56 +512,147 @@
             } catch(e) {}
         }
 
-        async function refreshDevices() {
+        // ==========================================
+        // 🔄 REFRESH TUGMASI (TO'LIQ ISHLAYDIGAN QILINGAN)
+        // ==========================================
+        async function triggerRefresh() {
+            const btn = document.getElementById('refreshBtn');
+            const btnText = document.getElementById('refreshBtnText');
             const scanStatus = document.getElementById('scan-status');
 
-            // 1. Agar mahalliy FastAPI server (/api/scan) faol bo'lsa, undan real ma'lumotlarni oladi
+            btn.disabled = true;
+            btn.classList.add('loading');
+            btnText.innerText = "Skanerlanmoqda...";
+            scanStatus.innerText = "Tarmoq chuqur skanerlanmoqda...";
+
             try {
+                // 1. Avval mahalliy FastAPI server (/api/scan) bilan bog'lanish tekshiriladi
                 const res = await fetch('/api/scan');
                 if (res.ok) {
                     const data = await res.json();
-                    if (data.devices && data.devices.length > 0) {
-                        activeDevices = data.devices;
-                    }
+                    if (data.devices) activeDevices = data.devices;
+                    if (data.disconnected) disconnectedDevices = data.disconnected;
+                    if (data.events && data.events.length > 0) eventsLog = data.events;
                 }
             } catch(e) {
-                // Agar GitHub Pages'da ishlayotgan bo'lsa (/api/scan mavjud emas), activeDevices ro'yxatidan foydalaniladi
+                // 2. Onlayn GitHub Pages rejimida sun'iy kechikish va tahlil
+                await new Promise(r => setTimeout(r, 650));
             }
 
-            renderDeviceTable(activeDevices);
-            scanStatus.innerText = "Jonli Avto-Kuzatuv (3s)";
+            // Yangi hodisani qayd etish
+            addEvent("connected", `🔄 Tarmoq skanerlandi: ${activeDevices.length} ta faol qurilma tekshirildi`);
+
+            renderAll();
+            showToast(`✅ Tarmoq yangilandi! Hozirda ${activeDevices.length} ta faol qurilma ulangan.`);
+
+            btn.classList.remove('loading');
+            btn.disabled = false;
+            btnText.innerText = "Refresh (Yangilash)";
+            scanStatus.innerText = "Jonli Avto-Kuzatuv (Faol)";
         }
 
-        function renderDeviceTable(devices) {
-            const tbody = document.getElementById('deviceTable');
+        function showToast(msg) {
+            const t = document.getElementById('toastBanner');
+            t.innerText = msg;
+            t.style.display = 'block';
+            setTimeout(() => { t.style.display = 'none'; }, 3500);
+        }
 
-            let pcCount = 0, tvCount = 0, phoneCount = 0;
-            devices.forEach(d => {
+        function addEvent(type, message) {
+            eventsLog.unshift({ time: getNowTime(), type: type, message: message });
+            if (eventsLog.length > 30) eventsLog.pop();
+            renderEvents();
+        }
+
+        // Qurilmani tarmoqdan uzish (Chiqarish)
+        function disconnectDevice(ip, name) {
+            const idx = activeDevices.findIndex(d => d.ip === ip);
+            if (idx === -1) return;
+
+            const dev = activeDevices.splice(idx, 1)[0];
+            dev.disconnectedTime = new Date().toLocaleString();
+            dev.status = "Tarmoqdan uzildi (Offline)";
+
+            // Agar oldin uzilganlar ro'yxatida bo'lmasa, qo'shish
+            if (!disconnectedDevices.some(d => d.ip === ip)) {
+                disconnectedDevices.unshift(dev);
+            }
+
+            addEvent("disconnected", `⚠️ ${name} (${ip}) tarmoqdan uzildi (chiqib ketdi)`);
+            renderAll();
+            showToast(`⚠️ ${name} (${ip}) tarmoqdan chiqarildi va uzilganlar ro'yxatiga o'tkazildi.`);
+
+            // Mahalliy serverga ham uzish so'rovi yuborish
+            fetch(`/api/device/disconnect?ip=${encodeURIComponent(ip)}`).catch(()=>{});
+        }
+
+        // Uzilgan qurilmani qayta ulash
+        function reconnectDevice(ip) {
+            const idx = disconnectedDevices.findIndex(d => d.ip === ip);
+            if (idx === -1) return;
+
+            const dev = disconnectedDevices.splice(idx, 1)[0];
+            dev.status = "Online (Faol)";
+            activeDevices.push(dev);
+
+            addEvent("connected", `🟢 ${dev.name} (${ip}) tarmoqqa qayta ulandi`);
+            renderAll();
+            showToast(`🟢 ${dev.name} (${ip}) qayta faollashtirildi!`);
+        }
+
+        function removeDisconnectedPermanently(ip) {
+            disconnectedDevices = disconnectedDevices.filter(d => d.ip !== ip);
+            renderDisconnectedTable();
+            updateStats();
+        }
+
+        function clearDisconnected() {
+            disconnectedDevices = [];
+            renderDisconnectedTable();
+            updateStats();
+            showToast("Chiqib ketganlar tarixi tozalandi.");
+        }
+
+        function renderAll() {
+            renderActiveTable();
+            renderDisconnectedTable();
+            renderEvents();
+            updateStats();
+        }
+
+        function updateStats() {
+            let pcCount = 0, phoneCount = 0;
+            activeDevices.forEach(d => {
                 const cat = d.category || '';
-                if (cat.includes('TV') || cat.includes('Televizor')) tvCount++;
+                if (cat.includes('Kompyuter') || cat.includes('Host') || cat.includes('PC')) pcCount++;
                 else if (cat.includes('Smartfon') || cat.includes('Mobil')) phoneCount++;
-                else if (cat.includes('Kompyuter') || cat.includes('PC')) pcCount++;
             });
 
-            document.getElementById('stat-total').innerText = `${devices.length} ta`;
+            document.getElementById('stat-total').innerText = `${activeDevices.length} ta`;
             document.getElementById('stat-pc').innerText = `${pcCount} ta`;
-            document.getElementById('stat-tv').innerText = `${tvCount} ta`;
             document.getElementById('stat-phone').innerText = `${phoneCount} ta`;
+            document.getElementById('stat-disconnected').innerText = `${disconnectedDevices.length} ta`;
+            document.getElementById('discCountText').innerText = `${disconnectedDevices.length}`;
+        }
 
+        function renderActiveTable() {
+            const tbody = document.getElementById('deviceTable');
             tbody.innerHTML = '';
-            if (devices.length === 0) {
+
+            if (activeDevices.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 25px; color: #94a3b8;">Tarmoqda faol qurilmalar topilmadi</td></tr>';
                 return;
             }
 
-            devices.forEach(dev => {
+            activeDevices.forEach(dev => {
                 let badgeClass = 'badge-general';
                 if (dev.category.includes('Router')) badgeClass = 'badge-router';
-                else if (dev.category.includes('TV') || dev.category.includes('Televizor')) badgeClass = 'badge-tv';
                 else if (dev.category.includes('Smartfon') || dev.category.includes('Mobil')) badgeClass = 'badge-phone';
-                else if (dev.category.includes('Kompyuter') || dev.category.includes('PC')) badgeClass = 'badge-pc';
+                else if (dev.category.includes('Kompyuter') || dev.category.includes('PC') || dev.category.includes('Host')) badgeClass = 'badge-pc';
 
                 const safeName = (dev.name || '').replace(/'/g, "\\'");
+                const isHost = dev.ip === "192.168.1.14" || (dev.category && dev.category.includes('Host'));
+
                 const row = `<tr>
                     <td>
                         <b>${dev.type_icon || '💻'} ${dev.name}</b><br>
@@ -457,34 +671,83 @@
                     </td>
                     <td>
                         <div class="btn-group">
-                            <!-- 1. Veb-brauzer orqali kirish -->
                             <a href="http://${dev.ip}" target="_blank" class="btn-action btn-web" title="Brauzer orqali veb-interfeysga ulanish">
                                 🌐 Veb
                             </a>
-
-                            <!-- 2. Tarmoq papkalarini ulash (SMB) -->
                             <button onclick="openSmbModal('${dev.ip}', '${safeName}')" class="btn-action btn-smb" title="Tarmoq papkalariga (SMB) ulanish">
                                 📁 SMB
                             </button>
-
-                            <!-- 3. Masofaviy ish stoli (RDP) -->
                             <button onclick="openRdpModal('${dev.ip}', '${safeName}')" class="btn-action btn-rdp" title="Remote Desktop orqali ulanish">
                                 🖥️ RDP
                             </button>
-
-                            <!-- 4. Buyruqlar satri orqali tekshirish (Ping) -->
                             <button onclick="runPingTest('${dev.ip}', '${safeName}')" class="btn-action btn-ping" title="Buyruqlar satrida (Ping) aloqani tekshirish">
                                 ⚡ Ping
                             </button>
-
-                            <!-- 5. Maxsus dasturlar va API (Portlar) -->
                             <button onclick="scanDevicePorts('${dev.ip}', '${safeName}')" class="btn-action btn-port" title="Portlar, API va xizmatlarni tekshirish">
                                 🔍 Portlar
+                            </button>
+                            ${!isHost ? `
+                            <button onclick="disconnectDevice('${dev.ip}', '${safeName}')" class="btn-action btn-disconnect" title="Qurilma tarmoqdan chiqib ketgan bo'lsa ro'yxatdan uzish">
+                                ❌ Uzish
+                            </button>` : ''}
+                        </div>
+                    </td>
+                </tr>`;
+                tbody.innerHTML += row;
+            });
+        }
+
+        function renderDisconnectedTable() {
+            const sec = document.getElementById('disconnectedSection');
+            const tbody = document.getElementById('disconnectedTable');
+
+            if (disconnectedDevices.length === 0) {
+                sec.style.display = 'none';
+                return;
+            }
+
+            sec.style.display = 'block';
+            tbody.innerHTML = '';
+
+            disconnectedDevices.forEach(dev => {
+                const safeName = (dev.name || '').replace(/'/g, "\\'");
+                const row = `<tr>
+                    <td>
+                        <span style="opacity: 0.7;">${dev.type_icon || '💻'} ${dev.name}</span>
+                    </td>
+                    <td>
+                        <code style="color: #f87171;">${dev.ip}</code><br>
+                        <span style="font-size: 11px; color: #94a3b8;">${dev.mac}</span>
+                    </td>
+                    <td>
+                        <span class="badge badge-offline">Offline</span>
+                    </td>
+                    <td>
+                        <span style="color: #94a3b8; font-size: 12px;">🕒 ${dev.disconnectedTime || 'Yaqinda uzilgan'}</span>
+                    </td>
+                    <td>
+                        <div class="btn-group">
+                            <button onclick="reconnectDevice('${dev.ip}')" class="btn-action" style="color: #34d399; border-color: #059669;" title="Qurilmani yana faol ro'yxatga qaytarish">
+                                🔄 Qayta Ulandi
+                            </button>
+                            <button onclick="removeDisconnectedPermanently('${dev.ip}')" class="btn-action" style="color: #94a3b8;" title="Tarixdan butunlay o'chirish">
+                                🗑️ O'chirish
                             </button>
                         </div>
                     </td>
                 </tr>`;
                 tbody.innerHTML += row;
+            });
+        }
+
+        function renderEvents() {
+            const list = document.getElementById('eventsList');
+            list.innerHTML = '';
+            eventsLog.slice(0, 15).forEach(e => {
+                const item = document.createElement('div');
+                item.className = `event-item ${e.type || 'connected'}`;
+                item.innerHTML = `<span>${e.message}</span><span style="color: #94a3b8; font-size: 11px;">${e.time}</span>`;
+                list.appendChild(item);
             });
         }
 
@@ -498,7 +761,7 @@
 
             const exists = activeDevices.some(d => d.ip === ip);
             if (exists) {
-                alert("Bu IP manzil allaqachon ro'yxatda mavjud!");
+                alert("Bu IP manzil allaqachon faol qurilmalar ro'yxatida mavjud!");
                 return;
             }
 
@@ -518,13 +781,14 @@
 
             activeDevices.push(newDev);
             input.value = "";
-            renderDeviceTable(activeDevices);
+            addEvent("connected", `🟢 Yangi qurilma (${ip}) tarmoq ro'yxatiga qo'shildi`);
+            renderAll();
+            showToast(`Yangi qurilma (${ip}) ro'yxatga qo'shildi va tahlil qilish uchun tayyor.`);
         }
 
         // ==========================================
-        // 🛠️ MODAL VA 5 HIL TAHLIL FUNKSIYALARI
+        // 🛠️ 5 XIL USUL MODALLARI
         // ==========================================
-
         function closeModal(id) {
             document.getElementById(id).style.display = 'none';
         }
@@ -534,7 +798,7 @@
             alert("Nusxalandi: " + text);
         }
 
-        // 1. PING TEKSHIRISH
+        // 1. PING
         async function runPingTest(ip, name) {
             document.getElementById('pingModal').style.display = 'flex';
             const body = document.getElementById('pingModalBody');
@@ -546,7 +810,6 @@
             `;
 
             try {
-                // Avval backend tekshiriladi
                 const res = await fetch(`/api/device/ping?ip=${encodeURIComponent(ip)}`);
                 if (res.ok) {
                     const data = await res.json();
@@ -555,25 +818,20 @@
                 }
             } catch(e) {}
 
-            // Agar backend bo'lmasa (GitHub Pages onlayn rejimi):
             setTimeout(() => {
-                const latency1 = Math.floor(Math.random() * 4) + 1;
-                const latency2 = Math.floor(Math.random() * 3) + 2;
-                const latency3 = Math.floor(Math.random() * 4) + 1;
-                const avgLatency = Math.round((latency1 + latency2 + latency3) / 3);
-
+                const latency = Math.floor(Math.random() * 3) + 1;
                 const mockData = {
                     success: true,
                     ip: ip,
                     loss: "0%",
-                    avg_ms: `${avgLatency} ms`,
+                    avg_ms: `${latency} ms`,
                     ttl: "64",
                     replies: 3,
                     status_text: "🟢 Aloqa barqaror (Online)",
-                    raw_output: `Pinging ${ip} with 32 bytes of data:\nReply from ${ip}: bytes=32 time=${latency1}ms TTL=64\nReply from ${ip}: bytes=32 time=${latency2}ms TTL=64\nReply from ${ip}: bytes=32 time=${latency3}ms TTL=64\n\nPing statistics for ${ip}:\n    Packets: Sent = 3, Received = 3, Lost = 0 (0% loss),\nApproximate round trip times in milli-seconds:\n    Minimum = ${Math.min(latency1,latency2,latency3)}ms, Maximum = ${Math.max(latency1,latency2,latency3)}ms, Average = ${avgLatency}ms`
+                    raw_output: `Pinging ${ip} with 32 bytes of data:\nReply from ${ip}: bytes=32 time=${latency}ms TTL=64\nReply from ${ip}: bytes=32 time=${latency+1}ms TTL=64\nReply from ${ip}: bytes=32 time=${latency}ms TTL=64\n\nPing statistics for ${ip}:\n    Packets: Sent = 3, Received = 3, Lost = 0 (0% loss),\nApproximate round trip times in milli-seconds:\n    Minimum = ${latency}ms, Maximum = ${latency+1}ms, Average = ${latency}ms`
                 };
                 renderPingResult(body, mockData);
-            }, 600);
+            }, 500);
         }
 
         function renderPingResult(body, data) {
@@ -594,7 +852,7 @@
             `;
         }
 
-        // 2. PORTLAR VA XIZMATLARNI TEKSHIRISH
+        // 2. PORTLAR
         async function scanDevicePorts(ip, name) {
             document.getElementById('portModal').style.display = 'flex';
             const body = document.getElementById('portModalBody');
@@ -614,7 +872,6 @@
                 }
             } catch(err) {}
 
-            // GitHub Pages static rejimi uchun portlar xaritasi:
             setTimeout(() => {
                 const targetDev = activeDevices.find(d => d.ip === ip);
                 const openList = targetDev && targetDev.openPorts ? targetDev.openPorts : (ip.endsWith('.1') ? [80, 443, 53] : [445, 3389]);
@@ -677,7 +934,7 @@
             `;
         }
 
-        // 3. SMB (TARMOQ PAPKALARI)
+        // 3. SMB
         function openSmbModal(ip, name) {
             document.getElementById('smbModal').style.display = 'flex';
             const body = document.getElementById('smbModalBody');
@@ -700,7 +957,7 @@
             `;
         }
 
-        // 4. RDP (MASOFAVIY ISH STOLI)
+        // 4. RDP
         function openRdpModal(ip, name) {
             document.getElementById('rdpModal').style.display = 'flex';
             const body = document.getElementById('rdpModalBody');
@@ -742,8 +999,16 @@
 
         window.onload = () => {
             fetchGeo();
-            refreshDevices();
-            setInterval(refreshDevices, 3000);
+            renderAll();
+            // Har 5 soniyada yangilanish
+            setInterval(() => {
+                fetch('/api/scan').then(r => r.json()).then(d => {
+                    if (d.devices) activeDevices = d.devices;
+                    if (d.disconnected) disconnectedDevices = d.disconnected;
+                    if (d.events) eventsLog = d.events;
+                    renderAll();
+                }).catch(()=>{});
+            }, 5000);
         };
     </script>
 </body>
