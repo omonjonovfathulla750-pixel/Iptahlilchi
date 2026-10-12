@@ -6,10 +6,11 @@ import time
 import struct
 import ctypes
 import threading
+import subprocess
 from datetime import datetime, timedelta
 from concurrent.futures import ThreadPoolExecutor
 
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, Query, Response
 from fastapi.responses import HTMLResponse, JSONResponse
 import uvicorn
 
@@ -49,7 +50,7 @@ def get_local_ip_and_gateway():
         return "192.168.0.107", "192.168.0.1"
 
 
-# Windows native Layer-2 SendARP chaqiruvi (Tarmoqdagi real qurilmani darhol aniqlash)
+# Windows native Layer-2 SendARP chaqiruvi
 def send_arp_probe(ip_str: str):
     try:
         inet_addr = struct.unpack("!I", socket.inet_aton(ip_str))[0]
@@ -66,7 +67,6 @@ def send_arp_probe(ip_str: str):
     return None
 
 
-# Tezkor hostname aniqlash (keshlangan)
 def resolve_hostname(ip_str: str):
     if ip_str in hostname_cache:
         return hostname_cache[ip_str]
@@ -80,7 +80,17 @@ def resolve_hostname(ip_str: str):
         return None
 
 
-# Qurilma turini (Smart TV, Android telefon, Simli kompyuter, Router) aniqlash
+def check_single_port(ip_str: str, port: int, timeout=0.35):
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.settimeout(timeout)
+    try:
+        res = s.connect_ex((ip_str, port))
+        s.close()
+        return res == 0
+    except Exception:
+        return False
+
+
 def classify_device(ip_str: str, mac_str: str, local_ip: str, gw_ip: str):
     prefix = mac_str[:8].upper()
     try:
@@ -119,7 +129,6 @@ def classify_device(ip_str: str, mac_str: str, local_ip: str, gw_ip: str):
         }
 
     # 3. Android Smart TV / Televizorlar
-    # Gaoshengda (84:C8:A0) modul yoki televizor ishlab chiqaruvchilari
     tv_prefixes = ["84:C8:A0", "00:08:22", "64:1C:67", "50:85:69", "AC:C1:EE"]
     is_tv = any(p in prefix for p in tv_prefixes) or (hostname and any(k in hostname.upper() for k in ["TV", "BRAVIA", "HISENSE", "TCL", "SKYWORTH", "SHARP", "MI-TV"]))
     if is_tv:
@@ -134,7 +143,7 @@ def classify_device(ip_str: str, mac_str: str, local_ip: str, gw_ip: str):
             "description": "Android TV / Smart tizimida ishlovchi televizor. Wi-Fi orqali media oqimiga ulangan.",
         }
 
-    # 4. Android Smartfonlar va Apple iOS (Maxfiy MAC manzilli mobil gadjetlar)
+    # 4. Android Smartfonlar va Apple iOS
     if is_random_mac:
         return {
             "name": f"Smartfon / Mobil Gadjet (Android / iOS)",
@@ -147,7 +156,7 @@ def classify_device(ip_str: str, mac_str: str, local_ip: str, gw_ip: str):
             "description": "Android yoki Apple tizimidagi mobil smartfon. Wi-Fi tarmog'iga himoyalangan MAC bilan ulangan.",
         }
 
-    # 5. Sim orqali (LAN kabel) yoki Wi-Fi orqali ulangan boshqa kompyuterlar
+    # 5. Sim orqali (LAN kabel) ulangan boshqa kompyuterlar
     if hostname and any(k in hostname.upper() for k in ["WIN-", "DESKTOP-", "HOME-PC", "PC", "LAPTOP"]):
         return {
             "name": f"{hostname} (Simli LAN Kompyuter)",
@@ -160,7 +169,7 @@ def classify_device(ip_str: str, mac_str: str, local_ip: str, gw_ip: str):
             "description": "Routerga sim orqali (LAN kabel) yoki Wi-Fi adapter orqali ulangan ishchi kompyuter.",
         }
 
-    # 6. Umumiy aniqlangan tarmoq qurilmasi
+    # 6. Umumiy tarmoq qurilmasi
     return {
         "name": f"Tarmoq Qurilmasi (IP: {ip_str})",
         "device_name": f"Lokal Tarmoq Tuguni ({ip_str})",
@@ -173,25 +182,19 @@ def classify_device(ip_str: str, mac_str: str, local_ip: str, gw_ip: str):
     }
 
 
-# Butun subnetni Layer-2 da tekshiruvchi funksiya
 def scan_subnet_once():
     global current_active_devices, disconnected_history, events_log
     local_ip, gw_ip = get_local_ip_and_gateway()
     parts = local_ip.split(".")
     subnet = f"{parts[0]}.{parts[1]}.{parts[2]}" if len(parts) == 4 else "192.168.0"
 
-    # 1 dan 254 gacha barcha IP larni aniqlash
     ips_to_scan = [f"{subnet}.{i}" for i in range(1, 255)]
-
     detected_now = {}
 
     def worker(ip):
         mac = send_arp_probe(ip)
-        if mac:
-            return ip, mac
-        return ip, None
+        return (ip, mac) if mac else (ip, None)
 
-    # Barcha 254 IP ga parallel SendARP jo'natish (4 soniya ichida butun tarmoq aniqlanadi)
     with ThreadPoolExecutor(max_workers=250) as executor:
         results = list(executor.map(worker, ips_to_scan))
 
@@ -221,7 +224,7 @@ def scan_subnet_once():
         old_ips = set(current_active_devices.keys())
         new_ips = set(detected_now.keys())
 
-        # Yangi ulanganlarni topish
+        # Yangi ulanganlar
         for ip in (new_ips - old_ips):
             dev = detected_now[ip]
             events_log.insert(0, {
@@ -233,7 +236,7 @@ def scan_subnet_once():
             if len(events_log) > 50:
                 events_log.pop()
 
-        # Tarmoqdan UZILGANLARNI (OFFLINE) topish
+        # Uzilganlar (avtomatik ro'yxatdan chiqadi)
         for ip in (old_ips - new_ips):
             dev = current_active_devices[ip]
             events_log.insert(0, {
@@ -251,38 +254,114 @@ def scan_subnet_once():
             if len(events_log) > 50:
                 events_log.pop()
 
-        # Eski ro'yxatni yangisi bilan to'liq almashtirish (Uzilganlar avtomatik ro'yxatdan o'chadi!)
         current_active_devices = detected_now
 
 
-# Fonda doimiy ishlovchi avtomatik skanerlash ipi
 def background_scanner_thread():
     while True:
         try:
             scan_subnet_once()
-        except Exception as e:
+        except Exception:
             pass
         time.sleep(3.5)
 
 
-# FastAPI start bo'lganda fon skanerni ishga tushirish
 @app.on_event("startup")
 def startup_event():
-    # Birinchi marta darhol skanerlash
     t = threading.Thread(target=background_scanner_thread, daemon=True)
     t.start()
 
 
-# 1. Ayni vaqtda faol qurilmalar ro'yxatini qaytaruvchi API
+# ========================================================
+# 🚀 5 TA ULASH VA TEKSHIRISH FUNKSIYALARI (API ENDPOINTLARI)
+# ========================================================
+
+# 1. Buyruqlar satri orqali tekshirish (Ping)
+@app.get("/api/device/ping")
+def api_device_ping(ip: str = Query(...)):
+    ip = ip.strip()
+    try:
+        res = subprocess.run(["ping", "-n", "3", "-w", "600", ip], capture_output=True, text=True)
+        out = res.stdout
+        success = (res.returncode == 0)
+        ttls = re.findall(r"TTL=(\d+)", out, re.IGNORECASE)
+        times = re.findall(r"(\d+)\s*(?:ms|мсек)", out, re.IGNORECASE)
+        loss_m = re.search(r"\((\d+)%", out)
+        loss = f"{loss_m.group(1)}%" if loss_m else ("0%" if success else "100%")
+        avg_ms = f"{sum(int(t) for t in times) // len(times)} ms" if times else ("0 ms" if success else "-")
+
+        status_text = "🟢 Aloqa barqaror (Online)" if success else "🔴 Javob bermadi (Offline / Firewall)"
+        return {
+            "success": success,
+            "ip": ip,
+            "loss": loss,
+            "avg_ms": avg_ms,
+            "ttl": ttls[0] if ttls else "-",
+            "replies": len(ttls),
+            "status_text": status_text,
+            "raw_output": out.strip()
+        }
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"success": False, "error": str(e)})
+
+
+# 2. Xizmatlar va Portlar tekshiruvi (HTTP, SMB, RDP, SSH, API)
+@app.get("/api/device/ports")
+def api_device_ports(ip: str = Query(...)):
+    ip = ip.strip()
+    target_ports = [
+        {"port": 80, "name": "HTTP", "desc": "Veb-brauzer / Router Paneli", "icon": "🌐"},
+        {"port": 443, "name": "HTTPS", "desc": "Xavfsiz Veb-sayt (SSL)", "icon": "🔒"},
+        {"port": 445, "name": "SMB", "desc": "Tarmoq Papkalari (File Sharing)", "icon": "📁"},
+        {"port": 3389, "name": "RDP", "desc": "Masofaviy Ish Stoli (Remote Desktop)", "icon": "🖥️"},
+        {"port": 22, "name": "SSH", "desc": "Masofaviy Terminal Konsoli", "icon": "💻"},
+        {"port": 8080, "name": "HTTP-Alt", "desc": "Veb-kamera / Proksi / Panel", "icon": "📹"},
+        {"port": 8000, "name": "Web API", "desc": "FastAPI / Django Backend", "icon": "⚡"},
+        {"port": 53, "name": "DNS", "desc": "Domen Nomlari Xizmati", "icon": "🔍"},
+    ]
+
+    results = []
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        futures = {executor.submit(check_single_port, ip, p["port"]): p for p in target_ports}
+        for f in futures:
+            p_info = futures[f]
+            is_open = f.result()
+            results.append({
+                **p_info,
+                "is_open": is_open,
+                "status": "OCHIQ (Faol)" if is_open else "Yopiq"
+            })
+
+    results.sort(key=lambda x: x["port"])
+    open_count = sum(1 for r in results if r["is_open"])
+    return {
+        "success": True,
+        "ip": ip,
+        "open_count": open_count,
+        "ports": results
+    }
+
+
+# 3. Masofaviy ish stoli (RDP) faylini yuklab berish
+@app.get("/api/device/rdp")
+def api_device_rdp(ip: str = Query(...)):
+    ip = ip.strip()
+    rdp_content = f"full address:s:{ip}\nprompt for credentials:i:1\nadministrative session:i:1\n"
+    return Response(
+        content=rdp_content,
+        media_type="application/x-rdp",
+        headers={"Content-Disposition": f"attachment; filename=remote_{ip}.rdp"}
+    )
+
+
+# 4. Ro'yxatni olish
 @app.get("/devices")
 def get_devices():
     with active_devices_lock:
-        # Faqat ayni vaqtda ON-LINE bo'lgan qurilmalar qaytadi!
-        devices = list(current_active_devices.values())
-    return devices
+        return list(current_active_devices.values())
 
 
-# 2. To'liq skanerlash va hodisalar API si
+# 5. API Skan holati
 @app.get("/api/scan")
 def api_scan():
     local_ip, gw_ip = get_local_ip_and_gateway()
@@ -291,7 +370,7 @@ def api_scan():
 
     with active_devices_lock:
         devices = list(current_active_devices.values())
-        events = list(events_log[:10])
+        events = list(events_log[:15])
 
     return {
         "success": True,
@@ -303,6 +382,9 @@ def api_scan():
     }
 
 
+# ========================================================
+# 🎨 WEB INTERFEYS VA HAR BIR QURILMA UCHUN TUGMALAR
+# ========================================================
 @app.get("/", response_class=HTMLResponse)
 def index():
     local_ip, gw_ip = get_local_ip_and_gateway()
@@ -313,15 +395,15 @@ def index():
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ayni Vaqtdagi Real Tarmoq Qurilmalari Monitoringi</title>
+    <title>Tarmoq Qurilmalari & Boshqaruv Markazi</title>
     <style>
         * {{ box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }}
         body {{ background-color: #0b0f19; color: #f8fafc; padding: 22px; }}
-        .container {{ max-width: 1350px; margin: 0 auto; }}
+        .container {{ max-width: 1400px; margin: 0 auto; }}
 
         .header {{ 
             background: linear-gradient(135deg, #1e293b, #0f172a); 
-            padding: 22px 25px; 
+            padding: 20px 25px; 
             border-radius: 14px; 
             display: flex; 
             justify-content: space-between; 
@@ -345,7 +427,6 @@ def index():
             flex-wrap: wrap;
             gap: 12px;
         }}
-        .control-left {{ display: flex; align-items: center; gap: 12px; }}
         .btn-refresh {{ 
             padding: 10px 22px; 
             background: #0284c7; 
@@ -392,97 +473,95 @@ def index():
         .stat-card h4 {{ font-size: 12px; color: #94a3b8; text-transform: uppercase; margin-bottom: 5px; }}
         .stat-card p {{ font-size: 18px; font-weight: bold; color: #38bdf8; }}
 
-        /* Live devices and events split */
-        .grid-split {{ display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 20px; }}
-        
-        .panel {{
-            background: #1e293b;
-            border-radius: 12px;
-            border: 1px solid #334155;
-            padding: 18px;
-        }}
-        .panel-header {{
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid #334155;
-            padding-bottom: 12px;
-            margin-bottom: 14px;
-            font-size: 15px;
-            font-weight: bold;
-            color: #38bdf8;
-        }}
-
-        #device-list {{
-            list-style: none;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            max-height: 400px;
-            overflow-y: auto;
-        }}
-        .device-card {{
-            padding: 12px 16px;
-            border-radius: 8px;
-            background: #0f172a;
-            border: 1px solid #334155;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: all 0.25s;
-        }}
-        .device-card:hover {{ border-color: #38bdf8; background: #172554; }}
-        .device-card.just-joined {{
-            background: #064e3b !important;
-            border-color: #059669 !important;
-            animation: highlightJoin 2s ease;
-        }}
-        .device-card.just-left {{
-            background: #451a03 !important;
-            border-color: #d97706 !important;
-        }}
-
-        #events-list {{
-            list-style: none;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            max-height: 400px;
-            overflow-y: auto;
-            font-size: 12.5px;
-        }}
-        .event-item {{
-            padding: 8px 12px;
+        /* Action Buttons Group */
+        .btn-group {{ display: flex; gap: 6px; flex-wrap: wrap; }}
+        .btn-action {{
+            padding: 6px 10px;
             border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid #334155;
             background: #0f172a;
-            border-left: 3px solid #38bdf8;
+            color: #f1f5f9;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.2s;
+            text-decoration: none;
         }}
-        .event-item.connected {{ border-left-color: #34d399; color: #a7f3d0; }}
-        .event-item.disconnected {{ border-left-color: #f59e0b; color: #fde68a; }}
+        .btn-action:hover {{ background: #1e293b; border-color: #38bdf8; transform: translateY(-1px); }}
+        .btn-action.btn-web {{ color: #38bdf8; }}
+        .btn-action.btn-smb {{ color: #facc15; }}
+        .btn-action.btn-rdp {{ color: #a78bfa; }}
+        .btn-action.btn-ping {{ color: #4ade80; }}
+        .btn-action.btn-port {{ color: #fb923c; }}
 
-        .table-wrap {{ overflow-x: auto; border-radius: 12px; border: 1px solid #334155; margin-top: 10px; }}
+        /* Table */
+        .table-wrap {{ overflow-x: auto; border-radius: 12px; border: 1px solid #334155; margin-bottom: 22px; }}
         table {{ width: 100%; border-collapse: collapse; background: #1e293b; }}
-        th, td {{ padding: 13px 16px; text-align: left; font-size: 13px; border-bottom: 1px solid #334155; vertical-align: middle; }}
+        th, td {{ padding: 14px 16px; text-align: left; font-size: 13px; border-bottom: 1px solid #334155; vertical-align: middle; }}
         th {{ background: #334155; color: #38bdf8; text-transform: uppercase; font-size: 11.5px; letter-spacing: 0.5px; }}
         tr:hover {{ background: #273548; }}
+        
         .badge {{ padding: 4px 9px; border-radius: 6px; font-size: 11.5px; font-weight: bold; display: inline-block; }}
         .badge-router {{ background: #1e3a8a; color: #93c5fd; }}
         .badge-pc {{ background: #064e3b; color: #6ee7b7; }}
         .badge-tv {{ background: #701a75; color: #f0abfc; }}
         .badge-phone {{ background: #7c2d12; color: #fdba74; }}
         .badge-general {{ background: #334155; color: #cbd5e1; }}
-        .tag-source {{ font-size: 11.5px; color: #38bdf8; font-weight: 500; display: block; margin-top: 2px; }}
+
+        /* Modal Styles */
+        .modal-overlay {{
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.75);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            backdrop-filter: blur(4px);
+        }}
+        .modal {{
+            background: #1e293b;
+            border: 1px solid #475569;
+            border-radius: 14px;
+            width: 90%;
+            max-width: 650px;
+            padding: 24px;
+            color: #f8fafc;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            max-height: 85vh;
+            overflow-y: auto;
+        }}
+        .modal-header {{
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #334155;
+            padding-bottom: 12px;
+            margin-bottom: 16px;
+        }}
+        .modal-title {{ font-size: 17px; font-weight: bold; color: #38bdf8; display: flex; align-items: center; gap: 8px; }}
+        .modal-close {{ background: none; border: none; color: #94a3b8; font-size: 22px; cursor: pointer; }}
+        .modal-close:hover {{ color: #f87171; }}
+        .modal-box {{ background: #0f172a; padding: 14px; border-radius: 8px; border: 1px solid #334155; margin-bottom: 12px; font-size: 13px; line-height: 1.6; }}
+        .port-grid {{ display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }}
+        .port-card {{ background: #0f172a; border: 1px solid #334155; padding: 10px 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; }}
+        .port-open {{ border-color: #059669; background: #064e3b; color: #a7f3d0; }}
+        .copy-pill {{ background: #334155; padding: 3px 8px; border-radius: 6px; cursor: pointer; color: #38bdf8; font-size: 11px; }}
+        .copy-pill:hover {{ background: #475569; }}
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <div class="title">🌐 Ayni Vaqtdagi Real Tarmoq Qurilmalari Tahlili</div>
+            <div class="title">🌐 Tarmoq Qurilmalari & Boshqaruv Markazi</div>
             <div class="geo">📍 {geo}</div>
         </div>
 
         <div class="control-bar">
-            <div class="control-left">
+            <div style="display: flex; align-items: center; gap: 14px;">
                 <button onclick="refreshDevices()" class="btn-refresh">
                     🔄 Refresh (Yangilash)
                 </button>
@@ -492,7 +571,7 @@ def index():
                 </div>
             </div>
             <div style="color: #94a3b8; font-size: 13px;">
-                Tarmoq shlyuzi: <code style="color: #38bdf8;">{gw_ip}</code> | Asosiy PC: <code style="color: #38bdf8;">{local_ip}</code>
+                Asosiy Shlyuz: <code style="color: #38bdf8;">{gw_ip}</code> | Lokal PC: <code style="color: #38bdf8;">{local_ip}</code>
             </div>
         </div>
 
@@ -502,7 +581,7 @@ def index():
                 <p id="stat-total">0 ta</p>
             </div>
             <div class="stat-card">
-                <h4>Kompyuterlar (Simli / Wi-Fi)</h4>
+                <h4>Kompyuterlar (LAN / Wi-Fi)</h4>
                 <p id="stat-pc" style="color: #6ee7b7;">0 ta</p>
             </div>
             <div class="stat-card">
@@ -515,46 +594,70 @@ def index():
             </div>
         </div>
 
-        <div class="grid-split">
-            <!-- Jonli Qurilmalar ro'yxati -->
-            <div class="panel">
-                <div class="panel-header">
-                    <span>📱 Ayni Vaqtda Ulangan Faol Qurilmalar</span>
-                    <span style="font-size: 12px; color: #34d399;" id="online-count">0 ta onlayn</span>
-                </div>
-                <ul id="device-list">
-                    <li style="padding: 20px; text-align: center; color: #94a3b8;">Tarmoq tekshirilmoqda...</li>
-                </ul>
-            </div>
-
-            <!-- Yangi qo'shilish va uzilishlar hodisalari -->
-            <div class="panel">
-                <div class="panel-header">
-                    <span>⚡ Jonli O'zgarishlar Jurnali</span>
-                    <span style="font-size: 12px; color: #94a3b8;">Hodisalar</span>
-                </div>
-                <ul id="events-list">
-                    <li style="padding: 10px; color: #94a3b8; text-align: center;">Hozircha o'zgarishlar yo'q</li>
-                </ul>
-            </div>
-        </div>
-
-        <!-- Batafsil Qurilmalar Jadvali -->
+        <!-- Qurilmalar jadvali va Maxsus Boshqaruv Tugmalari -->
         <div class="table-wrap">
             <table>
                 <thead>
                     <tr>
-                        <th style="width: 25%;">Qurilma & Nomi</th>
-                        <th style="width: 20%;">IP & Real MAC Manzil</th>
-                        <th style="width: 15%;">Kategoriya</th>
-                        <th style="width: 20%;">Ulanish Turi & Port</th>
-                        <th style="width: 20%;">Holati & Vaqti</th>
+                        <th style="width: 22%;">Qurilma Nomi</th>
+                        <th style="width: 16%;">IP & MAC Manzil</th>
+                        <th style="width: 14%;">Kategoriya</th>
+                        <th style="width: 16%;">Ulanish Turi</th>
+                        <th style="width: 32%;">⚡ Ulanish & Tekshirish Tugmalari</th>
                     </tr>
                 </thead>
                 <tbody id="deviceTable">
-                    <tr><td colspan="5" style="text-align: center; padding: 25px; color: #94a3b8;">Yuklanmoqda...</td></tr>
+                    <tr><td colspan="5" style="text-align: center; padding: 25px; color: #94a3b8;">Tarmoq qurilmalari aniqlanmoqda...</td></tr>
                 </tbody>
             </table>
+        </div>
+    </div>
+
+    <!-- PING MODALI -->
+    <div id="pingModal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title">⚡ Buyruqlar Satri Orqali Tekshirish (Ping)</div>
+                <button class="modal-close" onclick="closeModal('pingModal')">&times;</button>
+            </div>
+            <div id="pingModalBody">
+                <div style="text-align: center; padding: 20px; color: #94a3b8;">Paketlar yuborilmoqda, kuting...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PORT VA XIZMATLAR MODALI -->
+    <div id="portModal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title">🔍 Xizmatlar & Portlar Tahlili (API / Xizmatlar)</div>
+                <button class="modal-close" onclick="closeModal('portModal')">&times;</button>
+            </div>
+            <div id="portModalBody">
+                <div style="text-align: center; padding: 20px; color: #94a3b8;">Portlar skanerlanmoqda...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SMB PAPKA MODALI -->
+    <div id="smbModal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title">📁 Tarmoq Papkalarini Ulash (SMB / File Sharing)</div>
+                <button class="modal-close" onclick="closeModal('smbModal')">&times;</button>
+            </div>
+            <div id="smbModalBody"></div>
+        </div>
+    </div>
+
+    <!-- RDP MASOFAVIY ISH STOLI MODALI -->
+    <div id="rdpModal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title">🖥️ Masofaviy Ish Stoli (RDP / Remote Desktop)</div>
+                <button class="modal-close" onclick="closeModal('rdpModal')">&times;</button>
+            </div>
+            <div id="rdpModalBody"></div>
         </div>
     </div>
 
@@ -563,24 +666,15 @@ def index():
 
         async function refreshDevices() {{
             const scanStatus = document.getElementById('scan-status');
-            scanStatus.innerText = "Skanerlanmoqda...";
 
             try {{
-                // Backend dan haqiqiy ayni daqiqada ulangan qurilmalarni olish
                 const res = await fetch('/api/scan');
                 const data = await res.json();
                 
                 const currentDevices = data.devices || [];
-                const events = data.events || [];
-
-                const listEl = document.getElementById('device-list');
                 const tbody = document.getElementById('deviceTable');
-                const eventsEl = document.getElementById('events-list');
 
-                const prevIps = new Set(previousDevices.map(d => d.ip));
-                const currIps = new Set(currentDevices.map(d => d.ip));
-
-                // 1. STATISTIKA HISOB-KITOBLARI
+                // Statistika
                 let pcCount = 0, tvCount = 0, phoneCount = 0;
                 currentDevices.forEach(d => {{
                     const cat = d.category || '';
@@ -593,97 +687,226 @@ def index():
                 document.getElementById('stat-pc').innerText = `${{pcCount}} ta`;
                 document.getElementById('stat-tv').innerText = `${{tvCount}} ta`;
                 document.getElementById('stat-phone').innerText = `${{phoneCount}} ta`;
-                document.getElementById('online-count').innerText = `${{currentDevices.length}} ta onlayn`;
 
-                // 2. QURILMALAR RO'YXATINI YANGILASH
-                listEl.innerHTML = '';
-                if (currentDevices.length === 0) {{
-                    listEl.innerHTML = '<li style="padding: 20px; text-align: center; color: #94a3b8;">Tarmoqda qurilmalar topilmadi</li>';
-                }} else {{
-                    currentDevices.forEach(device => {{
-                        const li = document.createElement('li');
-                        li.className = 'device-card';
-                        
-                        const isNew = previousDevices.length > 0 && !prevIps.has(device.ip);
-                        if (isNew) {{
-                            li.className += ' just-joined';
-                        }}
-
-                        li.innerHTML = `
-                            <div>
-                                <div style="font-weight: bold; color: #f8fafc; font-size: 14px;">
-                                    ${{device.type_icon || '💻'}} ${{device.name}}
-                                </div>
-                                <div style="font-size: 12px; color: #94a3b8; margin-top: 3px;">
-                                    <code style="color: #38bdf8;">${{device.ip}}</code> | MAC: <code>${{device.mac}}</code>
-                                </div>
-                                <span class="tag-source">🔗 ${{device.source}}</span>
-                            </div>
-                            <div>
-                                ${{isNew ? '<span style="background: #059669; color: white; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: bold;">🟢 Yangi</span>' : '<span style="color: #34d399; font-size: 12px; font-weight: bold;">● Faol</span>'}}
-                            </div>
-                        `;
-                        listEl.appendChild(li);
-                    }});
-                }}
-
-                // 3. JADVALNI YANGILASH (UZILGANLAR AVTOMATIK JADVALDAN O'CHADI)
+                // Jadvalni yangilash
                 tbody.innerHTML = '';
-                currentDevices.forEach(dev => {{
-                    let badgeClass = 'badge-general';
-                    if (dev.category.includes('Router')) badgeClass = 'badge-router';
-                    else if (dev.category.includes('TV')) badgeClass = 'badge-tv';
-                    else if (dev.category.includes('Smartfon')) badgeClass = 'badge-phone';
-                    else if (dev.category.includes('Kompyuter')) badgeClass = 'badge-pc';
+                if (currentDevices.length === 0) {{
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 25px; color: #94a3b8;">Tarmoqda faol qurilmalar topilmadi</td></tr>';
+                }} else {{
+                    currentDevices.forEach(dev => {{
+                        let badgeClass = 'badge-general';
+                        if (dev.category.includes('Router')) badgeClass = 'badge-router';
+                        else if (dev.category.includes('TV')) badgeClass = 'badge-tv';
+                        else if (dev.category.includes('Smartfon')) badgeClass = 'badge-phone';
+                        else if (dev.category.includes('Kompyuter')) badgeClass = 'badge-pc';
 
-                    const row = `<tr>
-                        <td>
-                            <b>${{dev.type_icon || '💻'}} ${{dev.name}}</b><br>
-                            <span style="color: #94a3b8; font-size: 11px;">👤 ${{dev.owner}}</span>
-                        </td>
-                        <td>
-                            <code style="color: #38bdf8; font-weight: bold; font-size: 13px;">${{dev.ip}}</code><br>
-                            <code style="color: #94a3b8; font-size: 11.5px;">${{dev.mac}}</code>
-                        </td>
-                        <td>
-                            <span class="badge ${{badgeClass}}">${{dev.category}}</span>
-                        </td>
-                        <td>
-                            <span style="color: #f1f5f9; font-size: 12.5px;">${{dev.source}}</span><br>
-                            <span style="color: #94a3b8; font-size: 11.5px;">📍 ${{dev.location}}</span>
-                        </td>
-                        <td>
-                            <span style="color: #4ade80; font-weight: bold; font-size: 12.5px;">🟢 ${{dev.status}}</span><br>
-                            <span style="color: #94a3b8; font-size: 11px;">🕒 ${{dev.status_time}}</span>
-                        </td>
-                    </tr>`;
-                    tbody.innerHTML += row;
-                }});
+                        const row = `<tr>
+                            <td>
+                                <b>${{dev.type_icon || '💻'}} ${{dev.name}}</b><br>
+                                <span style="color: #94a3b8; font-size: 11px;">👤 ${{dev.owner}}</span>
+                            </td>
+                            <td>
+                                <code style="color: #38bdf8; font-weight: bold; font-size: 13px;">${{dev.ip}}</code><br>
+                                <code style="color: #94a3b8; font-size: 11.5px;">${{dev.mac}}</code>
+                            </td>
+                            <td>
+                                <span class="badge ${{badgeClass}}">${{dev.category}}</span>
+                            </td>
+                            <td>
+                                <span style="color: #f1f5f9; font-size: 12.5px;">${{dev.source}}</span><br>
+                                <span style="color: #4ade80; font-size: 11px;">🟢 ${{dev.status}}</span>
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    <!-- 1. Veb-brauzer orqali kirish -->
+                                    <a href="http://${{dev.ip}}" target="_blank" class="btn-action btn-web" title="Brauzer orqali veb-interfeysga ulanish">
+                                        🌐 Veb
+                                    </a>
 
-                // 4. HODISALAR JURNALINI YANGILASH
-                if (events.length > 0) {{
-                    eventsEl.innerHTML = '';
-                    events.forEach(ev => {{
-                        const li = document.createElement('li');
-                        li.className = `event-item ${{ev.type}}`;
-                        li.innerHTML = `<div>${{ev.message}}</div><div style="font-size: 11px; opacity: 0.7; margin-top: 2px;">${{ev.time}}</div>`;
-                        eventsEl.appendChild(li);
+                                    <!-- 2. Tarmoq papkalarini ulash (SMB) -->
+                                    <button onclick="openSmbModal('${{dev.ip}}', '${{escapeHtml(dev.name)}}')" class="btn-action btn-smb" title="Tarmoq papkalariga (SMB) ulanish">
+                                        📁 SMB
+                                    </button>
+
+                                    <!-- 3. Masofaviy ish stoli (RDP) -->
+                                    <button onclick="openRdpModal('${{dev.ip}}', '${{escapeHtml(dev.name)}}')" class="btn-action btn-rdp" title="Remote Desktop orqali ulanish">
+                                        🖥️ RDP
+                                    </button>
+
+                                    <!-- 4. Buyruqlar satri orqali tekshirish (Ping) -->
+                                    <button onclick="runPingTest('${{dev.ip}}', '${{escapeHtml(dev.name)}}')" class="btn-action btn-ping" title="Buyruqlar satrida (Ping) aloqani tekshirish">
+                                        ⚡ Ping
+                                    </button>
+
+                                    <!-- 5. Maxsus dasturlar va API (Portlar) -->
+                                    <button onclick="scanDevicePorts('${{dev.ip}}', '${{escapeHtml(dev.name)}}')" class="btn-action btn-port" title="Portlar, API va xizmatlarni tekshirish">
+                                        🔍 Portlar
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>`;
+                        tbody.innerHTML += row;
                     }});
                 }}
 
-                previousDevices = currentDevices;
                 scanStatus.innerText = "Jonli Avto-Kuzatuv (3s)";
-
-            }} catch (err) {{
-                console.error("Yangilashda xato:", err);
+            }} catch(e) {{
                 scanStatus.innerText = "Kutish rejimida";
             }}
         }}
 
-        // Sahifa ochilishi bilan boshlash
+        // ==========================================
+        // 🛠️ MODAL VA FUNKSIYALAR KODI
+        // ==========================================
+
+        function closeModal(id) {{
+            document.getElementById(id).style.display = 'none';
+        }}
+
+        function escapeHtml(str) {{
+            return (str || '').replace(/'/g, "\\'");
+        }}
+
+        function copyToClipboard(text) {{
+            navigator.clipboard.writeText(text);
+            alert("Nusxalandi: " + text);
+        }}
+
+        // 1. PING TEKSHIRISH
+        async function runPingTest(ip, name) {{
+            document.getElementById('pingModal').style.display = 'flex';
+            const body = document.getElementById('pingModalBody');
+            body.innerHTML = `
+                <div class="modal-box">
+                    <b>Tekshirilayotgan Qurilma:</b> ${{name}} (<code style="color: #38bdf8;">${{ip}}</code>)<br>
+                    <span>ICMP echo signallari (ping) yuborilmoqda, kuting...</span>
+                </div>
+            `;
+
+            try {{
+                const res = await fetch(`/api/device/ping?ip=${{encodeURIComponent(ip)}}`);
+                const data = await res.json();
+
+                body.innerHTML = `
+                    <div class="modal-box" style="border-left: 4px solid ${{data.success ? '#34d399' : '#f87171'}};">
+                        <h4 style="color: ${{data.success ? '#34d399' : '#f87171'}}; margin-bottom: 8px;">
+                            ${{data.status_text}}
+                        </h4>
+                        <div>🎯 <b>IP manzil:</b> ${{data.ip}}</div>
+                        <div>📊 <b>Paket yo'qotilishi (Loss):</b> <span style="color: #38bdf8;">${{data.loss}}</span></div>
+                        <div>⏱️ <b>O'rtacha kechikish (Latency):</b> <span style="color: #4ade80;">${{data.avg_ms}}</span></div>
+                        <div>📦 <b>TTL ko'rsatkichi:</b> ${{data.ttl}} | Qabul qilindi: ${{data.replies}}/3 ta</div>
+                    </div>
+                    <div style="font-size: 11.5px; color: #94a3b8; margin-top: 8px;">
+                        Terminaldagi xom natija:<br>
+                        <pre style="background: #0f172a; padding: 10px; border-radius: 6px; overflow-x: auto; color: #cbd5e1; margin-top: 4px;">${{data.raw_output || 'Maʼlumot yoʻq'}}</pre>
+                    </div>
+                `;
+            }} catch(err) {{
+                body.innerHTML = `<div class="modal-box" style="color: #f87171;">Xatolik: ${{err.message}}</div>`;
+            }}
+        }}
+
+        // 2. PORTLAR VA XIZMATLARNI TEKSHIRISH
+        async function scanDevicePorts(ip, name) {{
+            document.getElementById('portModal').style.display = 'flex';
+            const body = document.getElementById('portModalBody');
+            body.innerHTML = `
+                <div class="modal-box">
+                    <b>Qurilma:</b> ${{name}} (<code>${{ip}}</code>)<br>
+                    <span>HTTP, HTTPS, SMB, RDP, SSH, API portlari tekshirilmoqda...</span>
+                </div>
+            `;
+
+            try {{
+                const res = await fetch(`/api/device/ports?ip=${{encodeURIComponent(ip)}}`);
+                const data = await res.json();
+
+                let portCardsHtml = '';
+                data.ports.forEach(p => {{
+                    portCardsHtml += `
+                        <div class="port-card ${{p.is_open ? 'port-open' : ''}}">
+                            <div>
+                                <b>${{p.icon}} Port ${{p.port}}</b> (${{p.name}})<br>
+                                <span style="font-size: 11px; opacity: 0.8;">${{p.desc}}</span>
+                            </div>
+                            <div>
+                                <span style="font-weight: bold; font-size: 11.5px;">${{p.is_open ? '🟢 OCHIQ' : '🔴 Yopiq'}}</span>
+                            </div>
+                        </div>
+                    `;
+                }});
+
+                body.innerHTML = `
+                    <div class="modal-box">
+                        <b>Qurilma:</b> ${{name}} (<code style="color: #38bdf8;">${{ip}}</code>)<br>
+                        <span>Jami ochiq xizmatlar: <b style="color: #34d399;">${{data.open_count}} ta port faol</b></span>
+                    </div>
+                    <div class="port-grid">
+                        ${{portCardsHtml}}
+                    </div>
+                    <div class="modal-box" style="margin-top: 14px; font-size: 12px;">
+                        💡 <b>API orqali so'rov yuborish (Python / cURL):</b><br>
+                        <code>curl http://${{ip}}/</code> yoki Python: <code>requests.get("http://${{ip}}/")</code>
+                    </div>
+                `;
+            }} catch(err) {{
+                body.innerHTML = `<div class="modal-box" style="color: #f87171;">Xatolik: ${{err.message}}</div>`;
+            }}
+        }}
+
+        // 3. SMB (TARMOQ PAPKALARI)
+        function openSmbModal(ip, name) {{
+            document.getElementById('smbModal').style.display = 'flex';
+            const body = document.getElementById('smbModalBody');
+            const smbPath = `\\\\${{ip}}`;
+            body.innerHTML = `
+                <div class="modal-box">
+                    <b>Qurilma:</b> ${{name}} (<code style="color: #38bdf8;">${{ip}}</code>)<br>
+                    Windows yoki tarmoq umumiy fayllariga kirish yo'li:
+                    <div style="display: flex; gap: 8px; margin-top: 8px; align-items: center;">
+                        <input type="text" value="${{smbPath}}" readonly style="background: #1e293b; border: 1px solid #475569; color: #facc15; padding: 8px 12px; border-radius: 6px; font-weight: bold; width: 70%;">
+                        <button onclick="copyToClipboard('${{smbPath}}')" class="copy-pill" style="padding: 8px 14px; font-weight: bold;">📋 Manzilni Nusxalash</button>
+                    </div>
+                </div>
+                <div class="modal-box" style="font-size: 12.5px;">
+                    📝 <b>Qanday ulaniladi?</b><br>
+                    1. Klaviaturada <b>Win + R</b> tugmalarini bosing.<br>
+                    2. Chiqqan oynaga <code>${{smbPath}}</code> manzilini qo'ying va <b>Enter</b> bosing.<br>
+                    3. Agar umumiy papkalar ochiq bo'lsa, Windows Explorer fayllarni ko'rsatadi.
+                </div>
+            `;
+        }}
+
+        // 4. RDP (MASOFAVIY ISH STOLI)
+        function openRdpModal(ip, name) {{
+            document.getElementById('rdpModal').style.display = 'flex';
+            const body = document.getElementById('rdpModalBody');
+            const rdpCmd = `mstsc /v:${{ip}}`;
+            body.innerHTML = `
+                <div class="modal-box">
+                    <b>Qurilma:</b> ${{name}} (<code style="color: #38bdf8;">${{ip}}</code>)<br>
+                    Masofaviy ish stoliga 2 xil usulda ulanishingiz mumkin:
+                </div>
+                <div class="modal-box" style="border-left: 4px solid #a78bfa;">
+                    <b>1-usul: Tayyor RDP faylni yuklab olish (1 bosish bilan ulanish):</b><br>
+                    <a href="/api/device/rdp?ip=${{encodeURIComponent(ip)}}" class="btn-action btn-rdp" style="margin-top: 8px; padding: 8px 16px;">
+                        📥 .RDP Faylni Yuklab Olish (Ulanish)
+                    </a>
+                </div>
+                <div class="modal-box">
+                    <b>2-usul: Buyruqlar qatori orqali ulanish:</b><br>
+                    <div style="display: flex; gap: 8px; margin-top: 8px; align-items: center;">
+                        <input type="text" value="${{rdpCmd}}" readonly style="background: #1e293b; border: 1px solid #475569; color: #a78bfa; padding: 8px 12px; border-radius: 6px; font-weight: bold; width: 70%;">
+                        <button onclick="copyToClipboard('${{rdpCmd}}')" class="copy-pill" style="padding: 8px 14px; font-weight: bold;">📋 Buyruqni Nusxalash</button>
+                    </div>
+                    <span style="font-size: 11.5px; color: #94a3b8; display: block; margin-top: 6px;">Win + R oynasiga yoki CMD terminaliga kiritishingiz mumkin.</span>
+                </div>
+            `;
+        }}
+
         window.onload = () => {{
             refreshDevices();
-            // Har 3 soniyada avtomatik tekshirib yangilab turadi!
             setInterval(refreshDevices, 3000);
         }};
     </script>
