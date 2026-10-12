@@ -2,18 +2,30 @@ import os
 import re
 import socket
 import json
-import subprocess
-import urllib.request
+import time
+import struct
+import ctypes
+import threading
 from datetime import datetime, timedelta
+from concurrent.futures import ThreadPoolExecutor
+
 from fastapi import FastAPI, Query
 from fastapi.responses import HTMLResponse, JSONResponse
 import uvicorn
 
 app = FastAPI(title="Tarmoq Qurilmalarini Aniq va Chuqur Tahlil Qilish Tizimi")
 
+# Global holat
+active_devices_lock = threading.Lock()
+current_active_devices = {}
+disconnected_history = {}
+events_log = []
+hostname_cache = {}
+
 
 def get_public_geolocation():
     try:
+        import urllib.request
         with urllib.request.urlopen("http://ip-api.com/json/", timeout=2) as resp:
             data = json.loads(resp.read().decode())
             city = data.get("city", "Tashkent")
@@ -37,201 +49,263 @@ def get_local_ip_and_gateway():
         return "192.168.0.107", "192.168.0.1"
 
 
-# Har qanday IPv4 yoki IPv6 manzilni chuqur tahlil qilish funksiyasi
-def analyze_any_ip_address(ip_str: str):
-    ip_str = ip_str.strip()
-    now = datetime.now()
-    is_ipv6 = ":" in ip_str
-
-    if is_ipv6:
-        return {
-            "device_name": f"IPv6 Tarmoq Tuguni / Interfeys (Manzil: {ip_str})",
-            "name": f"IPv6 Tarmoq Tuguni ({ip_str})",
-            "ip": ip_str,
-            "mac": "33:33:00:00:00:01 (IPv6 Multicast / Link-Local)",
-            "category": "IPv6 Tarmoq Qatlami",
-            "owner": "Tarmoq Interfeysi / OS Network Stack",
-            "location": "Lokal Tarmoq Kontrolleri / Adapter",
-            "source": "IPv6 Neighbor Discovery / SLAAC",
-            "connected_time": (now - timedelta(hours=4)).strftime("%Y-%m-%d %H:%M:%S"),
-            "status_time": f"{now.strftime('%Y-%m-%d %H:%M:%S')} (Faol)",
-            "description": "Bu IPv6 Link-Local yoki global manzili bo'lib, qurilmaning tarmoq kartasiga avtomatik biriktirilgan.",
-            "status": "Faol (Online - IPv6)",
-        }
-
-    parts = ip_str.split(".")
-    if len(parts) != 4 or not parts[3].isdigit():
-        return {
-            "device_name": "Noma'lum IP Formati",
-            "name": "Noma'lum Qurilma",
-            "ip": ip_str,
-            "mac": "Noma'lum",
-            "category": "Xato Format",
-            "owner": "Aniqlanmagan",
-            "location": "Noma'lum joy",
-            "source": "Noma'lum",
-            "connected_time": "-",
-            "status_time": "-",
-            "description": "Kiritilgan IP manzil IPv4 yoki IPv6 standartlariga mos kelmadi.",
-            "status": "Xato",
-        }
-
-    last_octet = int(parts[3])
-
-    if last_octet in (1, 254):
-        return {
-            "device_name": "Asosiy Wi-Fi Router / Gateway (Shlyuz Uskunasi)",
-            "name": "Wi-Fi Router / Gateway",
-            "ip": ip_str,
-            "mac": "C0:4A:00:FC:77:6A",
-            "category": "Tarmoq Uskunasi (Router)",
-            "owner": "Tarmoq Administratsiyasi / Provayder",
-            "location": "Markaziy Server Xona / Asosiy Stend",
-            "source": "Wi-Fi 5GHz & Ethernet LAN Kabel",
-            "connected_time": (now - timedelta(days=5)).strftime("%Y-%m-%d %H:%M:%S"),
-            "status_time": f"{now.strftime('%Y-%m-%d %H:%M:%S')} (Doimiy Faol)",
-            "description": "Butun lokal tarmoqqa internet tarqatuvchi va qurilmalarni boshqaruvchi asosiy shlyuz uskuna.",
-            "status": "Faol (Online)",
-        }
-    elif 100 <= last_octet <= 140:
-        return {
-            "device_name": f"Shaxsiy Kompyuter / Ishchi Stansiya (IP: {ip_str})",
-            "name": f"Ishchi Stansiya (PC-{last_octet})",
-            "ip": ip_str,
-            "mac": f"D6:95:E2:CA:{last_octet:02X}:DB",
-            "category": "Kompyuter / Laptop",
-            "owner": "Asosiy Foydalanuvchi / Administrator",
-            "location": "Asosiy Ishchi O'rin / Stol Zonasida",
-            "source": "Ethernet LAN Kabel orqali",
-            "connected_time": (now - timedelta(hours=6)).strftime("%Y-%m-%d %H:%M:%S"),
-            "status_time": f"{now.strftime('%Y-%m-%d %H:%M:%S')} (Faol ishlamoqda)",
-            "description": "Windows / Linux tizimidagi shaxsiy kompyuter. Dasturlash va tarmoq monitoringi uchun mo'ljallangan.",
-            "status": "Faol (Online)",
-        }
-    elif last_octet % 2 == 0:
-        return {
-            "device_name": f"Smartfon / Mobil Gadjet (IP: {ip_str})",
-            "name": f"Mobil Telefon (Smartfon)",
-            "ip": ip_str,
-            "mac": f"78:F3:93:11:{last_octet:02X}:33",
-            "category": "Mobil Telefon / Smartfon",
-            "owner": "Ofis yoki Oila A'zosi",
-            "location": "Mehmonxona / Dam Olish Zonasi",
-            "source": "Wi-Fi (5 GHz / 2.4 GHz)",
-            "connected_time": (now - timedelta(hours=2, minutes=30)).strftime("%Y-%m-%d %H:%M:%S"),
-            "status_time": f"{now.strftime('%Y-%m-%d %H:%M:%S')} (Tarmoqda faol)",
-            "description": "Mobil aloqa va internet trafigidan foydalanish uchun tarmoqqa ulangan shaxsiy smartfon qurilmasi.",
-            "status": "Faol (Online)",
-        }
-    else:
-        return {
-            "device_name": f"Smart TV yoki Tarmoq Printeri / IoT (IP: {ip_str})",
-            "name": f"Smart Device / Printer",
-            "ip": ip_str,
-            "mac": f"70:B3:D5:88:{last_octet:02X}:00",
-            "category": "Smart Qurilma / IoT",
-            "owner": "Umumiy Foydalanishdagi Uskuna",
-            "location": "Zal Televizor Paneli / Ofis Burchagi",
-            "source": "Wi-Fi / LAN Kabel",
-            "connected_time": (now - timedelta(hours=12)).strftime("%Y-%m-%d %H:%M:%S"),
-            "status_time": f"{now.strftime('%Y-%m-%d %H:%M:%S')} (Faol / Kutish rejimi)",
-            "description": "Media kontentni ko'rsatish yoki hujjatlarni chop etish uchun xizmat qiluvchi maxsus tarmoq qurilmasi.",
-            "status": "Faol (Online)",
-        }
-
-
-def get_real_arp_devices():
-    devices = []
-    local_ip, gw_ip = get_local_ip_and_gateway()
-    seen_ips = set()
-
-    # 1. Asosiy shlyuz (Gateway router)
-    gw_dev = analyze_any_ip_address(gw_ip)
-    gw_dev["name"] = gw_dev["device_name"]
-    devices.append(gw_dev)
-    seen_ips.add(gw_ip)
-
-    # 2. Ushbu kompyuter (Localhost / Ishchi kompyuter)
-    if local_ip not in seen_ips:
-        my_dev = analyze_any_ip_address(local_ip)
-        my_dev["device_name"] = f"Ushbu Kompyuter (Asosiy Tugun, IP: {local_ip})"
-        my_dev["name"] = f"Ushbu Kompyuter (Host PC)"
-        my_dev["location"] = "Sizning Ish O'rningiz"
-        devices.append(my_dev)
-        seen_ips.add(local_ip)
-
-    # 3. ARP orqali tarmoqdagi real qurilmalarni qidirish
+# Windows native Layer-2 SendARP chaqiruvi (Tarmoqdagi real qurilmani darhol aniqlash)
+def send_arp_probe(ip_str: str):
     try:
-        output = subprocess.check_output("arp -a", shell=True, text=True, timeout=3)
-        for line in output.splitlines():
-            m = re.search(r"(\d+\.\d+\.\d+\.\d+)\s+([0-9a-fA-F-]+)", line.strip())
-            if m:
-                ip, mac = m.groups()
-                # Broadcast/multicast manzillarni chetlab o'tish
-                if ip.endswith(".255") or ip.startswith("224.") or ip.startswith("239.") or ip == "255.255.255.255":
-                    continue
-                if ip in seen_ips:
-                    continue
-                dev = analyze_any_ip_address(ip)
-                dev["mac"] = mac.replace("-", ":").upper()
-                dev["name"] = dev["device_name"]
-                devices.append(dev)
-                seen_ips.add(ip)
+        inet_addr = struct.unpack("!I", socket.inet_aton(ip_str))[0]
+        mac = (ctypes.c_byte * 6)()
+        mac_len = ctypes.c_ulong(6)
+        res = ctypes.windll.iphlpapi.SendARP(
+            socket.htonl(inet_addr), 0, ctypes.byref(mac), ctypes.byref(mac_len)
+        )
+        if res == 0:
+            mac_str = ":".join(f"{b & 0xFF:02X}" for b in mac)
+            return mac_str
     except Exception:
         pass
+    return None
 
-    # Agar tarmoqda boshqa qurilmalar ko'rinmasa, namuna segment qo'shish
-    if len(devices) <= 2:
-        parts = gw_ip.split(".")
-        subnet = f"{parts[0]}.{parts[1]}.{parts[2]}" if len(parts) == 4 else "192.168.0"
-        for octet in [101, 105]:
-            ip = f"{subnet}.{octet}"
-            if ip not in seen_ips:
-                dev = analyze_any_ip_address(ip)
-                dev["name"] = dev["device_name"]
-                devices.append(dev)
-                seen_ips.add(ip)
 
+# Tezkor hostname aniqlash (keshlangan)
+def resolve_hostname(ip_str: str):
+    if ip_str in hostname_cache:
+        return hostname_cache[ip_str]
+    try:
+        socket.setdefaulttimeout(0.4)
+        name, _, _ = socket.gethostbyaddr(ip_str)
+        hostname_cache[ip_str] = name
+        return name
+    except Exception:
+        hostname_cache[ip_str] = None
+        return None
+
+
+# Qurilma turini (Smart TV, Android telefon, Simli kompyuter, Router) aniqlash
+def classify_device(ip_str: str, mac_str: str, local_ip: str, gw_ip: str):
+    prefix = mac_str[:8].upper()
+    try:
+        first_byte = int(mac_str[:2], 16)
+        is_random_mac = bool(first_byte & 2)
+    except Exception:
+        is_random_mac = False
+
+    hostname = resolve_hostname(ip_str)
+
+    # 1. Asosiy Wi-Fi Router
+    if ip_str == gw_ip or ip_str.endswith(".1") or ip_str.endswith(".254") or "C0:4A:00" in prefix:
+        return {
+            "name": "Asosiy Wi-Fi Router / Shlyuz",
+            "device_name": "Wi-Fi Router (Shlyuz Uskunasi)",
+            "category": "Tarmoq Uskunasi (Router)",
+            "source": "Wi-Fi & Ethernet LAN Asosiy Boshqaruv",
+            "type_icon": "🌐",
+            "owner": "Tarmoq Administratsiyasi / Provayder",
+            "location": "Markaziy Server Xona / Wi-Fi Nuqtasi",
+            "description": "Butun lokal tarmoqqa internet tarqatuvchi va simli/simsiz qurilmalarni boshqaruvchi asosiy shlyuz.",
+        }
+
+    # 2. Ushbu Kompyuter (Host PC)
+    if ip_str == local_ip:
+        pc_name = hostname or "DESKTOP-A82U46C"
+        return {
+            "name": f"Ushbu Kompyuter ({pc_name})",
+            "device_name": f"{pc_name} — Asosiy Boshqaruv Kompyuteri",
+            "category": "Kompyuter (Host PC)",
+            "source": "Ethernet LAN Kabel / Wi-Fi",
+            "type_icon": "💻",
+            "owner": "Siz (Administrator)",
+            "location": "Asosiy Ish O'rningiz",
+            "description": "Hozirgi dastur va monitoring tizimi ishlayotgan shaxsiy kompyuter.",
+        }
+
+    # 3. Android Smart TV / Televizorlar
+    # Gaoshengda (84:C8:A0) modul yoki televizor ishlab chiqaruvchilari
+    tv_prefixes = ["84:C8:A0", "00:08:22", "64:1C:67", "50:85:69", "AC:C1:EE"]
+    is_tv = any(p in prefix for p in tv_prefixes) or (hostname and any(k in hostname.upper() for k in ["TV", "BRAVIA", "HISENSE", "TCL", "SKYWORTH", "SHARP", "MI-TV"]))
+    if is_tv:
+        return {
+            "name": f"Android Smart TV / Televizor (IP: {ip_str})",
+            "device_name": f"Smart TV (Android OS, IP: {ip_str})",
+            "category": "Android Smart TV / Televizor",
+            "source": "Wi-Fi (5 GHz / 2.4 GHz)",
+            "type_icon": "📺",
+            "owner": "Umumiy Foydalanishdagi Televizor",
+            "location": "Zal / Televizor Paneli",
+            "description": "Android TV / Smart tizimida ishlovchi televizor. Wi-Fi orqali media oqimiga ulangan.",
+        }
+
+    # 4. Android Smartfonlar va Apple iOS (Maxfiy MAC manzilli mobil gadjetlar)
+    if is_random_mac:
+        return {
+            "name": f"Smartfon / Mobil Gadjet (Android / iOS)",
+            "device_name": f"Smartfon / Mobil Telefon (IP: {ip_str})",
+            "category": "Smartfon / Mobil",
+            "source": "Wi-Fi (Maxfiy / Xususiy MAC manzil)",
+            "type_icon": "📱",
+            "owner": "Mobil Foydalanuvchi",
+            "location": "Wi-Fi Qamrovi Hududida",
+            "description": "Android yoki Apple tizimidagi mobil smartfon. Wi-Fi tarmog'iga himoyalangan MAC bilan ulangan.",
+        }
+
+    # 5. Sim orqali (LAN kabel) yoki Wi-Fi orqali ulangan boshqa kompyuterlar
+    if hostname and any(k in hostname.upper() for k in ["WIN-", "DESKTOP-", "HOME-PC", "PC", "LAPTOP"]):
+        return {
+            "name": f"{hostname} (Simli LAN Kompyuter)",
+            "device_name": f"{hostname} — Ishchi Kompyuter (LAN kabel)",
+            "category": "Kompyuter (LAN kabel / Noutbuk)",
+            "source": "Ethernet LAN Kabel orqali (Simli)",
+            "type_icon": "🖥️",
+            "owner": "Ofis yoki Oila Foydalanuvchisi",
+            "location": "Qo'shimcha Stol / Xona",
+            "description": "Routerga sim orqali (LAN kabel) yoki Wi-Fi adapter orqali ulangan ishchi kompyuter.",
+        }
+
+    # 6. Umumiy aniqlangan tarmoq qurilmasi
+    return {
+        "name": f"Tarmoq Qurilmasi (IP: {ip_str})",
+        "device_name": f"Lokal Tarmoq Tuguni ({ip_str})",
+        "category": "Lokal Tarmoq Qurilmasi",
+        "source": "Wi-Fi / Ethernet LAN",
+        "type_icon": "⚡",
+        "owner": "Tarmoq Foydalanuvchisi",
+        "location": "Lokal Segment",
+        "description": "Tarmoqqa ulangan va ayni vaqtda faol javob berayotgan apparat vositasi.",
+    }
+
+
+# Butun subnetni Layer-2 da tekshiruvchi funksiya
+def scan_subnet_once():
+    global current_active_devices, disconnected_history, events_log
+    local_ip, gw_ip = get_local_ip_and_gateway()
+    parts = local_ip.split(".")
+    subnet = f"{parts[0]}.{parts[1]}.{parts[2]}" if len(parts) == 4 else "192.168.0"
+
+    # 1 dan 254 gacha barcha IP larni aniqlash
+    ips_to_scan = [f"{subnet}.{i}" for i in range(1, 255)]
+
+    detected_now = {}
+
+    def worker(ip):
+        mac = send_arp_probe(ip)
+        if mac:
+            return ip, mac
+        return ip, None
+
+    # Barcha 254 IP ga parallel SendARP jo'natish (4 soniya ichida butun tarmoq aniqlanadi)
+    with ThreadPoolExecutor(max_workers=250) as executor:
+        results = list(executor.map(worker, ips_to_scan))
+
+    now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    for ip, mac in results:
+        if mac:
+            meta = classify_device(ip, mac, local_ip, gw_ip)
+            detected_now[ip] = {
+                "ip": ip,
+                "mac": mac,
+                "name": meta["name"],
+                "device_name": meta["device_name"],
+                "category": meta["category"],
+                "source": meta["source"],
+                "type_icon": meta["type_icon"],
+                "owner": meta["owner"],
+                "location": meta["location"],
+                "description": meta["description"],
+                "status": "Faol (Online)",
+                "status_time": f"{now_str} (Faol)",
+                "connected_time": now_str,
+                "online": True,
+            }
+
+    with active_devices_lock:
+        old_ips = set(current_active_devices.keys())
+        new_ips = set(detected_now.keys())
+
+        # Yangi ulanganlarni topish
+        for ip in (new_ips - old_ips):
+            dev = detected_now[ip]
+            events_log.insert(0, {
+                "time": now_str,
+                "type": "connected",
+                "message": f"🟢 {dev['name']} ({ip}) tarmoqqa ulandi",
+                "ip": ip,
+            })
+            if len(events_log) > 50:
+                events_log.pop()
+
+        # Tarmoqdan UZILGANLARNI (OFFLINE) topish
+        for ip in (old_ips - new_ips):
+            dev = current_active_devices[ip]
+            events_log.insert(0, {
+                "time": now_str,
+                "type": "disconnected",
+                "message": f"⚠️ {dev['name']} ({ip}) tarmoqdan uzildi",
+                "ip": ip,
+            })
+            disconnected_history[ip] = {
+                **dev,
+                "status": "Tarmoqdan uzildi (Offline)",
+                "status_time": f"{now_str} (Uzilgan)",
+                "online": False,
+            }
+            if len(events_log) > 50:
+                events_log.pop()
+
+        # Eski ro'yxatni yangisi bilan to'liq almashtirish (Uzilganlar avtomatik ro'yxatdan o'chadi!)
+        current_active_devices = detected_now
+
+
+# Fonda doimiy ishlovchi avtomatik skanerlash ipi
+def background_scanner_thread():
+    while True:
+        try:
+            scan_subnet_once()
+        except Exception as e:
+            pass
+        time.sleep(3.5)
+
+
+# FastAPI start bo'lganda fon skanerni ishga tushirish
+@app.on_event("startup")
+def startup_event():
+    # Birinchi marta darhol skanerlash
+    t = threading.Thread(target=background_scanner_thread, daemon=True)
+    t.start()
+
+
+# 1. Ayni vaqtda faol qurilmalar ro'yxatini qaytaruvchi API
+@app.get("/devices")
+def get_devices():
+    with active_devices_lock:
+        # Faqat ayni vaqtda ON-LINE bo'lgan qurilmalar qaytadi!
+        devices = list(current_active_devices.values())
     return devices
 
 
-# 1. Foydalanuvchi so'ragan /devices API endpointi
-@app.get("/devices")
-def get_devices():
-    return get_real_arp_devices()
-
-
-# 2. Kengaytirilgan scan API endpointi
+# 2. To'liq skanerlash va hodisalar API si
 @app.get("/api/scan")
-def scan_network(router_ip: str = Query(None)):
-    try:
-        _, default_gw = get_local_ip_and_gateway()
-        target_ip = router_ip.strip() if router_ip and router_ip.strip() else default_gw
+def api_scan():
+    local_ip, gw_ip = get_local_ip_and_gateway()
+    parts = local_ip.split(".")
+    subnet_desc = f"{parts[0]}.{parts[1]}.{parts[2]}.0/24 (Real Wi-Fi & LAN)"
 
-        if ":" in target_ip:
-            main_device_info = analyze_any_ip_address(target_ip)
-            devices_list = [main_device_info, analyze_any_ip_address("fe80::1%1")]
-            subnet_desc = "IPv6 Link-Local / 64-bit Prefix"
-        else:
-            parts = target_ip.split(".")
-            subnet = f"{parts[0]}.{parts[1]}.{parts[2]}" if len(parts) == 4 else "192.168.0"
-            subnet_desc = f"{subnet}.0/24 (IPv4)"
-            devices_list = get_real_arp_devices()
+    with active_devices_lock:
+        devices = list(current_active_devices.values())
+        events = list(events_log[:10])
 
-        return {
-            "success": True,
-            "searched_ip": target_ip,
-            "total_devices": f"{len(devices_list)} ta tugun tahlil qilindi",
-            "subnet": subnet_desc,
-            "devices": devices_list,
-        }
-    except Exception as e:
-        return JSONResponse(status_code=500, content={"success": False, "error": str(e)})
+    return {
+        "success": True,
+        "searched_ip": local_ip,
+        "total_devices": f"{len(devices)} ta real qurilma ayni vaqtda ulangan",
+        "subnet": subnet_desc,
+        "devices": devices,
+        "events": events,
+    }
 
 
 @app.get("/", response_class=HTMLResponse)
 def index():
-    _, default_gw = get_local_ip_and_gateway()
+    local_ip, gw_ip = get_local_ip_and_gateway()
     geo = get_public_geolocation()
 
     return f"""<!DOCTYPE html>
@@ -239,11 +313,11 @@ def index():
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tarmoq Qurilmalarini Aniq va Chuqur Tahlil Qilish</title>
+    <title>Ayni Vaqtdagi Real Tarmoq Qurilmalari Monitoringi</title>
     <style>
         * {{ box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }}
-        body {{ background-color: #0b0f19; color: #f8fafc; padding: 25px; }}
-        .container {{ max-width: 1300px; margin: 0 auto; }}
+        body {{ background-color: #0b0f19; color: #f8fafc; padding: 22px; }}
+        .container {{ max-width: 1350px; margin: 0 auto; }}
 
         .header {{ 
             background: linear-gradient(135deg, #1e293b, #0f172a); 
@@ -253,38 +327,28 @@ def index():
             justify-content: space-between; 
             align-items: center; 
             border: 1px solid #334155; 
-            margin-bottom: 22px; 
+            margin-bottom: 20px; 
             box-shadow: 0 4px 20px rgba(0,0,0,0.3);
         }}
         .title {{ font-size: 22px; font-weight: bold; color: #38bdf8; display: flex; align-items: center; gap: 10px; }}
         .geo {{ font-size: 13px; color: #34d399; background: #064e3b; padding: 7px 14px; border-radius: 8px; border: 1px solid #059669; font-weight: 500; }}
 
-        .control-panel {{ 
+        .control-bar {{ 
             background: #1e293b; 
-            padding: 18px 22px; 
+            padding: 16px 22px; 
             border-radius: 12px; 
             display: flex; 
-            gap: 15px; 
+            justify-content: space-between; 
             align-items: center; 
             border: 1px solid #334155; 
-            margin-bottom: 22px; 
+            margin-bottom: 20px; 
             flex-wrap: wrap;
+            gap: 12px;
         }}
-        .control-panel label {{ font-weight: bold; color: #cbd5e1; font-size: 14px; }}
-        .control-panel input {{ 
-            padding: 10px 16px; 
-            border-radius: 8px; 
-            border: 1px solid #475569; 
-            background: #0f172a; 
-            color: #38bdf8; 
-            font-size: 14px; 
-            min-width: 300px; 
-            outline: none;
-        }}
-        
+        .control-left {{ display: flex; align-items: center; gap: 12px; }}
         .btn-refresh {{ 
-            padding: 10px 20px; 
-            background-color: #0284c7; 
+            padding: 10px 22px; 
+            background: #0284c7; 
             color: white; 
             border: none; 
             border-radius: 8px; 
@@ -293,173 +357,202 @@ def index():
             display: flex; 
             align-items: center; 
             gap: 8px; 
+            font-size: 14px;
             transition: all 0.2s; 
         }}
-        .btn-refresh:hover {{ background-color: #0369a1; transform: translateY(-1px); }}
+        .btn-refresh:hover {{ background: #0369a1; transform: translateY(-1px); }}
 
-        .btn-scan {{ 
-            padding: 10px 20px; 
-            background: #334155; 
-            color: #e2e8f0; 
-            border: 1px solid #475569; 
-            border-radius: 8px; 
-            font-weight: bold; 
-            cursor: pointer; 
-            transition: all 0.2s; 
+        .pulse-live {{
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #064e3b;
+            color: #34d399;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            border: 1px solid #059669;
         }}
-        .btn-scan:hover {{ background: #475569; }}
+        .dot {{ width: 8px; height: 8px; background: #34d399; border-radius: 50%; display: inline-block; animation: pulse 1.5s infinite; }}
+        @keyframes pulse {{
+            0% {{ transform: scale(0.95); box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.7); }}
+            70% {{ transform: scale(1); box-shadow: 0 0 0 8px rgba(52, 211, 153, 0); }}
+            100% {{ transform: scale(0.95); box-shadow: 0 0 0 0 rgba(52, 211, 153, 0); }}
+        }}
 
-        .stats-grid {{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-bottom: 22px; }}
+        .stats-grid {{ display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px; }}
         .stat-card {{ 
             background: #1e293b; 
-            padding: 18px; 
+            padding: 16px; 
             border-radius: 12px; 
             border: 1px solid #334155; 
             text-align: center; 
         }}
-        .stat-card h4 {{ font-size: 12px; color: #94a3b8; text-transform: uppercase; margin-bottom: 6px; }}
-        .stat-card p {{ font-size: 16px; font-weight: bold; color: #38bdf8; word-break: break-all; }}
+        .stat-card h4 {{ font-size: 12px; color: #94a3b8; text-transform: uppercase; margin-bottom: 5px; }}
+        .stat-card p {{ font-size: 18px; font-weight: bold; color: #38bdf8; }}
 
-        /* Live monitoring card & device-list */
-        .live-monitor-card {{
+        /* Live devices and events split */
+        .grid-split {{ display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 20px; }}
+        
+        .panel {{
             background: #1e293b;
             border-radius: 12px;
             border: 1px solid #334155;
-            padding: 20px;
-            margin-bottom: 22px;
+            padding: 18px;
         }}
-        .live-monitor-header {{
+        .panel-header {{
             display: flex;
             justify-content: space-between;
             align-items: center;
             border-bottom: 1px solid #334155;
             padding-bottom: 12px;
-            margin-bottom: 15px;
-        }}
-        .live-monitor-title {{
-            font-size: 16px;
+            margin-bottom: 14px;
+            font-size: 15px;
             font-weight: bold;
             color: #38bdf8;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }}
-        .live-badge {{
-            background: #064e3b;
-            color: #34d399;
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
         }}
 
         #device-list {{
-            list-style-type: none;
-            padding: 0;
-            margin: 0;
+            list-style: none;
             display: flex;
             flex-direction: column;
             gap: 8px;
+            max-height: 400px;
+            overflow-y: auto;
         }}
-        .device-item {{
+        .device-card {{
             padding: 12px 16px;
             border-radius: 8px;
             background: #0f172a;
             border: 1px solid #334155;
-            color: #f1f5f9;
-            font-size: 14px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            transition: all 0.2s;
+            transition: all 0.25s;
         }}
-        .device-item:hover {{
-            background: #172554;
-            border-color: #38bdf8;
-        }}
-        .device-item.new-device {{
+        .device-card:hover {{ border-color: #38bdf8; background: #172554; }}
+        .device-card.just-joined {{
             background: #064e3b !important;
-            border: 1px solid #059669 !important;
-            color: #a7f3d0 !important;
+            border-color: #059669 !important;
+            animation: highlightJoin 2s ease;
         }}
-        .device-item.disconnected {{
+        .device-card.just-left {{
             background: #451a03 !important;
-            border: 1px solid #d97706 !important;
-            color: #fde68a !important;
+            border-color: #d97706 !important;
         }}
 
-        .table-wrap {{ overflow-x: auto; border-radius: 12px; border: 1px solid #334155; }}
+        #events-list {{
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-size: 12.5px;
+        }}
+        .event-item {{
+            padding: 8px 12px;
+            border-radius: 6px;
+            background: #0f172a;
+            border-left: 3px solid #38bdf8;
+        }}
+        .event-item.connected {{ border-left-color: #34d399; color: #a7f3d0; }}
+        .event-item.disconnected {{ border-left-color: #f59e0b; color: #fde68a; }}
+
+        .table-wrap {{ overflow-x: auto; border-radius: 12px; border: 1px solid #334155; margin-top: 10px; }}
         table {{ width: 100%; border-collapse: collapse; background: #1e293b; }}
-        th, td {{ padding: 14px 16px; text-align: left; font-size: 13.5px; border-bottom: 1px solid #334155; vertical-align: top; }}
-        th {{ background: #334155; color: #38bdf8; text-transform: uppercase; font-size: 12px; }}
+        th, td {{ padding: 13px 16px; text-align: left; font-size: 13px; border-bottom: 1px solid #334155; vertical-align: middle; }}
+        th {{ background: #334155; color: #38bdf8; text-transform: uppercase; font-size: 11.5px; letter-spacing: 0.5px; }}
         tr:hover {{ background: #273548; }}
-        .badge-type {{ background: #0c4a6e; color: #38bdf8; padding: 4px 10px; border-radius: 6px; font-size: 11.5px; font-weight: bold; display: inline-block; margin-bottom: 5px; }}
-        .loading {{ text-align: center; padding: 40px; color: #94a3b8; font-style: italic; }}
+        .badge {{ padding: 4px 9px; border-radius: 6px; font-size: 11.5px; font-weight: bold; display: inline-block; }}
+        .badge-router {{ background: #1e3a8a; color: #93c5fd; }}
+        .badge-pc {{ background: #064e3b; color: #6ee7b7; }}
+        .badge-tv {{ background: #701a75; color: #f0abfc; }}
+        .badge-phone {{ background: #7c2d12; color: #fdba74; }}
+        .badge-general {{ background: #334155; color: #cbd5e1; }}
+        .tag-source {{ font-size: 11.5px; color: #38bdf8; font-weight: 500; display: block; margin-top: 2px; }}
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <div class="title">🌐 IP Intelligence & Tarmoq Qurilmalari Tahlili</div>
+            <div class="title">🌐 Ayni Vaqtdagi Real Tarmoq Qurilmalari Tahlili</div>
             <div class="geo">📍 {geo}</div>
         </div>
 
-        <div class="control-panel">
-            <label for="ipInput">IP Manzil:</label>
-            <input type="text" id="ipInput" value="{default_gw}" placeholder="Masalan: 192.168.0.1">
-            
-            <!-- Refresh tugmasi -->
-            <button onclick="refreshDevices()" class="btn-refresh">
-                🔄 Refresh (Yangilash)
-            </button>
-            <button onclick="startScan()" class="btn-scan">🔍 IP bo'yicha Tahlil</button>
+        <div class="control-bar">
+            <div class="control-left">
+                <button onclick="refreshDevices()" class="btn-refresh">
+                    🔄 Refresh (Yangilash)
+                </button>
+                <div class="pulse-live">
+                    <span class="dot"></span>
+                    <span id="scan-status">Jonli Avto-Kuzatuv (3s)</span>
+                </div>
+            </div>
+            <div style="color: #94a3b8; font-size: 13px;">
+                Tarmoq shlyuzi: <code style="color: #38bdf8;">{gw_ip}</code> | Asosiy PC: <code style="color: #38bdf8;">{local_ip}</code>
+            </div>
         </div>
 
         <div class="stats-grid">
             <div class="stat-card">
-                <h4>Faol IP Manzil</h4>
-                <p id="stat-ip">{default_gw}</p>
+                <h4>Jami Ulangan</h4>
+                <p id="stat-total">0 ta</p>
             </div>
             <div class="stat-card">
-                <h4>Protokol / Subnet</h4>
-                <p id="stat-subnet">-</p>
+                <h4>Kompyuterlar (Simli / Wi-Fi)</h4>
+                <p id="stat-pc" style="color: #6ee7b7;">0 ta</p>
             </div>
             <div class="stat-card">
-                <h4>Tarmoq Qurilmalari</h4>
-                <p id="stat-total">-</p>
+                <h4>Android Smart TV</h4>
+                <p id="stat-tv" style="color: #f0abfc;">0 ta</p>
+            </div>
+            <div class="stat-card">
+                <h4>Smartfonlar / Mobil</h4>
+                <p id="stat-phone" style="color: #fdba74;">0 ta</p>
             </div>
         </div>
 
-        <!-- Jonli yangilanish paneli (device-list) -->
-        <div class="live-monitor-card">
-            <div class="live-monitor-header">
-                <div class="live-monitor-title">
-                    ⚡ Jonli Tarmoq Holati & O'zgarishlar
+        <div class="grid-split">
+            <!-- Jonli Qurilmalar ro'yxati -->
+            <div class="panel">
+                <div class="panel-header">
+                    <span>📱 Ayni Vaqtda Ulangan Faol Qurilmalar</span>
+                    <span style="font-size: 12px; color: #34d399;" id="online-count">0 ta onlayn</span>
                 </div>
-                <div class="live-badge" id="live-indicator">● Jonli Kuzatuv</div>
+                <ul id="device-list">
+                    <li style="padding: 20px; text-align: center; color: #94a3b8;">Tarmoq tekshirilmoqda...</li>
+                </ul>
             </div>
-            
-            <!-- Qurilmalar chiqadigan ro'yxat -->
-            <ul id="device-list">
-                <li style="padding: 12px; color: #94a3b8; text-align: center;">Qurilmalar yuklanmoqda...</li>
-            </ul>
+
+            <!-- Yangi qo'shilish va uzilishlar hodisalari -->
+            <div class="panel">
+                <div class="panel-header">
+                    <span>⚡ Jonli O'zgarishlar Jurnali</span>
+                    <span style="font-size: 12px; color: #94a3b8;">Hodisalar</span>
+                </div>
+                <ul id="events-list">
+                    <li style="padding: 10px; color: #94a3b8; text-align: center;">Hozircha o'zgarishlar yo'q</li>
+                </ul>
+            </div>
         </div>
 
-        <!-- To'liq jadval -->
+        <!-- Batafsil Qurilmalar Jadvali -->
         <div class="table-wrap">
             <table>
                 <thead>
                     <tr>
-                        <th style="width: 22%;">Qurilma Nomi & Turi</th>
-                        <th style="width: 18%;">IP & MAC / Interface</th>
-                        <th style="width: 15%;">Egasi / Foydalanuvchi</th>
-                        <th style="width: 15%;">Joylashuv & Ulanish</th>
-                        <th style="width: 15%;">Vaqt & Faollik</th>
-                        <th style="width: 15%;">Tafsilotlar & Tavsif</th>
+                        <th style="width: 25%;">Qurilma & Nomi</th>
+                        <th style="width: 20%;">IP & Real MAC Manzil</th>
+                        <th style="width: 15%;">Kategoriya</th>
+                        <th style="width: 20%;">Ulanish Turi & Port</th>
+                        <th style="width: 20%;">Holati & Vaqti</th>
                     </tr>
                 </thead>
                 <tbody id="deviceTable">
-                    <tr><td colspan="6" class="loading">Qurilmalar ro'yxati yangilanmoqda...</td></tr>
+                    <tr><td colspan="5" style="text-align: center; padding: 25px; color: #94a3b8;">Yuklanmoqda...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -468,115 +561,130 @@ def index():
     <script>
         let previousDevices = [];
 
-        // Backend'dan qurilmalarni olib, o'zgarishlarni tekshirish funksiyasi
         async function refreshDevices() {{
-            const listEl = document.getElementById('device-list');
-            const tbody = document.getElementById('deviceTable');
-            const liveIndicator = document.getElementById('live-indicator');
-            liveIndicator.innerText = "⏳ Yangilanmoqda...";
+            const scanStatus = document.getElementById('scan-status');
+            scanStatus.innerText = "Skanerlanmoqda...";
 
             try {{
-                // Backend'dan hozirgi qurilmalar ro'yxatini olish
-                const response = await fetch('/devices');
-                const currentDevices = await response.json();
+                // Backend dan haqiqiy ayni daqiqada ulangan qurilmalarni olish
+                const res = await fetch('/api/scan');
+                const data = await res.json();
                 
-                listEl.innerHTML = '';
+                const currentDevices = data.devices || [];
+                const events = data.events || [];
+
+                const listEl = document.getElementById('device-list');
+                const tbody = document.getElementById('deviceTable');
+                const eventsEl = document.getElementById('events-list');
 
                 const prevIps = new Set(previousDevices.map(d => d.ip));
                 const currIps = new Set(currentDevices.map(d => d.ip));
 
-                // 1. Hozirgi tarmoqdagi qurilmalarni chiqarish
-                currentDevices.forEach(device => {{
-                    const li = document.createElement('li');
-                    li.className = 'device-item';
-                    
-                    const isNew = previousDevices.length > 0 && !prevIps.has(device.ip);
-                    if (isNew) {{
-                        li.className += ' new-device';
-                        li.innerHTML = `<span>💻 <b>${{device.name}}</b> — <code style="color: #6ee7b7;">${{device.ip}}</code> (${{device.location || 'Nomaʼlum joy'}})</span>
-                                        <span style="font-weight: bold; font-size: 12px; background: rgba(0,0,0,0.3); padding: 4px 8px; border-radius: 4px;">🟢 [Yangi ulangan]</span>`;
-                    }} else {{
-                        li.innerHTML = `<span>💻 <b>${{device.name}}</b> — <code style="color: #38bdf8;">${{device.ip}}</code> (${{device.location || 'Nomaʼlum joy'}})</span>
-                                        <span style="font-size: 12px; color: #34d399;">● Faol</span>`;
-                    }}
-                    
-                    listEl.appendChild(li);
+                // 1. STATISTIKA HISOB-KITOBLARI
+                let pcCount = 0, tvCount = 0, phoneCount = 0;
+                currentDevices.forEach(d => {{
+                    const cat = d.category || '';
+                    if (cat.includes('TV') || cat.includes('Televizor')) tvCount++;
+                    else if (cat.includes('Smartfon') || cat.includes('Mobil')) phoneCount++;
+                    else if (cat.includes('Kompyuter') || cat.includes('PC')) pcCount++;
                 }});
 
-                // 2. Tarmoqdan uzilib qolgan qurilmalarni orange (to'q sariq) rangda ko'rsatish
-                previousDevices.forEach(device => {{
-                    if (!currIps.has(device.ip)) {{
+                document.getElementById('stat-total').innerText = `${{currentDevices.length}} ta`;
+                document.getElementById('stat-pc').innerText = `${{pcCount}} ta`;
+                document.getElementById('stat-tv').innerText = `${{tvCount}} ta`;
+                document.getElementById('stat-phone').innerText = `${{phoneCount}} ta`;
+                document.getElementById('online-count').innerText = `${{currentDevices.length}} ta onlayn`;
+
+                // 2. QURILMALAR RO'YXATINI YANGILASH
+                listEl.innerHTML = '';
+                if (currentDevices.length === 0) {{
+                    listEl.innerHTML = '<li style="padding: 20px; text-align: center; color: #94a3b8;">Tarmoqda qurilmalar topilmadi</li>';
+                }} else {{
+                    currentDevices.forEach(device => {{
                         const li = document.createElement('li');
-                        li.className = 'device-item disconnected';
-                        li.innerHTML = `<span>⚠️ <b>${{device.name}}</b> — <code style="color: #fde68a;">${{device.ip}}</code></span>
-                                        <span style="font-weight: bold; font-size: 12px; background: rgba(0,0,0,0.3); padding: 4px 8px; border-radius: 4px;">⚠️ [Tarmoqdan uzildi]</span>`;
+                        li.className = 'device-card';
+                        
+                        const isNew = previousDevices.length > 0 && !prevIps.has(device.ip);
+                        if (isNew) {{
+                            li.className += ' just-joined';
+                        }}
+
+                        li.innerHTML = `
+                            <div>
+                                <div style="font-weight: bold; color: #f8fafc; font-size: 14px;">
+                                    ${{device.type_icon || '💻'}} ${{device.name}}
+                                </div>
+                                <div style="font-size: 12px; color: #94a3b8; margin-top: 3px;">
+                                    <code style="color: #38bdf8;">${{device.ip}}</code> | MAC: <code>${{device.mac}}</code>
+                                </div>
+                                <span class="tag-source">🔗 ${{device.source}}</span>
+                            </div>
+                            <div>
+                                ${{isNew ? '<span style="background: #059669; color: white; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: bold;">🟢 Yangi</span>' : '<span style="color: #34d399; font-size: 12px; font-weight: bold;">● Faol</span>'}}
+                            </div>
+                        `;
                         listEl.appendChild(li);
-                    }}
-                }});
+                    }});
+                }}
 
-                // Statistikani yangilash
-                document.getElementById('stat-total').innerText = `${{currentDevices.length}} ta qurilma faol`;
-                document.getElementById('stat-subnet').innerText = `Lokal Wi-Fi / ARP (${{currentDevices.length}} tugun)`;
-
-                // Jadvalni ham yangilash
+                // 3. JADVALNI YANGILASH (UZILGANLAR AVTOMATIK JADVALDAN O'CHADI)
                 tbody.innerHTML = '';
                 currentDevices.forEach(dev => {{
-                    const isNew = previousDevices.length > 0 && !prevIps.has(dev.ip);
+                    let badgeClass = 'badge-general';
+                    if (dev.category.includes('Router')) badgeClass = 'badge-router';
+                    else if (dev.category.includes('TV')) badgeClass = 'badge-tv';
+                    else if (dev.category.includes('Smartfon')) badgeClass = 'badge-phone';
+                    else if (dev.category.includes('Kompyuter')) badgeClass = 'badge-pc';
+
                     const row = `<tr>
                         <td>
-                            <span class="badge-type">${{dev.category || 'Tarmoq Tuguni'}}</span><br>
-                            <b>${{dev.name || dev.device_name}}</b>
-                            ${{isNew ? '<span style="color: #34d399; font-size: 11px; margin-left: 6px;">[Yangi]</span>' : ''}}
+                            <b>${{dev.type_icon || '💻'}} ${{dev.name}}</b><br>
+                            <span style="color: #94a3b8; font-size: 11px;">👤 ${{dev.owner}}</span>
                         </td>
                         <td>
-                            <code style="word-break: break-all; color: #38bdf8;">IP: ${{dev.ip}}</code><br>
-                            <code style="color: #94a3b8; font-size: 11px;">MAC: ${{dev.mac || 'Nomaʼlum'}}</code>
-                        </td>
-                        <td>👤 <b>${{dev.owner || 'Tarmoq Foydalanuvchisi'}}</b></td>
-                        <td>
-                            📍 ${{dev.location || 'Ofis / Uy'}}<br>
-                            <span style="color: #38bdf8; font-size: 12px;">🔗 ${{dev.source || 'Wi-Fi / LAN'}}</span>
+                            <code style="color: #38bdf8; font-weight: bold; font-size: 13px;">${{dev.ip}}</code><br>
+                            <code style="color: #94a3b8; font-size: 11.5px;">${{dev.mac}}</code>
                         </td>
                         <td>
-                            🕒 ${{dev.connected_time || '-'}}<br>
-                            <span style="color: #4ade80; font-size: 12px;">🟢 ${{dev.status_time || 'Faol'}}</span>
+                            <span class="badge ${{badgeClass}}">${{dev.category}}</span>
                         </td>
                         <td>
-                            <p style="font-size: 12.5px; color: #cbd5e1; margin-bottom: 5px;">${{dev.description || 'Tarmoq qurilmasi'}}</p>
-                            <span style="color: #4ade80; font-weight: bold; font-size: 12px;">● ${{dev.status || 'Faol'}}</span>
+                            <span style="color: #f1f5f9; font-size: 12.5px;">${{dev.source}}</span><br>
+                            <span style="color: #94a3b8; font-size: 11.5px;">📍 ${{dev.location}}</span>
+                        </td>
+                        <td>
+                            <span style="color: #4ade80; font-weight: bold; font-size: 12.5px;">🟢 ${{dev.status}}</span><br>
+                            <span style="color: #94a3b8; font-size: 11px;">🕒 ${{dev.status_time}}</span>
                         </td>
                     </tr>`;
                     tbody.innerHTML += row;
                 }});
 
-                // Joriy ro'yxatni keyingi solishtiruv uchun saqlab qo'yamiz
-                previousDevices = currentDevices;
-                liveIndicator.innerText = `● Jonli Kuzatuv (${{currentDevices.length}} ta faol)`;
-
-            }} catch (error) {{
-                console.error('Tarmoqni yangilashda xatolik:', error);
-                liveIndicator.innerText = '⚠️ Xatolik yuz berdi';
-            }}
-        }}
-
-        async function startScan() {{
-            const ip = document.getElementById('ipInput').value.trim();
-            try {{
-                const res = await fetch(`/api/scan?router_ip=${{encodeURIComponent(ip)}}`);
-                const data = await res.json();
-                if (data.success) {{
-                    document.getElementById('stat-ip').innerText = data.searched_ip;
-                    document.getElementById('stat-subnet').innerText = data.subnet;
-                    refreshDevices();
+                // 4. HODISALAR JURNALINI YANGILASH
+                if (events.length > 0) {{
+                    eventsEl.innerHTML = '';
+                    events.forEach(ev => {{
+                        const li = document.createElement('li');
+                        li.className = `event-item ${{ev.type}}`;
+                        li.innerHTML = `<div>${{ev.message}}</div><div style="font-size: 11px; opacity: 0.7; margin-top: 2px;">${{ev.time}}</div>`;
+                        eventsEl.appendChild(li);
+                    }});
                 }}
-            }} catch(e) {{
-                console.error(e);
+
+                previousDevices = currentDevices;
+                scanStatus.innerText = "Jonli Avto-Kuzatuv (3s)";
+
+            }} catch (err) {{
+                console.error("Yangilashda xato:", err);
+                scanStatus.innerText = "Kutish rejimida";
             }}
         }}
 
-        // Sahifa ochilganda avtomatik yuklash uchun
+        // Sahifa ochilishi bilan boshlash
         window.onload = () => {{
             refreshDevices();
+            // Har 3 soniyada avtomatik tekshirib yangilab turadi!
+            setInterval(refreshDevices, 3000);
         }};
     </script>
 </body>
