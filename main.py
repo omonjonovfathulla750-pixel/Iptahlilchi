@@ -443,6 +443,45 @@ def api_disconnect_device(ip: str = Query(...)):
     return {"success": False, "message": "Qurilma topilmadi"}
 
 
+@app.get("/api/device/scan_ip")
+def api_scan_single_ip(ip: str = Query(...)):
+    ip = ip.strip()
+    mac = send_arp_probe(ip)
+    local_ip, gw_ip = get_local_ip_and_gateway()
+    now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    if mac:
+        meta = classify_device(ip, mac, local_ip, gw_ip)
+        dev = {
+            "ip": ip,
+            "mac": mac,
+            **meta,
+            "status": "Faol (Online)",
+            "status_time": f"{now_str} (Faol)",
+            "connected_time": now_str,
+            "online": True
+        }
+        with active_devices_lock:
+            current_active_devices[ip] = dev
+        return {"found": True, "device": dev}
+    else:
+        res = subprocess.run(["ping", "-n", "1", "-w", "500", ip], capture_output=True)
+        if res.returncode == 0:
+            meta = classify_device(ip, "Lokal Tarmoq", local_ip, gw_ip)
+            dev = {
+                "ip": ip,
+                "mac": "Wi-Fi Tarmoq",
+                **meta,
+                "status": "Faol (Online)",
+                "status_time": f"{now_str} (Faol)",
+                "connected_time": now_str,
+                "online": True
+            }
+            with active_devices_lock:
+                current_active_devices[ip] = dev
+            return {"found": True, "device": dev}
+        return {"found": False, "message": f"{ip} manzilidan javob olinmadi (Offline)"}
+
+
 # ========================================================
 # 🎨 WEB INTERFEYS VA HAR BIR QURILMA UCHUN TUGMALAR
 # ========================================================
@@ -612,6 +651,54 @@ def index():
         .port-open {{ border-color: #059669; background: #064e3b; color: #a7f3d0; }}
         .copy-pill {{ background: #334155; padding: 3px 8px; border-radius: 6px; cursor: pointer; color: #38bdf8; font-size: 11px; }}
         .copy-pill:hover {{ background: #475569; }}
+
+        /* Search row & Toast */
+        .search-row {{
+            background: #1e293b;
+            padding: 14px 22px;
+            border-radius: 12px;
+            border: 1px solid #334155;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }}
+        .search-row label {{ font-size: 13.5px; font-weight: bold; color: #cbd5e1; }}
+        .search-row input {{
+            padding: 9px 15px;
+            border-radius: 8px;
+            border: 1px solid #475569;
+            background: #0f172a;
+            color: #38bdf8;
+            font-size: 14px;
+            min-width: 280px;
+            outline: none;
+        }}
+        .search-row input:focus {{ border-color: #38bdf8; }}
+        .btn-add {{
+            padding: 9px 18px;
+            background: #0284c7;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }}
+        .btn-add:hover {{ background: #0369a1; }}
+        .toast-banner {{
+            display: none;
+            background: #064e3b;
+            color: #a7f3d0;
+            border: 1px solid #059669;
+            padding: 10px 18px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-size: 13px;
+            font-weight: 500;
+        }}
     </style>
 </head>
 <body>
@@ -620,6 +707,8 @@ def index():
             <div class="title">🌐 Tarmoq Qurilmalari & Boshqaruv Markazi</div>
             <div class="geo">📍 {geo}</div>
         </div>
+
+        <div id="toastBanner" class="toast-banner"></div>
 
         <div class="control-bar">
             <div style="display: flex; align-items: center; gap: 14px;">
@@ -634,6 +723,12 @@ def index():
             <div style="color: #94a3b8; font-size: 13px;">
                 Asosiy Shlyuz: <code style="color: #38bdf8;">{gw_ip}</code> | Lokal PC: <code style="color: #38bdf8;">{local_ip}</code>
             </div>
+        </div>
+
+        <div class="search-row">
+            <label for="customIpInput">🔍 IP Manzillar Qidiruvi & Tahlili:</label>
+            <input type="text" id="customIpInput" placeholder="Masalan: 192.168.0.105 yoki Qurilma nomi" oninput="filterDevicesTable(this.value)" onkeydown="if(event.key==='Enter') scanCustomIp()">
+            <button class="btn-add" onclick="scanCustomIp()">⚡ Yangi IP ni Chuqur Skanerlash & Qo'shish</button>
         </div>
 
         <div class="stats-grid">
@@ -723,7 +818,123 @@ def index():
     </div>
 
     <script>
-        let previousDevices = [];
+        let allCurrentDevices = [];
+        let currentSearchQuery = "";
+
+        function filterDevicesTable(query) {{
+            currentSearchQuery = (query || "").trim().toLowerCase();
+            renderDevicesTable();
+        }}
+
+        function showToast(msg) {{
+            const t = document.getElementById('toastBanner');
+            if (t) {{
+                t.innerText = msg;
+                t.style.display = 'block';
+                setTimeout(() => {{ t.style.display = 'none'; }}, 3500);
+            }}
+        }}
+
+        async function scanCustomIp() {{
+            const input = document.getElementById('customIpInput');
+            const ip = (input.value || "").trim();
+            if (!ip) {{
+                alert("Iltimos, IP manzilni kiriting!");
+                return;
+            }}
+            showToast(`🔍 ${{ip}} manzili chuqur skanerlanmoqda...`);
+            try {{
+                const res = await fetch(`/api/device/scan_ip?ip=${{encodeURIComponent(ip)}}`);
+                const data = await res.json();
+                if (data.found) {{
+                    showToast(`🟢 ${{ip}} topildi va faol ro'yxatga qo'shildi!`);
+                    await refreshDevices();
+                }} else {{
+                    showToast(`⚠️ ${{ip}} manzilidan javob kelmadi (Offline yoki mavjud emas)`);
+                }}
+            }} catch(e) {{
+                showToast("Xatolik yuz berdi");
+            }}
+        }}
+
+        function renderDevicesTable() {{
+            const tbody = document.getElementById('deviceTable');
+            if (!tbody) return;
+
+            let filtered = allCurrentDevices;
+            if (currentSearchQuery) {{
+                filtered = allCurrentDevices.filter(d => 
+                    (d.ip || '').toLowerCase().includes(currentSearchQuery) ||
+                    (d.name || '').toLowerCase().includes(currentSearchQuery) ||
+                    (d.mac || '').toLowerCase().includes(currentSearchQuery) ||
+                    (d.category || '').toLowerCase().includes(currentSearchQuery) ||
+                    (d.owner || '').toLowerCase().includes(currentSearchQuery)
+                );
+            }}
+
+            tbody.innerHTML = '';
+            if (filtered.length === 0) {{
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 25px; color: #94a3b8;">' +
+                    (currentSearchQuery ? `"${{currentSearchQuery}}" bo'yicha hech qanday qurilma topilmadi` : 'Tarmoqda faol qurilmalar topilmadi') +
+                    '</td></tr>';
+                return;
+            }}
+
+            filtered.forEach(dev => {{
+                let badgeClass = 'badge-general';
+                if (dev.category.includes('Router')) badgeClass = 'badge-router';
+                else if (dev.category.includes('TV')) badgeClass = 'badge-tv';
+                else if (dev.category.includes('Smartfon')) badgeClass = 'badge-phone';
+                else if (dev.category.includes('Kompyuter')) badgeClass = 'badge-pc';
+
+                const row = `<tr>
+                    <td>
+                        <b>${{dev.type_icon || '💻'}} ${{dev.name}}</b><br>
+                        <span style="color: #94a3b8; font-size: 11px;">👤 ${{dev.owner}}</span>
+                    </td>
+                    <td>
+                        <code style="color: #38bdf8; font-weight: bold; font-size: 13px;">${{dev.ip}}</code><br>
+                        <code style="color: #94a3b8; font-size: 11.5px;">${{dev.mac}}</code>
+                    </td>
+                    <td>
+                        <span class="badge ${{badgeClass}}">${{dev.category}}</span>
+                    </td>
+                    <td>
+                        <span style="color: #f1f5f9; font-size: 12.5px;">${{dev.source}}</span><br>
+                        <span style="color: #4ade80; font-size: 11px;">🟢 ${{dev.status}}</span>
+                    </td>
+                    <td>
+                        <div class="btn-group">
+                            <!-- 1. Veb-brauzer orqali kirish -->
+                            <a href="http://${{dev.ip}}" target="_blank" class="btn-action btn-web" title="Brauzer orqali veb-interfeysga ulanish">
+                                🌐 Veb
+                            </a>
+
+                            <!-- 2. Tarmoq papkalarini ulash (SMB) -->
+                            <button onclick="openSmbModal('${{dev.ip}}', '${{escapeHtml(dev.name)}}')" class="btn-action btn-smb" title="Tarmoq papkalariga (SMB) ulanish">
+                                📁 SMB
+                            </button>
+
+                            <!-- 3. Masofaviy ish stoli (RDP) -->
+                            <button onclick="openRdpModal('${{dev.ip}}', '${{escapeHtml(dev.name)}}')" class="btn-action btn-rdp" title="Remote Desktop orqali ulanish">
+                                🖥️ RDP
+                            </button>
+
+                            <!-- 4. Buyruqlar satri orqali tekshirish (Ping) -->
+                            <button onclick="runPingTest('${{dev.ip}}', '${{escapeHtml(dev.name)}}')" class="btn-action btn-ping" title="Buyruqlar satrida (Ping) aloqani tekshirish">
+                                ⚡ Ping
+                            </button>
+
+                            <!-- 5. Maxsus dasturlar va API (Portlar) -->
+                            <button onclick="scanDevicePorts('${{dev.ip}}', '${{escapeHtml(dev.name)}}')" class="btn-action btn-port" title="Portlar, API va xizmatlarni tekshirish">
+                                🔍 Portlar
+                            </button>
+                        </div>
+                    </td>
+                </tr>`;
+                tbody.innerHTML += row;
+            }});
+        }}
 
         async function refreshDevices() {{
             const scanStatus = document.getElementById('scan-status');
@@ -732,83 +943,24 @@ def index():
                 const res = await fetch('/api/scan');
                 const data = await res.json();
                 
-                const currentDevices = data.devices || [];
-                const tbody = document.getElementById('deviceTable');
+                allCurrentDevices = data.devices || [];
 
                 // Statistika
                 let pcCount = 0, tvCount = 0, phoneCount = 0;
-                currentDevices.forEach(d => {{
+                allCurrentDevices.forEach(d => {{
                     const cat = d.category || '';
                     if (cat.includes('TV') || cat.includes('Televizor')) tvCount++;
                     else if (cat.includes('Smartfon') || cat.includes('Mobil')) phoneCount++;
                     else if (cat.includes('Kompyuter') || cat.includes('PC')) pcCount++;
                 }});
 
-                document.getElementById('stat-total').innerText = `${{currentDevices.length}} ta`;
+                document.getElementById('stat-total').innerText = `${{allCurrentDevices.length}} ta`;
                 document.getElementById('stat-pc').innerText = `${{pcCount}} ta`;
                 document.getElementById('stat-tv').innerText = `${{tvCount}} ta`;
                 document.getElementById('stat-phone').innerText = `${{phoneCount}} ta`;
 
                 // Jadvalni yangilash
-                tbody.innerHTML = '';
-                if (currentDevices.length === 0) {{
-                    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 25px; color: #94a3b8;">Tarmoqda faol qurilmalar topilmadi</td></tr>';
-                }} else {{
-                    currentDevices.forEach(dev => {{
-                        let badgeClass = 'badge-general';
-                        if (dev.category.includes('Router')) badgeClass = 'badge-router';
-                        else if (dev.category.includes('TV')) badgeClass = 'badge-tv';
-                        else if (dev.category.includes('Smartfon')) badgeClass = 'badge-phone';
-                        else if (dev.category.includes('Kompyuter')) badgeClass = 'badge-pc';
-
-                        const row = `<tr>
-                            <td>
-                                <b>${{dev.type_icon || '💻'}} ${{dev.name}}</b><br>
-                                <span style="color: #94a3b8; font-size: 11px;">👤 ${{dev.owner}}</span>
-                            </td>
-                            <td>
-                                <code style="color: #38bdf8; font-weight: bold; font-size: 13px;">${{dev.ip}}</code><br>
-                                <code style="color: #94a3b8; font-size: 11.5px;">${{dev.mac}}</code>
-                            </td>
-                            <td>
-                                <span class="badge ${{badgeClass}}">${{dev.category}}</span>
-                            </td>
-                            <td>
-                                <span style="color: #f1f5f9; font-size: 12.5px;">${{dev.source}}</span><br>
-                                <span style="color: #4ade80; font-size: 11px;">🟢 ${{dev.status}}</span>
-                            </td>
-                            <td>
-                                <div class="btn-group">
-                                    <!-- 1. Veb-brauzer orqali kirish -->
-                                    <a href="http://${{dev.ip}}" target="_blank" class="btn-action btn-web" title="Brauzer orqali veb-interfeysga ulanish">
-                                        🌐 Veb
-                                    </a>
-
-                                    <!-- 2. Tarmoq papkalarini ulash (SMB) -->
-                                    <button onclick="openSmbModal('${{dev.ip}}', '${{escapeHtml(dev.name)}}')" class="btn-action btn-smb" title="Tarmoq papkalariga (SMB) ulanish">
-                                        📁 SMB
-                                    </button>
-
-                                    <!-- 3. Masofaviy ish stoli (RDP) -->
-                                    <button onclick="openRdpModal('${{dev.ip}}', '${{escapeHtml(dev.name)}}')" class="btn-action btn-rdp" title="Remote Desktop orqali ulanish">
-                                        🖥️ RDP
-                                    </button>
-
-                                    <!-- 4. Buyruqlar satri orqali tekshirish (Ping) -->
-                                    <button onclick="runPingTest('${{dev.ip}}', '${{escapeHtml(dev.name)}}')" class="btn-action btn-ping" title="Buyruqlar satrida (Ping) aloqani tekshirish">
-                                        ⚡ Ping
-                                    </button>
-
-                                    <!-- 5. Maxsus dasturlar va API (Portlar) -->
-                                    <button onclick="scanDevicePorts('${{dev.ip}}', '${{escapeHtml(dev.name)}}')" class="btn-action btn-port" title="Portlar, API va xizmatlarni tekshirish">
-                                        🔍 Portlar
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>`;
-                        tbody.innerHTML += row;
-                    }});
-                }}
+                renderDevicesTable();
 
                 scanStatus.innerText = "Jonli Avto-Kuzatuv (3s)";
             }} catch(e) {{
