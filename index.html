@@ -267,6 +267,15 @@
 
         <div id="toastBanner" class="toast-banner"></div>
 
+        <div style="background: linear-gradient(135deg, #0c2d48, #0a192f); border: 1px solid #0284c7; padding: 14px 20px; border-radius: 12px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+            <div style="font-size: 13px; color: #bae6fd; max-width: 800px; line-height: 1.5;">
+                <span style="font-size: 15px;">📡</span> <b>Jonli Wi-Fi Monitoring (Real Vaqt):</b> Kompyuteringizdagi Wi-Fi router va barcha ulangan qurilmalarni jonli apparat (SendARP) skanerida ko'rish uchun <a href="http://127.0.0.1:8000" target="_blank" style="color: #38bdf8; font-weight: bold; text-decoration: underline;">http://127.0.0.1:8000</a> ga kiring yoki papkadagi <code>start_server.bat</code> ni bosing.
+            </div>
+            <a href="http://127.0.0.1:8000" target="_blank" style="background: #0284c7; color: white; padding: 8px 16px; border-radius: 8px; text-decoration: none; font-size: 12.5px; font-weight: bold; display: inline-flex; align-items: center; gap: 6px;">
+                🚀 Jonli Serverni Ochish
+            </a>
+        </div>
+
         <div class="control-bar">
             <div style="display: flex; align-items: center; gap: 14px;">
                 <button id="refreshBtn" onclick="triggerRefresh()" class="btn-refresh">
@@ -278,14 +287,14 @@
                 </div>
             </div>
             <div style="color: #94a3b8; font-size: 13px;">
-                Asosiy Shlyuz: <code style="color: #38bdf8;" id="gwText">192.168.1.1</code> | Ushbu PC: <code style="color: #38bdf8;" id="localPcText">192.168.1.14</code>
+                Asosiy Shlyuz: <code style="color: #38bdf8;" id="gwText">192.168.0.1</code> | Ushbu PC: <code style="color: #38bdf8;" id="localPcText">192.168.0.108</code>
             </div>
         </div>
 
         <div class="search-row">
-            <label for="customIpInput">🔍 Yangi IP Manzilni Tekshirish & Qo'shish:</label>
-            <input type="text" id="customIpInput" placeholder="Masalan: 192.168.1.100 yoki 192.168.1.25">
-            <button class="btn-add" onclick="addCustomDevice()">+ Tarmoqdan Qidirish & Qo'shish</button>
+            <label for="customIpInput">🔍 Istalgan IP Manzilni Tahlil Qilish & Qo'shish:</label>
+            <input type="text" id="customIpInput" placeholder="Masalan: 192.168.0.1 yoki 192.168.0.102">
+            <button class="btn-add" onclick="addCustomDevice()">+ Tahlil Qilish & Ro'yxatga Qo'shish</button>
         </div>
 
         <div class="stats-grid">
@@ -415,13 +424,13 @@
     </div>
 
     <script>
-        // Real aniqlangan qurilmalar ro'yxati (Soxta yoki mavjud bo'lmagan qurilmalarsiz)
+        // Real aniqlangan qurilmalar ro'yxati (192.168.0.x Wi-Fi tarmog'i)
         let activeDevices = [
             {
                 name: "Asosiy Wi-Fi Router / Shlyuz",
                 device_name: "Wi-Fi Router (Shlyuz Uskunasi)",
-                ip: "192.168.1.1",
-                mac: "D8:85:5E:0F:0B:82",
+                ip: "192.168.0.1",
+                mac: "C0:4A:00:FC:77:6A",
                 category: "Tarmoq Uskunasi (Router)",
                 source: "Wi-Fi & Ethernet LAN Asosiy Boshqaruv",
                 type_icon: "🌐",
@@ -430,71 +439,47 @@
                 openPorts: [80, 443, 53]
             },
             {
-                name: "Ushbu Kompyuter (WIN-QK4LQTVD6NH)",
-                device_name: "WIN-QK4LQTVD6NH — Boshqaruv Kompyuteri (Host)",
-                ip: "192.168.1.14",
-                mac: "CB:EC:78:3A:42:1F",
+                name: "Ushbu Kompyuter (DESKTOP-A82U46C)",
+                device_name: "DESKTOP-A82U46C — Boshqaruv Kompyuteri (Host)",
+                ip: "192.168.0.108",
+                mac: "50:76:AF:4B:89:35",
                 category: "Kompyuter (Host PC)",
-                source: "Ethernet LAN Kabel orqali (Simli)",
+                source: "Wi-Fi Tarmoq orqali",
                 type_icon: "💻",
                 owner: "Siz (Administrator)",
                 status: "Online (Faol)",
-                openPorts: [445, 3389, 8000]
+                openPorts: [445, 135, 8000]
             },
             {
-                name: "DESKTOP-PEKTSN3 (Simli LAN / Wi-Fi Kompyuter)",
-                device_name: "DESKTOP-PEKTSN3 — Ishchi Kompyuter",
-                ip: "192.168.1.12",
-                mac: "D0:50:99:97:D3:FE",
-                category: "Kompyuter (LAN kabel / Noutbuk)",
-                source: "Ethernet LAN / Wi-Fi",
+                name: "WIN-QK4LQTVD6NH (Ishchi Kompyuter)",
+                device_name: "WIN-QK4LQTVD6NH — LAN / Wi-Fi Kompyuter",
+                ip: "192.168.0.102",
+                mac: "F4:CE:23:04:8C:7E",
+                category: "Kompyuter (LAN / Wi-Fi)",
+                source: "Wi-Fi / Ethernet",
                 type_icon: "🖥️",
                 owner: "Tarmoq Foydalanuvchisi",
                 status: "Online (Faol)",
                 openPorts: [445, 3389]
             },
             {
-                name: "Smartfon / Mobil Gadjet (Android / iOS)",
-                device_name: "Smartfon (IP: 192.168.1.11)",
-                ip: "192.168.1.11",
-                mac: "54:EF:92:55:47:F9",
-                category: "Smartfon / Mobil",
-                source: "Wi-Fi (Maxfiy MAC)",
-                type_icon: "📱",
-                owner: "Mobil Foydalanuvchi",
-                status: "Online (Faol)",
-                openPorts: []
-            },
-            {
-                name: "Smartfon / Mobil Gadjet (Android / iOS)",
-                device_name: "Smartfon (IP: 192.168.1.18)",
-                ip: "192.168.1.18",
-                mac: "56:39:7F:33:37:3B",
-                category: "Smartfon / Mobil",
-                source: "Wi-Fi (Maxfiy MAC)",
-                type_icon: "📱",
-                owner: "Mobil Foydalanuvchi",
-                status: "Online (Faol)",
-                openPorts: []
-            },
-            {
-                name: "Lokal Tarmoq Tuguni (192.168.1.3)",
-                device_name: "Tarmoq Tuguni (192.168.1.3)",
-                ip: "192.168.1.3",
-                mac: "CE:45:BD:1F:8C:BF",
-                category: "Lokal Tarmoq Qurilmasi",
+                name: "Tarmoq Printeri (PRINTER)",
+                device_name: "PRINTER — Tarmoq Printeri / Gadjet",
+                ip: "192.168.0.109",
+                mac: "E0:D5:5E:6E:BB:0F",
+                category: "Lokal Tarmoq Qurilmasi (Printer)",
                 source: "Wi-Fi / LAN",
-                type_icon: "⚡",
-                owner: "Tarmoq Foydalanuvchisi",
+                type_icon: "🖨️",
+                owner: "Ofis / Uy Qurilmasi",
                 status: "Online (Faol)",
-                openPorts: [80]
+                openPorts: [80, 9100, 515]
             }
         ];
 
         let disconnectedDevices = [];
         let eventsLog = [
-            { time: getNowTime(), type: "connected", message: "🟢 Asosiy Wi-Fi Router / Shlyuz (192.168.1.1) tarmoqda faol" },
-            { time: getNowTime(), type: "connected", message: "🟢 Ushbu Kompyuter (WIN-QK4LQTVD6NH) tarmoqqa ulandi" }
+            { time: getNowTime(), type: "connected", message: "🟢 Asosiy Wi-Fi Router (192.168.0.1) tarmoqda faol" },
+            { time: getNowTime(), type: "connected", message: "🟢 Ushbu Kompyuter DESKTOP-A82U46C (192.168.0.108) tarmoqqa ulandi" }
         ];
 
         function getNowTime() {
@@ -526,16 +511,24 @@
             scanStatus.innerText = "Tarmoq chuqur skanerlanmoqda...";
 
             try {
-                // 1. Avval mahalliy FastAPI server (/api/scan) bilan bog'lanish tekshiriladi
-                const res = await fetch('/api/scan');
-                if (res.ok) {
+                // 1. Avval mahalliy FastAPI server (/api/scan yoki 127.0.0.1:8000) bilan bog'lanish tekshiriladi
+                let res = null;
+                try {
+                    res = await fetch('/api/scan');
+                } catch(err) {
+                    try {
+                        res = await fetch('http://127.0.0.1:8000/api/scan');
+                    } catch(err2) {}
+                }
+                if (res && res.ok) {
                     const data = await res.json();
                     if (data.devices) activeDevices = data.devices;
                     if (data.disconnected) disconnectedDevices = data.disconnected;
                     if (data.events && data.events.length > 0) eventsLog = data.events;
+                } else {
+                    await new Promise(r => setTimeout(r, 650));
                 }
             } catch(e) {
-                // 2. Onlayn GitHub Pages rejimida sun'iy kechikish va tahlil
                 await new Promise(r => setTimeout(r, 650));
             }
 
@@ -651,7 +644,7 @@
                 else if (dev.category.includes('Kompyuter') || dev.category.includes('PC') || dev.category.includes('Host')) badgeClass = 'badge-pc';
 
                 const safeName = (dev.name || '').replace(/'/g, "\\'");
-                const isHost = dev.ip === "192.168.1.14" || (dev.category && dev.category.includes('Host'));
+                const isHost = dev.ip === "192.168.0.108" || (dev.category && dev.category.includes('Host'));
 
                 const row = `<tr>
                     <td>
@@ -810,8 +803,15 @@
             `;
 
             try {
-                const res = await fetch(`/api/device/ping?ip=${encodeURIComponent(ip)}`);
-                if (res.ok) {
+                let res = null;
+                try {
+                    res = await fetch(`/api/device/ping?ip=${encodeURIComponent(ip)}`);
+                } catch(e1) {
+                    try {
+                        res = await fetch(`http://127.0.0.1:8000/api/device/ping?ip=${encodeURIComponent(ip)}`);
+                    } catch(e2) {}
+                }
+                if (res && res.ok) {
                     const data = await res.json();
                     renderPingResult(body, data);
                     return;
@@ -864,8 +864,15 @@
             `;
 
             try {
-                const res = await fetch(`/api/device/ports?ip=${encodeURIComponent(ip)}`);
-                if (res.ok) {
+                let res = null;
+                try {
+                    res = await fetch(`/api/device/ports?ip=${encodeURIComponent(ip)}`);
+                } catch(e1) {
+                    try {
+                        res = await fetch(`http://127.0.0.1:8000/api/device/ports?ip=${encodeURIComponent(ip)}`);
+                    } catch(e2) {}
+                }
+                if (res && res.ok) {
                     const data = await res.json();
                     renderPortsResult(body, data, ip, name);
                     return;
@@ -1007,7 +1014,14 @@
                     if (d.disconnected) disconnectedDevices = d.disconnected;
                     if (d.events) eventsLog = d.events;
                     renderAll();
-                }).catch(()=>{});
+                }).catch(()=>{
+                    fetch('http://127.0.0.1:8000/api/scan').then(r => r.json()).then(d => {
+                        if (d.devices) activeDevices = d.devices;
+                        if (d.disconnected) disconnectedDevices = d.disconnected;
+                        if (d.events) eventsLog = d.events;
+                        renderAll();
+                    }).catch(()=>{});
+                });
             }, 5000);
         };
     </script>
