@@ -1,0 +1,1375 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CyberNet Pro — Kiberxavfsizlik va Tarmoq Tahlili Platformasi</title>
+    <!-- Leaflet.js CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif; }
+        body { background-color: #0b0f19; color: #f8fafc; padding: 18px; min-height: 100vh; }
+        .container { max-width: 1440px; margin: 0 auto; }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            padding: 18px 24px;
+            border-radius: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid #334155;
+            margin-bottom: 18px;
+            box-shadow: 0 4px 25px rgba(0,0,0,0.4);
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .brand { display: flex; align-items: center; gap: 12px; }
+        .brand-icon { font-size: 28px; }
+        .brand-title { font-size: 21px; font-weight: 800; color: #38bdf8; letter-spacing: -0.5px; }
+        .brand-subtitle { font-size: 12px; color: #94a3b8; }
+        .header-meta { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+        .geo-badge { font-size: 12.5px; color: #34d399; background: #064e3b; padding: 6px 14px; border-radius: 8px; border: 1px solid #059669; font-weight: 600; }
+        .cache-badge { font-size: 12px; color: #cbd5e1; background: #1e293b; padding: 6px 12px; border-radius: 8px; border: 1px solid #475569; }
+
+        /* Tab Navigation */
+        .nav-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 18px;
+            border-bottom: 2px solid #334155;
+            padding-bottom: 8px;
+            overflow-x: auto;
+        }
+        .tab-btn {
+            background: #1e293b;
+            color: #94a3b8;
+            border: 1px solid #334155;
+            padding: 10px 18px;
+            border-radius: 10px;
+            font-size: 13.5px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+        .tab-btn:hover { background: #334155; color: #f8fafc; }
+        .tab-btn.active {
+            background: #0284c7;
+            color: white;
+            border-color: #38bdf8;
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.35);
+        }
+
+        /* Tab Contents */
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.25s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Cards & Grids */
+        .card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 18px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            border-bottom: 1px solid #334155;
+            padding-bottom: 12px;
+        }
+        .card-title { font-size: 16px; font-weight: 700; color: #38bdf8; display: flex; align-items: center; gap: 8px; }
+
+        .control-bar {
+            background: #1e293b;
+            padding: 14px 20px;
+            border-radius: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid #334155;
+            margin-bottom: 18px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .btn-primary {
+            padding: 9px 18px;
+            background: #0284c7;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 13.5px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+        .btn-primary:hover { background: #0369a1; transform: translateY(-1px); }
+        .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        .pulse-live {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #064e3b;
+            color: #34d399;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            border: 1px solid #059669;
+        }
+        .dot { width: 8px; height: 8px; background: #34d399; border-radius: 50%; display: inline-block; animation: pulse 1.5s infinite; }
+        @keyframes pulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(52, 211, 153, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(52, 211, 153, 0); }
+        }
+
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 18px; }
+        .stat-card {
+            background: #1e293b;
+            padding: 16px;
+            border-radius: 12px;
+            border: 1px solid #334155;
+            text-align: center;
+        }
+        .stat-card h4 { font-size: 11.5px; color: #94a3b8; text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.5px; }
+        .stat-card p { font-size: 20px; font-weight: 800; color: #38bdf8; }
+
+        /* Tables */
+        .table-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid #334155; margin-bottom: 18px; }
+        table { width: 100%; border-collapse: collapse; background: #1e293b; }
+        th, td { padding: 12px 14px; text-align: left; font-size: 13px; border-bottom: 1px solid #334155; vertical-align: middle; }
+        th { background: #334155; color: #38bdf8; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; }
+        tr:hover { background: #273548; }
+
+        .badge { padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; display: inline-block; }
+        .badge-router { background: #1e3a8a; color: #93c5fd; }
+        .badge-pc { background: #064e3b; color: #6ee7b7; }
+        .badge-tv { background: #701a75; color: #f0abfc; }
+        .badge-phone { background: #7c2d12; color: #fdba74; }
+        .badge-general { background: #334155; color: #cbd5e1; }
+        
+        .badge-safe { background: #064e3b; color: #6ee7b7; border: 1px solid #059669; }
+        .badge-medium { background: #713f12; color: #fde047; border: 1px solid #a16207; }
+        .badge-suspicious { background: #7c2d12; color: #fdba74; border: 1px solid #ea580c; }
+        .badge-dangerous { background: #7f1d1d; color: #fca5a5; border: 1px solid #dc2626; }
+
+        /* Action Buttons */
+        .btn-group { display: flex; gap: 5px; flex-wrap: wrap; }
+        .btn-action {
+            padding: 5px 9px;
+            border-radius: 6px;
+            font-size: 11.5px;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid #334155;
+            background: #0f172a;
+            color: #f1f5f9;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .btn-action:hover { background: #1e293b; border-color: #38bdf8; transform: translateY(-1px); }
+        .btn-action.btn-ping { color: #4ade80; }
+        .btn-action.btn-port { color: #fb923c; }
+        .btn-action.btn-intel { color: #38bdf8; }
+        .btn-action.btn-block { color: #f87171; border-color: #7f1d1d; }
+        .btn-action.btn-rdp { color: #c084fc; }
+
+        /* Form Controls */
+        .input-group { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+        .text-input {
+            flex: 1;
+            min-width: 250px;
+            padding: 10px 14px;
+            border-radius: 8px;
+            border: 1px solid #475569;
+            background: #0f172a;
+            color: #38bdf8;
+            font-size: 14px;
+            outline: none;
+        }
+        .text-input:focus { border-color: #38bdf8; box-shadow: 0 0 10px rgba(56, 189, 248, 0.2); }
+        textarea.text-input { min-height: 140px; font-family: 'Consolas', monospace; font-size: 12.5px; line-height: 1.5; }
+
+        /* Threat Intel Result Layout */
+        .intel-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 16px; margin-top: 16px; }
+        .risk-gauge-box {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .risk-score-circle {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 12px;
+            border: 6px solid #38bdf8;
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.3);
+        }
+        .risk-score-val { font-size: 32px; font-weight: 900; }
+        .risk-score-lbl { font-size: 11px; text-transform: uppercase; color: #94a3b8; }
+        .intel-details-box {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 18px;
+        }
+        .intel-info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 9px 0;
+            border-bottom: 1px solid #1e293b;
+            font-size: 13px;
+        }
+        .intel-info-row:last-child { border-bottom: none; }
+        .intel-lbl { color: #94a3b8; font-weight: 500; }
+        .intel-val { color: #f8fafc; font-weight: 600; text-align: right; }
+
+        /* Map styling */
+        #threatMap { height: 500px; width: 100%; border-radius: 12px; border: 1px solid #334155; }
+
+        /* Modals */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            backdrop-filter: blur(4px);
+        }
+        .modal {
+            background: #1e293b;
+            border: 1px solid #475569;
+            border-radius: 14px;
+            width: 90%;
+            max-width: 680px;
+            padding: 24px;
+            color: #f8fafc;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #334155;
+            padding-bottom: 12px;
+            margin-bottom: 16px;
+        }
+        .modal-title { font-size: 17px; font-weight: bold; color: #38bdf8; display: flex; align-items: center; gap: 8px; }
+        .modal-close { background: none; border: none; color: #94a3b8; font-size: 22px; cursor: pointer; }
+        .modal-close:hover { color: #f87171; }
+        .modal-box { background: #0f172a; padding: 14px; border-radius: 8px; border: 1px solid #334155; margin-bottom: 12px; font-size: 13px; line-height: 1.6; }
+        .code-box { background: #020617; border: 1px solid #334155; padding: 12px; border-radius: 8px; font-family: 'Consolas', monospace; font-size: 12px; color: #38bdf8; overflow-x: auto; margin-bottom: 8px; position: relative; }
+        .btn-copy { position: absolute; right: 8px; top: 8px; padding: 4px 10px; background: #1e293b; color: #94a3b8; border: 1px solid #475569; border-radius: 6px; font-size: 11px; cursor: pointer; }
+        .btn-copy:hover { color: #38bdf8; border-color: #38bdf8; }
+
+        /* Toast notification */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: #064e3b;
+            color: #a7f3d0;
+            border: 1px solid #059669;
+            padding: 12px 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.4);
+            font-size: 13.5px;
+            font-weight: 600;
+            display: none;
+            z-index: 10000;
+            animation: slideUp 0.3s ease;
+        }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Main Platform Header -->
+        <div class="header">
+            <div class="brand">
+                <span class="brand-icon">🛡️</span>
+                <div>
+                    <div class="brand-title">CyberNet Pro — Threat Intelligence Platformasi</div>
+                    <div class="brand-subtitle">Tarmoq Tahlili, Kiberxavfsizlik, Server Loglari & Firewall Nazorati</div>
+                </div>
+            </div>
+            <div class="header-meta">
+                <div class="geo-badge" id="publicGeoDisplay">📍 Tashkent, O'zbekiston</div>
+                <div class="cache-badge" id="cacheStatsBadge">⚡ Kesh: Faol</div>
+            </div>
+        </div>
+
+        <!-- 6 Asosiy Yo'nalish Tablari -->
+        <div class="nav-tabs">
+            <button class="tab-btn active" onclick="switchTab('tab-lan')">🌐 1. Lokal Tarmoq (LAN)</button>
+            <button class="tab-btn" onclick="switchTab('tab-threat')">🛡️ 2. IP Xavfsizlik & Threat Intel</button>
+            <button class="tab-btn" onclick="switchTab('tab-map')">🗺️ 3. Dunyo Xaritasi (Geo-Map)</button>
+            <button class="tab-btn" onclick="switchTab('tab-logs')">📊 4. Server Log Tahlilchi</button>
+            <button class="tab-btn" onclick="switchTab('tab-subnet')">🧮 5. Subnet Kalkulyator</button>
+            <button class="tab-btn" onclick="switchTab('tab-settings')">⚙️ 6. Avtomatlashtirish & Telegram</button>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- TAB 1: LOKAL TARMOQ (LAN MONITORING) -->
+        <!-- ========================================== -->
+        <div id="tab-lan" class="tab-content active">
+            <div class="control-bar">
+                <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                    <button onclick="refreshDevices()" class="btn-primary" id="refreshBtn">
+                        🔄 Yangilash (Scan)
+                    </button>
+                    <div class="pulse-live">
+                        <span class="dot"></span>
+                        <span id="scan-status">Jonli Avto-Monitoring (3s)</span>
+                    </div>
+                </div>
+                <div style="color: #94a3b8; font-size: 13px;" id="networkInfoBar">
+                    Tarmoq yuklanmoqda...
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h4>Jami Ulangan</h4>
+                    <p id="stat-total">0 ta</p>
+                </div>
+                <div class="stat-card">
+                    <h4>Kompyuterlar</h4>
+                    <p id="stat-pc" style="color: #6ee7b7;">0 ta</p>
+                </div>
+                <div class="stat-card">
+                    <h4>Android Smart TV</h4>
+                    <p id="stat-tv" style="color: #f0abfc;">0 ta</p>
+                </div>
+                <div class="stat-card">
+                    <h4>Smartfonlar</h4>
+                    <p id="stat-phone" style="color: #fdba74;">0 ta</p>
+                </div>
+            </div>
+
+            <div class="card" style="padding: 12px 16px; margin-bottom: 16px;">
+                <div class="input-group" style="margin-bottom: 0;">
+                    <input type="text" id="lanSearchInput" class="text-input" placeholder="🔍 Tarmoq ichidan IP yoki Qurilma nomi bo'yicha tezkor qidiruv..." oninput="filterDevicesTable(this.value)">
+                    <button class="btn-primary" onclick="scanSingleLanIp()">⚡ Bitta IP ni Tekshirish</button>
+                </div>
+            </div>
+
+            <div class="table-wrap">
+                <table id="devicesTable">
+                    <thead>
+                        <tr>
+                            <th>Qurilma Nomi</th>
+                            <th>IP Manzil</th>
+                            <th>MAC Manzil</th>
+                            <th>Kategoriya</th>
+                            <th>Holat</th>
+                            <th>Ulanish / Amallar</th>
+                        </tr>
+                    </thead>
+                    <tbody id="devicesTableBody">
+                        <tr><td colspan="6" style="text-align:center; padding: 30px; color:#94a3b8;">Tarmoq tekshirilmoqda, iltimos kuting...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Hodisalar Jurnali -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">📜 Tarmoq Hodisalari Jurnali (Events Log)</div>
+                    <span style="font-size: 12px; color: #94a3b8;">Oxirgi 20 ta hodisa</span>
+                </div>
+                <div id="eventsLogBox" style="max-height: 180px; overflow-y: auto; font-size: 13px; line-height: 1.8;">
+                    <div style="color: #94a3b8;">Hodisalar qayd etilmadi.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- TAB 2: IP XAVFSIZLIK & THREAT INTEL -->
+        <!-- ========================================== -->
+        <div id="tab-threat" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">🛡️ Istalgan IP Manzilni Kiberxavfsizlik va Reputatsiya Tahlili</div>
+                </div>
+                <p style="font-size: 13.5px; color: #94a3b8; margin-bottom: 14px;">
+                    Ushbu bo'lim orqali istalgan ommaviy yoki shaxsiy IP manzilni Spam, Botnet, Proksi/VPN, Jahon qora ro'yxatlari (DNSBL) va zararli faoliyatga tekshirishingiz mumkin.
+                </p>
+                <div class="input-group">
+                    <input type="text" id="threatIpInput" class="text-input" placeholder="IP manzilni kiriting (Masalan: 8.8.8.8, 185.220.101.5 yoki 1.1.1.1)" onkeydown="if(event.key==='Enter') runThreatScan()">
+                    <button class="btn-primary" onclick="runThreatScan()" id="threatScanBtn">🚀 Tahlil Qilish</button>
+                </div>
+
+                <div id="threatResultArea" style="display: none;">
+                    <div class="intel-grid">
+                        <div class="risk-gauge-box">
+                            <div class="risk-score-circle" id="riskScoreCircle">
+                                <span class="risk-score-val" id="riskScoreVal">0%</span>
+                                <span class="risk-score-lbl">Risk Score</span>
+                            </div>
+                            <div id="riskLevelBadge" class="badge" style="font-size: 13px; padding: 6px 12px; margin-bottom: 12px;">SAFE</div>
+                            <p id="threatSummaryText" style="font-size: 12.5px; color: #cbd5e1; line-height: 1.5;"></p>
+                            <div style="margin-top: 14px; width: 100%;">
+                                <button class="btn-action btn-block" style="width: 100%; justify-content: center; padding: 8px;" onclick="openFirewallModalFromIntel()">
+                                    🚫 Ushbu IP ni Firewall orqali Bloklash
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="intel-details-box">
+                            <h4 style="color: #38bdf8; margin-bottom: 12px; font-size: 14.5px;">📋 IP Dosyesi va Ma'lumotlari</h4>
+                            <div class="intel-info-row">
+                                <span class="intel-lbl">Tekshirilgan IP:</span>
+                                <span class="intel-val" id="intelIpVal" style="color: #38bdf8;">-</span>
+                            </div>
+                            <div class="intel-info-row">
+                                <span class="intel-lbl">Davlat va Shahar:</span>
+                                <span class="intel-val" id="intelLocationVal">-</span>
+                            </div>
+                            <div class="intel-info-row">
+                                <span class="intel-lbl">Provayder (ISP):</span>
+                                <span class="intel-val" id="intelIspVal">-</span>
+                            </div>
+                            <div class="intel-info-row">
+                                <span class="intel-lbl">Tashkilot (Org):</span>
+                                <span class="intel-val" id="intelOrgVal">-</span>
+                            </div>
+                            <div class="intel-info-row">
+                                <span class="intel-lbl">Autonom Tizim (ASN):</span>
+                                <span class="intel-val" id="intelAsnVal">-</span>
+                            </div>
+                            <div class="intel-info-row">
+                                <span class="intel-lbl">Reverse DNS (PTR):</span>
+                                <span class="intel-val" id="intelPtrVal">-</span>
+                            </div>
+                            <div class="intel-info-row">
+                                <span class="intel-lbl">VPN / Proksi:</span>
+                                <span class="intel-val" id="intelVpnVal">-</span>
+                            </div>
+                            <div class="intel-info-row">
+                                <span class="intel-lbl">Server / Datacenter IP:</span>
+                                <span class="intel-val" id="intelHostingVal">-</span>
+                            </div>
+                            <div class="intel-info-row">
+                                <span class="intel-lbl">DNSBL Qora Ro'yxat:</span>
+                                <span class="intel-val" id="intelDnsblVal">-</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- DNSBL Tafsilotlari Jadvali -->
+                    <div style="margin-top: 20px;">
+                        <h4 style="font-size: 14px; color: #cbd5e1; margin-bottom: 10px;">🔍 5 ta Jahon Qora Ro'yxati (DNSBL / RBL) Natijalari</h4>
+                        <div class="table-wrap">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Provayder Nomi</th>
+                                        <th>DNS Host</th>
+                                        <th>Xavf Tavsifi</th>
+                                        <th>Holat</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="dnsblTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- TAB 3: DUNYO XARITASI (GEO-MAP) -->
+        <!-- ========================================== -->
+        <div id="tab-map" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">🗺️ Dunyo Xaritasi (Real-vaqt Kiberxarita)</div>
+                    <span style="font-size: 12px; color: #94a3b8;">Leaflet.js + OpenStreetMap</span>
+                </div>
+                <p style="font-size: 13px; color: #94a3b8; margin-bottom: 14px;">
+                    Tizim tomonidan tahlil qilingan va server loglarida aniqlangan IP manzillar geografik koordinatalari bo'yicha xaritada aks etadi. Nuqta rangi uning xavflilik darajasini ifodalaydi.
+                </p>
+                <div id="threatMap"></div>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- TAB 4: SERVER LOG TAHLILCHI (LOG ANALYZER) -->
+        <!-- ========================================== -->
+        <div id="tab-logs" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">📊 Server Log Fayllarini Ommaviy Tahlil Qilish (Batch Analyzer)</div>
+                </div>
+                <p style="font-size: 13.5px; color: #94a3b8; margin-bottom: 12px;">
+                    Nginx, Apache, Linux Auth.log yoki istalgan server log matnini kiriting. Tizim avtomatik barcha IP larni ajratib, DDoS, SSH Brute-Force va buzib kirish urinishlarini fosh qiladi.
+                </p>
+
+                <div style="margin-bottom: 14px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                        <label style="font-size: 13px; font-weight: 600; color: #cbd5e1;">Log matnini kiriting yoki fayldan nusxalab tashlang:</label>
+                        <button onclick="insertSampleLog()" style="background: none; border: none; color: #38bdf8; font-size: 12px; cursor: pointer;">
+                            💡 Sinov uchun namunaviy log matnini yuklash
+                        </button>
+                    </div>
+                    <textarea id="logTextarea" class="text-input" placeholder="192.168.1.50 - - [16/Oct/2026:10:00:00 +0000] &quot;GET /index.html HTTP/1.1&quot; 200 512&#10;185.220.101.5 - - [16/Oct/2026:10:01:00 +0000] &quot;GET /wp-admin HTTP/1.1&quot; 403 128&#10;Failed password for invalid user admin from 45.154.255.80 port 22"></textarea>
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-bottom: 18px; flex-wrap: wrap;">
+                    <button class="btn-primary" onclick="analyzeLogContent()" id="logAnalyzeBtn">
+                        ⚡ Loglarni Tahlil Qilish
+                    </button>
+                    <button class="btn-action" onclick="document.getElementById('logTextarea').value=''">
+                        🗑️ Maydonni tozalash
+                    </button>
+                </div>
+
+                <div id="logAnalysisResults" style="display: none;">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <h4>Jami Qatorlar</h4>
+                            <p id="logStatLines">0</p>
+                        </div>
+                        <div class="stat-card">
+                            <h4>Noyob IP lar</h4>
+                            <p id="logStatIps" style="color: #6ee7b7;">0</p>
+                        </div>
+                        <div class="stat-card">
+                            <h4>Shubhali Hujumlar</h4>
+                            <p id="logStatSuspicious" style="color: #f87171;">0</p>
+                        </div>
+                    </div>
+
+                    <!-- Top IPs va Anomaliyalar Jadvali -->
+                    <div class="intel-grid" style="grid-template-columns: 1fr 1fr; margin-bottom: 18px;">
+                        <div>
+                            <h4 style="color: #38bdf8; margin-bottom: 10px; font-size: 14px;">🔥 Eng Faol IP Manzillar (Top Requests)</h4>
+                            <div class="table-wrap">
+                                <table>
+                                    <thead><tr><th>IP Manzil</th><th>So'rovlar Soni</th><th>Amal</th></tr></thead>
+                                    <tbody id="logTopIpsBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 style="color: #f87171; margin-bottom: 10px; font-size: 14px;">🚨 Aniqlangan Shubhali Faolliklar</h4>
+                            <div class="table-wrap">
+                                <table>
+                                    <thead><tr><th>IP</th><th>Hujum Turi</th><th>Tafsilot</th></tr></thead>
+                                    <tbody id="logSuspiciousBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Batch Block Button -->
+                    <div class="card" style="background: #0f172a; border-color: #dc2626;">
+                        <h4 style="color: #f87171; margin-bottom: 8px;">🛡️ Barcha Shubhali IP larni Bir Bosishda Bloklash</h4>
+                        <p style="font-size: 13px; color: #94a3b8; margin-bottom: 12px;">
+                            Ushbu logda aniqlangan barcha tajovuzkor IP manzillar uchun Linux (UFW/IPTables) yoki Windows Firewall bloklash skriptini yuklab oling.
+                        </p>
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            <button class="btn-primary" style="background: #dc2626;" onclick="downloadLogFirewallScript('linux_ufw')">
+                                🐧 Linux UFW Skriptini Yuklab Olish (.sh)
+                            </button>
+                            <button class="btn-primary" style="background: #2563eb;" onclick="downloadLogFirewallScript('windows_powershell')">
+                                🪟 Windows PowerShell Skriptini Yuklab Olish (.ps1)
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- TAB 5: SUBNET & CIDR KALKULYATOR -->
+        <!-- ========================================== -->
+        <div id="tab-subnet" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">🧮 Subnet va CIDR Kalkulyatori</div>
+                </div>
+                <p style="font-size: 13.5px; color: #94a3b8; margin-bottom: 14px;">
+                    Tarmoq diapazonlari, mavjud xostlar soni, broadcast va netmask parametrlarini hisoblash.
+                </p>
+                <div class="input-group">
+                    <input type="text" id="cidrInput" class="text-input" placeholder="CIDR kiriting (Masalan: 192.168.0.0/24 yoki 10.0.0.0/16)" value="192.168.0.0/24" onkeydown="if(event.key==='Enter') calculateSubnet()">
+                    <button class="btn-primary" onclick="calculateSubnet()">Hisoblash</button>
+                </div>
+
+                <div id="subnetResultBox" style="margin-top: 18px;">
+                    <div class="intel-details-box">
+                        <div class="intel-info-row">
+                            <span class="intel-lbl">Tarmoq Manzili (Network Address):</span>
+                            <span class="intel-val" id="subNetVal" style="color: #38bdf8;">-</span>
+                        </div>
+                        <div class="intel-info-row">
+                            <span class="intel-lbl">Broadcast Manzili:</span>
+                            <span class="intel-val" id="subBcastVal">-</span>
+                        </div>
+                        <div class="intel-info-row">
+                            <span class="intel-lbl">Tarmoq Niqobi (Subnet Mask):</span>
+                            <span class="intel-val" id="subMaskVal">-</span>
+                        </div>
+                        <div class="intel-info-row">
+                            <span class="intel-lbl">Wildcard Mask:</span>
+                            <span class="intel-val" id="subWildVal">-</span>
+                        </div>
+                        <div class="intel-info-row">
+                            <span class="intel-lbl">Foydalanish mumkin bo'lgan diapazon:</span>
+                            <span class="intel-val" id="subRangeVal" style="color: #34d399;">-</span>
+                        </div>
+                        <div class="intel-info-row">
+                            <span class="intel-lbl">Foydalaniladigan xostlar soni:</span>
+                            <span class="intel-val" id="subHostsVal">-</span>
+                        </div>
+                        <div class="intel-info-row">
+                            <span class="intel-lbl">IP Sinifi va Turi:</span>
+                            <span class="intel-val" id="subClassVal">-</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- TAB 6: AVTOMATLASHTIRISH & TELEGRAM -->
+        <!-- ========================================== -->
+        <div id="tab-settings" class="tab-content">
+            <div class="intel-grid" style="grid-template-columns: 1fr 1fr;">
+                <!-- Telegram Bot Sozlamalari -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">🤖 Telegram Xabarnomalar Boti</div>
+                    </div>
+                    <p style="font-size: 13px; color: #94a3b8; margin-bottom: 14px;">
+                        Xavfli IP aniqlanganda yoki begona qurilma ulanganda darhol Telegramingizga ogohlantirish keladi.
+                    </p>
+                    <div style="margin-bottom: 12px;">
+                        <label style="font-size: 12.5px; color: #94a3b8; display: block; margin-bottom: 4px;">Telegram Bot Token:</label>
+                        <input type="text" id="tgBotTokenInput" class="text-input" style="width: 100%;" placeholder="123456789:ABCdefGhIJKlmNoPQRsTUVwxyZ">
+                    </div>
+                    <div style="margin-bottom: 14px;">
+                        <label style="font-size: 12.5px; color: #94a3b8; display: block; margin-bottom: 4px;">Telegram Chat ID (Sizning profilingiz yoki guruh ID):</label>
+                        <input type="text" id="tgChatIdInput" class="text-input" style="width: 100%;" placeholder="987654321">
+                    </div>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <button class="btn-primary" onclick="saveTelegramSettings()">💾 Saqlash</button>
+                        <button class="btn-action" style="padding: 9px 16px;" onclick="testTelegramAlert()">🔔 Sinov Xabari Yuborish</button>
+                    </div>
+                </div>
+
+                <!-- Kesh va Tizim Unumdorligi -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">⚡ Kesh va Tezlik Boshqaruvi</div>
+                    </div>
+                    <p style="font-size: 13px; color: #94a3b8; margin-bottom: 14px;">
+                        SQLite va Xotirada saqlanuvchi kesh tizimi takroriy so'rovlarni bir zumda chiqarib, internet trafigi va API limitlarini tejaydi.
+                    </p>
+                    <div class="intel-details-box" style="margin-bottom: 16px;">
+                        <div class="intel-info-row">
+                            <span class="intel-lbl">Keshdan Muvaffaqiyatli Olingan (Hits):</span>
+                            <span class="intel-val" id="cacheHitsVal" style="color: #34d399;">0</span>
+                        </div>
+                        <div class="intel-info-row">
+                            <span class="intel-lbl">Tashqi So'rovlar (Misses):</span>
+                            <span class="intel-val" id="cacheMissesVal">0</span>
+                        </div>
+                        <div class="intel-info-row">
+                            <span class="intel-lbl">Kesh Unumdorligi (Hit Ratio):</span>
+                            <span class="intel-val" id="cacheRatioVal" style="color: #38bdf8;">0%</span>
+                        </div>
+                        <div class="intel-info-row">
+                            <span class="intel-lbl">Kesh Bazasidagi Yozuvlar:</span>
+                            <span class="intel-val" id="cacheEntriesVal">0 ta</span>
+                        </div>
+                    </div>
+                    <button class="btn-action" onclick="clearCache()" style="color: #f87171; border-color: #7f1d1d;">
+                        🧹 Muddati O'tgan Keshni Tozalash
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ========================================== -->
+    <!-- MODAL: PING TEKSHIRUVI -->
+    <!-- ========================================== -->
+    <div id="pingModal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title">⚡ Tarmoq Aloqasi (Ping) Tekshiruvi</div>
+                <button class="modal-close" onclick="closeModal('pingModal')">&times;</button>
+            </div>
+            <div id="pingModalBody">Ping yuborilmoqda...</div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- MODAL: PORTLAR VA BANNERLAR SKANERI -->
+    <!-- ========================================== -->
+    <div id="portsModal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title">🔍 Portlar va Servis Bannerlari (Banner Grabbing)</div>
+                <button class="modal-close" onclick="closeModal('portsModal')">&times;</button>
+            </div>
+            <div id="portsModalBody">Portlar tekshirilmoqda...</div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- MODAL: FIREWALL BLOKLASH QOIDALARI -->
+    <!-- ========================================== -->
+    <div id="firewallModal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title">🚫 Firewall Bloklash Qoidalari</div>
+                <button class="modal-close" onclick="closeModal('firewallModal')">&times;</button>
+            </div>
+            <div id="firewallModalBody">Qoidalar yuklanmoqda...</div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toastNotification" class="toast"></div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script>
+        // Global Holat
+        let allDevices = [];
+        let mapInstance = null;
+        let mapMarkers = [];
+        let lastAnalyzedThreat = null;
+        let lastLogAnalyzedIps = [];
+
+        // Tablarni almashtirish
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            
+            event.currentTarget.classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+
+            if (tabId === 'tab-map') {
+                setTimeout(initOrUpdateMap, 200);
+            }
+        }
+
+        function showToast(msg, isError = false) {
+            const t = document.getElementById('toastNotification');
+            t.innerText = msg;
+            t.style.display = 'block';
+            t.style.background = isError ? '#7f1d1d' : '#064e3b';
+            t.style.borderColor = isError ? '#dc2626' : '#059669';
+            t.style.color = isError ? '#fca5a5' : '#a7f3d0';
+            setTimeout(() => { t.style.display = 'none'; }, 3500);
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).style.display = 'none';
+        }
+
+        // ==========================================
+        // 1. LOKAL TARMOQ (LAN MONITORING)
+        // ==========================================
+        async function refreshDevices() {
+            try {
+                const res = await fetch('/api/scan');
+                const data = await res.json();
+                if (data.success) {
+                    allDevices = data.devices || [];
+                    document.getElementById('networkInfoBar').innerHTML = 
+                        `Asosiy Shlyuz: <code style="color: #38bdf8;">${data.searched_ip}</code> | Segment: <code style="color: #34d399;">${data.subnet}</code>`;
+                    renderDevicesTable(allDevices);
+                    renderEventsLog(data.events || []);
+                    updateLanStats(allDevices);
+                }
+            } catch (err) {
+                console.error("Tarmoq ma'lumotlarini yuklashda xato:", err);
+            }
+        }
+
+        function renderDevicesTable(devices) {
+            const tbody = document.getElementById('devicesTableBody');
+            if (!devices || devices.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 25px; color:#94a3b8;">Hozircha hech qanday qurilma topilmadi.</td></tr>`;
+                return;
+            }
+
+            let html = '';
+            devices.forEach(dev => {
+                let badgeClass = 'badge-general';
+                if (dev.category.includes('Router')) badgeClass = 'badge-router';
+                else if (dev.category.includes('Kompyuter')) badgeClass = 'badge-pc';
+                else if (dev.category.includes('TV')) badgeClass = 'badge-tv';
+                else if (dev.category.includes('Smartfon')) badgeClass = 'badge-phone';
+
+                html += `
+                    <tr>
+                        <td>
+                            <strong style="color: #f8fafc; font-size: 13.5px;">${dev.type_icon || '⚡'} ${dev.name}</strong><br>
+                            <small style="color: #94a3b8; font-size: 11.5px;">${dev.description || ''}</small>
+                        </td>
+                        <td><code style="color: #38bdf8; font-size: 13px;">${dev.ip}</code></td>
+                        <td><code style="color: #cbd5e1; font-size: 12px;">${dev.mac}</code></td>
+                        <td><span class="badge ${badgeClass}">${dev.category}</span></td>
+                        <td>
+                            <span style="color: #34d399; font-weight: 600; font-size: 12px;">🟢 Faol (Online)</span>
+                        </td>
+                        <td>
+                            <div class="btn-group">
+                                <button class="btn-action btn-ping" onclick="pingDevice('${dev.ip}')">⚡ Ping</button>
+                                <button class="btn-action btn-port" onclick="scanDevicePorts('${dev.ip}')">🔍 Portlar</button>
+                                <button class="btn-action btn-intel" onclick="inspectIpIntel('${dev.ip}')">🛡️ Tahlil</button>
+                                <button class="btn-action btn-block" onclick="openFirewallModal('${dev.ip}')">🚫 Bloklash</button>
+                                <a href="/api/device/rdp?ip=${dev.ip}" class="btn-action btn-rdp" title="Masofaviy ish stoli fayli">🖥️ RDP</a>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+        }
+
+        function renderEventsLog(events) {
+            const box = document.getElementById('eventsLogBox');
+            if (!events || events.length === 0) {
+                box.innerHTML = `<div style="color: #94a3b8;">Hodisalar mavjud emas.</div>`;
+                return;
+            }
+            let html = '';
+            events.forEach(e => {
+                const color = e.type === 'connected' ? '#34d399' : '#f87171';
+                html += `<div style="border-bottom: 1px solid #1e293b; padding: 4px 0;">
+                    <span style="color: #64748b; font-size: 11.5px;">[${e.time}]</span> 
+                    <span style="color: ${color}; font-weight: 500;">${e.message}</span>
+                </div>`;
+            });
+            box.innerHTML = html;
+        }
+
+        function updateLanStats(devices) {
+            document.getElementById('stat-total').innerText = `${devices.length} ta`;
+            const pcCount = devices.filter(d => d.category.includes('Kompyuter')).length;
+            const tvCount = devices.filter(d => d.category.includes('TV')).length;
+            const phoneCount = devices.filter(d => d.category.includes('Smartfon')).length;
+
+            document.getElementById('stat-pc').innerText = `${pcCount} ta`;
+            document.getElementById('stat-tv').innerText = `${tvCount} ta`;
+            document.getElementById('stat-phone').innerText = `${phoneCount} ta`;
+        }
+
+        function filterDevicesTable(query) {
+            const q = query.toLowerCase().trim();
+            const filtered = allDevices.filter(d => 
+                d.name.toLowerCase().includes(q) || 
+                d.ip.toLowerCase().includes(q) || 
+                d.mac.toLowerCase().includes(q) ||
+                d.category.toLowerCase().includes(q)
+            );
+            renderDevicesTable(filtered);
+        }
+
+        async function scanSingleLanIp() {
+            const input = document.getElementById('lanSearchInput');
+            const ip = input.value.trim();
+            if (!ip) {
+                alert("Iltimos, IP manzilni kiriting!");
+                return;
+            }
+            showToast(`${ip} manzil tekshirilmoqda...`);
+            try {
+                const res = await fetch(`/api/device/scan_ip?ip=${encodeURIComponent(ip)}`);
+                const data = await res.json();
+                if (data.found) {
+                    showToast(`Qurilma topildi: ${data.device.name}`);
+                    refreshDevices();
+                } else {
+                    showToast(data.message || "Qurilmadan javob olinmadi", true);
+                }
+            } catch (err) {
+                showToast("Ulanish xatosi", true);
+            }
+        }
+
+        // ==========================================
+        // 2. IP XAVFSIZLIK & THREAT INTEL
+        // ==========================================
+        async function runThreatScan(ipToScan = null) {
+            const ip = ipToScan || document.getElementById('threatIpInput').value.trim();
+            if (!ip) {
+                alert("Iltimos, tekshirmoqchi bo'lgan IP manzilni kiriting!");
+                return;
+            }
+
+            document.getElementById('threatIpInput').value = ip;
+            const btn = document.getElementById('threatScanBtn');
+            btn.disabled = true;
+            btn.innerText = "⏳ Tahlil qilinmoqda...";
+
+            try {
+                const res = await fetch(`/api/intel/reputation?ip=${encodeURIComponent(ip)}`);
+                const data = await res.json();
+                lastAnalyzedThreat = data;
+                renderThreatResult(data);
+                document.getElementById('threatResultArea').style.display = 'block';
+
+                // Dunyo xaritasiga ham qo'shish
+                if (data.city && data.country && !data.is_private) {
+                    fetchMapDetailsForIp(data);
+                }
+            } catch (err) {
+                showToast("Tahlil qilishda xatolik yuz berdi", true);
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "🚀 Tahlil Qilish";
+            }
+        }
+
+        function renderThreatResult(data) {
+            const circle = document.getElementById('riskScoreCircle');
+            const val = document.getElementById('riskScoreVal');
+            const badge = document.getElementById('riskLevelBadge');
+            const summary = document.getElementById('threatSummaryText');
+
+            val.innerText = `${data.risk_score}%`;
+            circle.style.borderColor = data.risk_color;
+            circle.style.boxShadow = `0 0 25px ${data.risk_color}55`;
+            val.style.color = data.risk_color;
+
+            badge.innerText = data.risk_badge;
+            badge.style.background = data.risk_color + '22';
+            badge.style.borderColor = data.risk_color;
+            badge.style.color = data.risk_color;
+
+            summary.innerText = data.summary;
+
+            // Details
+            document.getElementById('intelIpVal').innerText = data.ip;
+            document.getElementById('intelLocationVal').innerText = `${data.city || ''}, ${data.country || 'Noma\'lum'}`;
+            document.getElementById('intelIspVal').innerText = data.isp || 'Noma\'lum';
+            document.getElementById('intelOrgVal').innerText = data.org || 'Noma\'lum';
+            document.getElementById('intelAsnVal').innerText = data.as || 'Noma\'lum';
+            document.getElementById('intelPtrVal').innerText = data.reverse || 'Mavjud emas';
+            
+            document.getElementById('intelVpnVal').innerHTML = data.is_proxy ? 
+                `<span style="color:#f87171;">⚠️ Aniqlangan (VPN / Proxy)</span>` : 
+                `<span style="color:#34d399;">Yo'q (Toza)</span>`;
+                
+            document.getElementById('intelHostingVal').innerHTML = data.is_datacenter ? 
+                `<span style="color:#fb923c;">🏢 Server / Hosting IP</span>` : 
+                `<span style="color:#34d399;">Aholi provayderi (Residential)</span>`;
+
+            document.getElementById('intelDnsblVal').innerHTML = data.dnsbl_listed_count > 0 ? 
+                `<span style="color:#f87171; font-weight:bold;">${data.dnsbl_listed_count} ta bazada qora ro'yxatda!</span>` : 
+                `<span style="color:#34d399;">Toza (0 ta ro'yxat)</span>`;
+
+            // DNSBL Table
+            const dnsblTbody = document.getElementById('dnsblTableBody');
+            dnsblTbody.innerHTML = '';
+            (data.dnsbl_details || []).forEach(d => {
+                dnsblTbody.innerHTML += `
+                    <tr>
+                        <td><strong>${d.provider}</strong></td>
+                        <td><code>${d.host}</code></td>
+                        <td>${d.desc}</td>
+                        <td>
+                            ${d.listed ? 
+                                `<span class="badge badge-dangerous">⚠️ QORA RO'YXATDA</span>` : 
+                                `<span class="badge badge-safe">✅ Toza</span>`}
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function inspectIpIntel(ip) {
+            switchTab('tab-threat');
+            document.querySelectorAll('.tab-btn').forEach(b => {
+                if (b.innerText.includes('Threat Intel')) b.classList.add('active');
+                else b.classList.remove('active');
+            });
+            runThreatScan(ip);
+        }
+
+        // ==========================================
+        // 3. DUNYO XARITASI (LEAFLET GEO-MAP)
+        // ==========================================
+        function initOrUpdateMap() {
+            if (!mapInstance) {
+                mapInstance = L.map('threatMap').setView([41.2995, 69.2401], 3);
+                // Dark matter tiles
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                    attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+                    subdomains: 'abcd',
+                    maxZoom: 19
+                }).addTo(mapInstance);
+            } else {
+                mapInstance.invalidateSize();
+            }
+        }
+
+        async function fetchMapDetailsForIp(intelData) {
+            try {
+                const res = await fetch(`/api/intel/details?ip=${encodeURIComponent(intelData.ip)}`);
+                const full = await res.json();
+                if (full.lat && full.lon && mapInstance) {
+                    const color = intelData.risk_color || '#38bdf8';
+                    const marker = L.circleMarker([full.lat, full.lon], {
+                        radius: 8,
+                        fillColor: color,
+                        color: '#fff',
+                        weight: 1.5,
+                        opacity: 1,
+                        fillOpacity: 0.85
+                    }).addTo(mapInstance);
+
+                    marker.bindPopup(`
+                        <div style="color: #0b0f19; font-size: 13px;">
+                            <strong style="color:#0284c7;">IP: ${full.query}</strong><br>
+                            📍 ${full.city}, ${full.country}<br>
+                            🏢 ${full.isp}<br>
+                            ⚠️ Risk: <b style="color:${color};">${intelData.risk_score}% (${intelData.risk_badge})</b>
+                        </div>
+                    `);
+                    mapMarkers.push(marker);
+                }
+            } catch (e) {
+                console.error("Map marker error:", e);
+            }
+        }
+
+        // ==========================================
+        // 4. SERVER LOG TAHLILCHI (LOG ANALYZER)
+        // ==========================================
+        function insertSampleLog() {
+            const sample = `185.220.101.5 - - [16/Oct/2026:10:15:32 +0000] "GET /wp-login.php HTTP/1.1" 403 1450 "Mozilla/5.0"
+185.220.101.5 - - [16/Oct/2026:10:15:33 +0000] "POST /xmlrpc.php HTTP/1.1" 403 210 "curl/7.68"
+45.154.255.80 - - [16/Oct/2026:10:16:01 +0000] "GET /.env HTTP/1.1" 404 180 "Go-http-client"
+45.154.255.80 - - [16/Oct/2026:10:16:02 +0000] "GET /config.json HTTP/1.1" 404 180 "Go-http-client"
+192.168.1.105 - - [16/Oct/2026:10:20:00 +0000] "GET /api/v1/status HTTP/1.1" 200 890 "Mozilla/5.0"
+Failed password for invalid user root from 194.26.29.112 port 44322 ssh2
+Failed password for invalid user admin from 194.26.29.112 port 44324 ssh2
+Failed password for invalid user test from 194.26.29.112 port 44326 ssh2`;
+            document.getElementById('logTextarea').value = sample;
+        }
+
+        async function analyzeLogContent() {
+            const text = document.getElementById('logTextarea').value.trim();
+            if (!text) {
+                alert("Iltimos, log matnini kiriting!");
+                return;
+            }
+
+            const btn = document.getElementById('logAnalyzeBtn');
+            btn.disabled = true;
+            btn.innerText = "⏳ Tahlil qilinmoqda...";
+
+            try {
+                const res = await fetch('/api/log/analyze', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ content: text })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    renderLogResults(data);
+                    document.getElementById('logAnalysisResults').style.display = 'block';
+                    showToast("Log fayl muvaffaqiyatli tahlil qilindi!");
+                }
+            } catch (err) {
+                showToast("Loglarni tahlil qilishda xatolik", true);
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "⚡ Loglarni Tahlil Qilish";
+            }
+        }
+
+        function renderLogResults(data) {
+            document.getElementById('logStatLines').innerText = data.total_lines_analyzed;
+            document.getElementById('logStatIps').innerText = data.unique_ip_count;
+            document.getElementById('logStatSuspicious').innerText = data.suspicious_events_count;
+
+            lastLogAnalyzedIps = (data.top_ips || []).map(i => i.ip);
+
+            // Top IPs Table
+            const topBody = document.getElementById('logTopIpsBody');
+            topBody.innerHTML = '';
+            (data.top_ips || []).forEach(item => {
+                topBody.innerHTML += `
+                    <tr>
+                        <td><code style="color: #38bdf8;">${item.ip}</code></td>
+                        <td><strong>${item.count} ta</strong> so'rov</td>
+                        <td>
+                            <button class="btn-action btn-intel" onclick="inspectIpIntel('${item.ip}')">🛡️ Tekshirish</button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            // Suspicious Table
+            const susBody = document.getElementById('logSuspiciousBody');
+            susBody.innerHTML = '';
+            if (!data.suspicious_events || data.suspicious_events.length === 0) {
+                susBody.innerHTML = `<tr><td colspan="3" style="color:#94a3b8; text-align:center;">Hech qanday shubhali hujum topilmadi.</td></tr>`;
+            } else {
+                data.suspicious_events.forEach(item => {
+                    susBody.innerHTML += `
+                        <tr>
+                            <td><code style="color: #f87171;">${item.ip}</code></td>
+                            <td><span class="badge badge-dangerous">${item.type}</span></td>
+                            <td style="font-size: 12px; color: #cbd5e1;">${item.details}</td>
+                        </tr>
+                    `;
+                });
+            }
+        }
+
+        function downloadLogFirewallScript(platform) {
+            if (!lastLogAnalyzedIps || lastLogAnalyzedIps.length === 0) {
+                alert("Hali hech qanday IP aniqlanmagan!");
+                return;
+            }
+            const ipsQuery = lastLogAnalyzedIps.join(',');
+            window.location.href = `/api/firewall/download?ips=${encodeURIComponent(ipsQuery)}&platform=${platform}`;
+        }
+
+        // ==========================================
+        // 5. SUBNET & CIDR KALKULYATOR
+        // ==========================================
+        async function calculateSubnet() {
+            const cidr = document.getElementById('cidrInput').value.trim();
+            if (!cidr) return;
+            try {
+                const res = await fetch(`/api/intel/subnet?cidr=${encodeURIComponent(cidr)}`);
+                const data = await res.json();
+                if (data.success) {
+                    document.getElementById('subNetVal').innerText = data.network_address;
+                    document.getElementById('subBcastVal').innerText = data.broadcast_address;
+                    document.getElementById('subMaskVal').innerText = `${data.netmask} (/${data.prefix_length})`;
+                    document.getElementById('subWildVal').innerText = data.wildcard_mask;
+                    document.getElementById('subRangeVal').innerText = `${data.first_usable_ip} ➔ ${data.last_usable_ip}`;
+                    document.getElementById('subHostsVal').innerText = `${data.usable_addresses.toLocaleString()} ta xost`;
+                    document.getElementById('subClassVal').innerText = `${data.ip_class} (${data.is_private ? 'Xususiy / Private' : 'Ommaviy / Public'})`;
+                } else {
+                    alert(data.error);
+                }
+            } catch (err) {
+                showToast("Subnet hisoblashda xatolik", true);
+            }
+        }
+
+        // ==========================================
+        // 6. SOZLAMALAR & TELEGRAM BOT & KESH
+        // ==========================================
+        async function loadSettingsAndCache() {
+            try {
+                // Telegram config
+                const tgRes = await fetch('/api/telegram/config');
+                const tgData = await tgRes.json();
+                if (tgData.bot_token) document.getElementById('tgBotTokenInput').value = tgData.bot_token;
+                if (tgData.chat_id) document.getElementById('tgChatIdInput').value = tgData.chat_id;
+
+                // Cache stats
+                const cRes = await fetch('/api/cache/stats');
+                const cData = await cRes.json();
+                document.getElementById('cacheHitsVal').innerText = cData.hits;
+                document.getElementById('cacheMissesVal').innerText = cData.misses;
+                document.getElementById('cacheRatioVal').innerText = `${cData.hit_ratio_percent}%`;
+                document.getElementById('cacheEntriesVal').innerText = `${cData.cached_entries_count} ta`;
+                document.getElementById('cacheStatsBadge').innerText = `⚡ Kesh: ${cData.cached_entries_count} yozuv (${cData.hit_ratio_percent}%)`;
+            } catch (e) {}
+        }
+
+        async function saveTelegramSettings() {
+            const token = document.getElementById('tgBotTokenInput').value.trim();
+            const chatId = document.getElementById('tgChatIdInput').value.trim();
+            try {
+                const res = await fetch('/api/telegram/config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ bot_token: token, chat_id: chatId, enabled: true })
+                });
+                const d = await res.json();
+                if (d.success) showToast("Telegram sozlamalari saqlandi!");
+            } catch (e) {
+                showToast("Saqlashda xato", true);
+            }
+        }
+
+        async function testTelegramAlert() {
+            try {
+                showToast("Sinov xabarnomasi yuborilmoqda...");
+                const res = await fetch('/api/telegram/test');
+                const d = await res.json();
+                if (d.success) showToast("Telegramga xabar bordi! ✅");
+                else showToast(d.message || "Xatolik", true);
+            } catch (e) {
+                showToast("Ulanish xatosi", true);
+            }
+        }
+
+        async function clearCache() {
+            try {
+                const res = await fetch('/api/cache/clear');
+                const d = await res.json();
+                showToast(d.message);
+                loadSettingsAndCache();
+            } catch (e) {
+                showToast("Keshni tozalashda xato", true);
+            }
+        }
+
+        // ==========================================
+        // MODALLAR VA AMALLAR (Ping, Portlar, Firewall)
+        // ==========================================
+        async function pingDevice(ip) {
+            document.getElementById('pingModalBody').innerHTML = `<p style="color:#38bdf8;">${ip} manziliga ping paketlari yuborilmoqda...</p>`;
+            document.getElementById('pingModal').style.display = 'flex';
+            try {
+                const res = await fetch(`/api/device/ping?ip=${encodeURIComponent(ip)}`);
+                const data = await res.json();
+                document.getElementById('pingModalBody').innerHTML = `
+                    <div class="modal-box">
+                        <strong style="font-size: 15px; color: ${data.success ? '#34d399' : '#f87171'}">${data.status_text}</strong>
+                        <div style="margin-top: 10px; font-size: 13px;">
+                            Javob vaqti (Ping): <b>${data.avg_ms}</b> | Paket yo'qotish: <b>${data.loss}</b> | TTL: <b>${data.ttl}</b>
+                        </div>
+                    </div>
+                    <div class="code-box">${data.raw_output || 'Chiqish mavjud emas'}</div>
+                `;
+            } catch (e) {
+                document.getElementById('pingModalBody').innerHTML = `<p style="color:#f87171;">Ping yuborishda xatolik yuz berdi.</p>`;
+            }
+        }
+
+        async function scanDevicePorts(ip) {
+            document.getElementById('portsModalBody').innerHTML = `<p style="color:#38bdf8;">${ip} portlari va xizmat bannerlari skanerlanmoqda (multi-thread)...</p>`;
+            document.getElementById('portsModal').style.display = 'flex';
+            try {
+                const res = await fetch(`/api/intel/deep_ports?ip=${encodeURIComponent(ip)}`);
+                const data = await res.json();
+                let html = `<div style="margin-bottom: 12px; font-size: 13.5px;">Ochiq portlar: <b style="color: #34d399;">${data.open_count} ta</b> (Jami tekshirildi: ${data.total_scanned} ta)</div>`;
+                html += `<div class="table-wrap"><table><thead><tr><th>Port</th><th>Xizmat Nomi</th><th>Holat</th><th>Banner / Versiya</th></tr></thead><tbody>`;
+                data.ports.forEach(p => {
+                    html += `<tr>
+                        <td><strong style="color: #38bdf8;">${p.port}</strong></td>
+                        <td>${p.service || p.name}</td>
+                        <td>${p.is_open ? '<span class="badge badge-safe">OCHIQ</span>' : '<span style="color:#64748b;">Yopiq</span>'}</td>
+                        <td style="font-size: 12px; font-family: monospace; color: #cbd5e1;">${p.banner}</td>
+                    </tr>`;
+                });
+                html += `</tbody></table></div>`;
+                document.getElementById('portsModalBody').innerHTML = html;
+            } catch (e) {
+                document.getElementById('portsModalBody').innerHTML = `<p style="color:#f87171;">Portlarni tekshirishda xatolik yuz berdi.</p>`;
+            }
+        }
+
+        async function openFirewallModal(ip) {
+            document.getElementById('firewallModalBody').innerHTML = `<p style="color:#38bdf8;">${ip} uchun bloklash qoidalari shakllantirilmoqda...</p>`;
+            document.getElementById('firewallModal').style.display = 'flex';
+            try {
+                const res = await fetch(`/api/firewall/rules?ip=${encodeURIComponent(ip)}`);
+                const d = await res.json();
+                document.getElementById('firewallModalBody').innerHTML = `
+                    <p style="font-size: 13px; color: #94a3b8; margin-bottom: 14px;">
+                        Quyidagi buyruqlardan birini mos tizim terminalida (root yoki administrator sifatida) ishga tushiring:
+                    </p>
+                    
+                    <label style="font-size: 12px; color: #38bdf8; font-weight: bold;">🐧 Linux UFW:</label>
+                    <div class="code-box">
+                        ${d.linux_ufw}
+                        <button class="btn-copy" onclick="copyToClipboard('${d.linux_ufw.replace(/'/g, "\\'")}')">Nusxa</button>
+                    </div>
+
+                    <label style="font-size: 12px; color: #38bdf8; font-weight: bold;">🐧 Linux IPTables:</label>
+                    <div class="code-box">
+                        ${d.linux_iptables}
+                        <button class="btn-copy" onclick="copyToClipboard('${d.linux_iptables.replace(/'/g, "\\'")}')">Nusxa</button>
+                    </div>
+
+                    <label style="font-size: 12px; color: #38bdf8; font-weight: bold;">🪟 Windows PowerShell (Administrator):</label>
+                    <div class="code-box">
+                        ${d.windows_powershell}
+                        <button class="btn-copy" onclick="copyToClipboard('${d.windows_powershell.replace(/"/g, '\\"')}')">Nusxa</button>
+                    </div>
+
+                    <label style="font-size: 12px; color: #38bdf8; font-weight: bold;">🌐 Nginx Veb Server:</label>
+                    <div class="code-box">
+                        ${d.nginx_deny}
+                        <button class="btn-copy" onclick="copyToClipboard('${d.nginx_deny}')">Nusxa</button>
+                    </div>
+
+                    <label style="font-size: 12px; color: #38bdf8; font-weight: bold;">⚡ Mikrotik RouterOS:</label>
+                    <div class="code-box">
+                        ${d.mikrotik}
+                        <button class="btn-copy" onclick="copyToClipboard('${d.mikrotik}')">Nusxa</button>
+                    </div>
+                `;
+            } catch (e) {
+                document.getElementById('firewallModalBody').innerHTML = `<p style="color:#f87171;">Qoidalarni olishda xatolik.</p>`;
+            }
+        }
+
+        function openFirewallModalFromIntel() {
+            if (lastAnalyzedThreat && lastAnalyzedThreat.ip) {
+                openFirewallModal(lastAnalyzedThreat.ip);
+            }
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text);
+            showToast("Buyruq nusxalandi!");
+        }
+
+        // Boshlang'ich yuklash
+        window.addEventListener('DOMContentLoaded', () => {
+            refreshDevices();
+            loadSettingsAndCache();
+            calculateSubnet();
+            // Har 3 soniyada LAN ro'yxatini yangilash
+            setInterval(refreshDevices, 3500);
+        });
+    </script>
+</body>
+</html>

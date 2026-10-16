@@ -7,3 +7,5 @@ env/
 venv/
 .vscode/
 .idea/
+cache.db
+telegram_config.json
