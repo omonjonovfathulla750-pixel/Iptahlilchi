@@ -115,6 +115,8 @@
             margin-bottom: 14px;
             padding-bottom: 10px;
             border-bottom: 1px solid var(--border);
+            flex-wrap: wrap;
+            gap: 8px;
         }
         .card-title { font-size: 15px; font-weight: 800; color: var(--cyan); display: flex; align-items: center; gap: 8px; }
 
@@ -207,8 +209,16 @@
         .info-lbl { color: var(--text-muted); }
         .info-val { font-weight: 600; }
 
-        /* Map */
-        #mapBox { height: 260px; width: 100%; border-radius: 10px; border: 1px solid var(--border); margin-top: 10px; }
+        /* Map styling & Switchers */
+        .map-switch-group { display: flex; gap: 6px; }
+        .btn-map-switch { padding: 4px 10px; font-size: 11px; font-weight: 600; border-radius: 6px; border: 1px solid var(--border); background: #080d19; color: var(--text-muted); cursor: pointer; transition: 0.2s; }
+        .btn-map-switch.active, .btn-map-switch:hover { background: #0284c7; color: white; border-color: var(--cyan); }
+        #mapBox { height: 280px; width: 100%; border-radius: 10px; border: 1px solid var(--border); margin-top: 10px; }
+
+        /* Telegram Custom Message Box */
+        .tg-quick-tags { display: flex; gap: 6px; margin: 8px 0; flex-wrap: wrap; }
+        .tag-pill { font-size: 11px; padding: 3px 8px; border-radius: 5px; background: #131f37; border: 1px solid var(--border); color: var(--blue); cursor: pointer; }
+        .tag-pill:hover { background: #1e3a8a; border-color: var(--cyan); }
 
         /* Modals */
         .modal-overlay {
@@ -255,7 +265,9 @@
             display: none;
             z-index: 10000;
             box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+            animation: slideIn 0.3s ease;
         }
+        @keyframes slideIn { from { transform: translateY(15px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
     </style>
 </head>
 <body>
@@ -266,7 +278,7 @@
                 <div class="radar-icon">📡</div>
                 <div>
                     <div class="brand-title">CYBERNET SOC PRO — SENTINEL</div>
-                    <div class="brand-subtitle">Real-Vaqt Tarmoq Monitoringi, Kiberxavfsizlik, Server Loglari & Firewall</div>
+                    <div class="brand-subtitle">Real-Vaqt Tarmoq Monitoringi, Google Maps Kiberxaritasi & Telegram Nazorati</div>
                 </div>
             </div>
             <div class="header-meta">
@@ -444,7 +456,7 @@
                 </div>
             </div>
 
-            <!-- O'ng Tomon: Threat Intel, Dunyo Xaritasi, Subnet va Telegram -->
+            <!-- O'ng Tomon: Threat Intel, Google Maps, Subnet va Telegram Xabarlari -->
             <div>
                 <!-- 3. Threat Intel & IP Reputatsiyasi -->
                 <div class="card">
@@ -479,39 +491,50 @@
                     </div>
                 </div>
 
-                <!-- 4. Dunyo Xaritasi (Leaflet) -->
+                <!-- 4. Google Maps Kiberxaritasi -->
                 <div class="card">
                     <div class="card-header">
-                        <div class="card-title">🗺️ 3. Dunyo Kiberxaritasi (Global Threat Map)</div>
-                        <span style="font-size: 11px; color: var(--text-muted);">Real-vaqt Nuqtalari</span>
+                        <div class="card-title">🗺️ 3. Google Maps Kiberxaritasi</div>
+                        <div class="map-switch-group">
+                            <button class="btn-map-switch active" id="btnMapSat" onclick="setMapLayer('satellite')">🛰️ Google Satellite</button>
+                            <button class="btn-map-switch" id="btnMapRoad" onclick="setMapLayer('roadmap')">🗺️ Google Xarita</button>
+                            <button class="btn-map-switch" id="btnMapDark" onclick="setMapLayer('dark')">🌃 Dark SOC</button>
+                        </div>
                     </div>
-                    <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">
-                        Tahlil qilingan xavfli IP manzillar koordinatalari bo'yicha dunyo xaritasida aks etadi:
-                    </p>
                     <div id="mapBox"></div>
                 </div>
 
-                <!-- 5. Subnet Kalkulyator va Telegram Bot -->
+                <!-- 5. Subnet Kalkulyator va Telegram Botga Xabar Yuborish -->
                 <div class="card">
                     <div class="card-header">
-                        <div class="card-title">🧮 5. Subnet Kalkulyator & 🤖 6. Telegram Bot</div>
+                        <div class="card-title">🤖 6. Telegram Botga Qo'shimcha Xabar Yuborish (@cybernetfo_bot)</div>
                     </div>
                     
-                    <div style="display: flex; gap: 8px; margin-bottom: 10px;">
-                        <input type="text" id="cidrVal" class="text-input" value="192.168.0.0/24">
-                        <button class="btn-primary" onclick="calcSubnet()" style="white-space: nowrap;">Hisob</button>
+                    <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px;">
+                        Ushbu maydonga istalgan xabar, e'lon yoki buyruqni yozib, to'g'ridan-to'g'ri Telegramingizga yuborishingiz mumkin:
+                    </p>
+
+                    <textarea id="tgCustomMsg" class="text-input" style="height: 70px; font-size: 13px; margin-bottom: 6px;" placeholder="Telegramga yuboriladigan xabar matnini kiriting..."></textarea>
+                    
+                    <div class="tg-quick-tags">
+                        <span class="tag-pill" onclick="insertTgTag('🚨 DIQQAT: Shubhali IP faolligi aniqlandi!')">🚨 Hujum xabari</span>
+                        <span class="tag-pill" onclick="insertTgTag('🛡️ Serverda profilaktika ishlari boshlandi.')">🛡️ Profilaktika</span>
+                        <span class="tag-pill" onclick="insertTgTag('✅ Tarmoq to\'liq xavfsiz va barqaror.')">✅ Xavfsiz</span>
                     </div>
 
-                    <div style="background: var(--bg-card-alt); padding: 10px; border-radius: 8px; border: 1px solid var(--border); font-size: 12px; margin-bottom: 12px;">
-                        <div class="info-row"><span class="info-lbl">Netmask / Diapazon:</span><span class="info-val" style="color: var(--green);">255.255.255.0 (192.168.0.1 ➔ 192.168.0.254)</span></div>
-                        <div class="info-row"><span class="info-lbl">Foydalaniladigan xostlar:</span><span class="info-val">254 ta xost (C Sinif Private)</span></div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+                        <span style="font-size: 11.5px; color: var(--green);">● Bot: @cybernetfo_bot</span>
+                        <button class="btn-primary" onclick="sendCustomTelegram()" style="padding: 7px 16px; font-size: 12.5px;">
+                            📨 Telegramga Yuborish
+                        </button>
                     </div>
 
-                    <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border); padding-top: 10px;">
-                        <div style="font-size: 12px;">
-                            <strong>Telegram Bot:</strong> <code style="color: var(--cyan);">@cybernetfo_bot</code> (Ulangan)
+                    <!-- Kichik Subnet qismi -->
+                    <div style="margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--border);">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-size: 12px; color: var(--cyan); font-weight: bold;">🧮 5. Subnet / CIDR:</span>
+                            <span style="font-size: 12px; color: var(--text-muted);">192.168.0.0/24 (254 xost)</span>
                         </div>
-                        <button class="btn-action btn-intel" onclick="testTelegram()">🔔 Sinov Xabari</button>
                     </div>
                 </div>
             </div>
@@ -536,15 +559,94 @@
 
     <script>
         let map;
+        let currentTileLayer;
+
+        // Google Maps qatlamlari
+        const mapLayers = {
+            satellite: L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', { maxZoom: 20, attribution: '&copy; Google Satellite' }),
+            roadmap: L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', { maxZoom: 20, attribution: '&copy; Google Maps' }),
+            dark: L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 18, attribution: '&copy; CARTO' })
+        };
+
+        function setMapLayer(name) {
+            document.querySelectorAll('.btn-map-switch').forEach(b => b.classList.remove('active'));
+            if (name === 'satellite') document.getElementById('btnMapSat').classList.add('active');
+            if (name === 'roadmap') document.getElementById('btnMapRoad').classList.add('active');
+            if (name === 'dark') document.getElementById('btnMapDark').classList.add('active');
+
+            if (currentTileLayer) map.removeLayer(currentTileLayer);
+            currentTileLayer = mapLayers[name];
+            currentTileLayer.addTo(map);
+            showToast(`Xarita o'zgartirildi: ${name.toUpperCase()}`);
+        }
 
         function showToast(msg) {
             const t = document.getElementById('toast');
             t.innerText = msg;
             t.style.display = 'block';
-            setTimeout(() => { t.style.display = 'none'; }, 3000);
+            setTimeout(() => { t.style.display = 'none'; }, 3500);
         }
 
         function closeM() { document.getElementById('modalBox').style.display = 'none'; }
+
+        // Telegramga qo'shimcha xabar jo'natish
+        async function sendCustomTelegram() {
+            const input = document.getElementById('tgCustomMsg');
+            const text = input.value.trim();
+            if (!text) {
+                alert("Iltimos, yubormoqchi bo'lgan xabaringizni yozing!");
+                return;
+            }
+
+            showToast("Telegramga xabar yuborilmoqda...");
+
+            const token = "8863195525:AAGm7Y0fhLkRv3YxsK9e3-f4GEeAgmnk-sc";
+            const chatId = "8471528668";
+
+            // 1. Avval lokal Python FastAPI orqali yuborishga urinish
+            try {
+                const res = await fetch('/api/telegram/send_custom', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: text })
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.success) {
+                        showToast("Xabar Telegram botingizga yetkazildi! ✅");
+                        input.value = '';
+                        return;
+                    }
+                }
+            } catch(e) {}
+
+            // 2. Agar GitHub Pages orqali ochilgan bo'lsa, to'g'ridan-to'g'ri Telegram API ga yuborish
+            try {
+                const tgUrl = `https://api.telegram.org/bot${token}/sendMessage`;
+                const tgRes = await fetch(tgUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        chat_id: chatId,
+                        text: `📢 <b>ADMINISTRATOR MAXSUS XABARNOMASI</b>\n\n💬 <i>"${text}"</i>\n\n🛡️ <b>Tizim:</b> CyberNet SOC Pro Sentinel`,
+                        parse_mode: 'HTML'
+                    })
+                });
+                const d = await tgRes.json();
+                if (d.ok) {
+                    showToast("Xabar Telegram botingizga yetkazildi! ✅");
+                    input.value = '';
+                } else {
+                    showToast(`Telegram xatosi: ${d.description}`, true);
+                }
+            } catch(err) {
+                showToast("Ulanishda xatolik yuz berdi", true);
+            }
+        }
+
+        function insertTgTag(tagText) {
+            document.getElementById('tgCustomMsg').value = tagText;
+        }
 
         function ping(ip) {
             document.getElementById('mTitle').innerText = `⚡ ${ip} — Tarmoq Ping Tekshiruvi`;
@@ -610,10 +712,6 @@
             }
         }
 
-        function calcSubnet() {
-            showToast("Subnet parametrlari hisoblandi!");
-        }
-
         function insertLogSample() {
             document.getElementById('logBox').value = `185.220.101.5 - - [16/Oct/2026:10:15:32] "GET /wp-login.php" 403\nFailed password for root from 194.26.29.112 port 22\n45.154.255.80 - - [16/Oct/2026:10:16:01] "GET /.env" 404`;
             showToast("Namunaviy log joylandi!");
@@ -631,10 +729,6 @@
             showToast("Skript yuklab olindi!");
         }
 
-        function testTelegram() {
-            showToast("Telegram botga sinov xabari yuborildi! 📲");
-        }
-
         function refreshLan() { showToast("Tarmoq qayta skanerlandi!"); }
 
         function filterDevices(q) {
@@ -646,19 +740,20 @@
         }
 
         window.onload = () => {
-            // Leaflet Map init
+            // Leaflet Google Maps init
             map = L.map('mapBox').setView([41.2995, 69.2401], 2);
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 18 }).addTo(map);
+            currentTileLayer = mapLayers.satellite;
+            currentTileLayer.addTo(map);
 
             const pts = [
-                { lat: 50.1109, lon: 8.6821, ip: "185.220.101.5 (Frankfurt)", color: "#ff3366" },
-                { lat: 55.7558, lon: 37.6173, ip: "194.26.29.112 (Moskva)", color: "#ff3366" },
-                { lat: 52.3676, lon: 4.9041, ip: "45.154.255.80 (Amsterdam)", color: "#facc15" },
-                { lat: 41.2995, lon: 69.2401, ip: "Lokal Tarmoq (Toshkent)", color: "#00f0ff" }
+                { lat: 50.1109, lon: 8.6821, ip: "185.220.101.5 (Frankfurt - Tor Exit)", color: "#ff3366" },
+                { lat: 55.7558, lon: 37.6173, ip: "194.26.29.112 (Moskva - SSH Brute)", color: "#ff3366" },
+                { lat: 52.3676, lon: 4.9041, ip: "45.154.255.80 (Amsterdam - Exploit)", color: "#facc15" },
+                { lat: 41.2995, lon: 69.2401, ip: "Lokal Tarmoq (Toshkent Host PC)", color: "#00f0ff" }
             ];
 
             pts.forEach(p => {
-                L.circleMarker([p.lat, p.lon], { radius: 7, fillColor: p.color, color: '#fff', weight: 1.5, fillOpacity: 0.9 })
+                L.circleMarker([p.lat, p.lon], { radius: 8, fillColor: p.color, color: '#fff', weight: 2, fillOpacity: 0.95 })
                     .bindPopup(`<b>${p.ip}</b>`)
                     .addTo(map);
             });

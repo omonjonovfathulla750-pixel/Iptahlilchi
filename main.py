@@ -571,6 +571,26 @@ def api_telegram_test():
     return {"success": ok, "message": msg}
 
 
+class CustomMessagePayload(BaseModel):
+    message: str
+
+@app.post("/api/telegram/send_custom")
+def api_telegram_send_custom(payload: CustomMessagePayload):
+    text = payload.message.strip()
+    if not text:
+        return {"success": False, "message": "Xabar matni bo'sh bo'lishi mumkin emas"}
+    now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    formatted_text = (
+        f"📢 <b>ADMINISTRATOR MAXSUS XABARNOMASI</b>\n\n"
+        f"💬 <i>\"{text}\"</i>\n\n"
+        f"⏱️ <b>Vaqt:</b> {now_str}\n"
+        f"🛡️ <b>Tizim:</b> CyberNet SOC Pro Sentinel"
+    )
+    ok, msg = telegram_notifier.send_message(formatted_text)
+    return {"success": ok, "message": msg}
+
+
+
 # ========================================================
 # ⚡ 6. KESH VA TEZLIK BOSHQARUVI
 # ========================================================
