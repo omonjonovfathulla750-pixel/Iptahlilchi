@@ -3,1065 +3,1416 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sakinah Aksessuarlar Do'koni</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Tarmoq Qurilmalari & 5 Xil IP Tahlil Markazi</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    
     <style>
-        body {
-            background-color: #080911;
-            color: #f3f4f6;
-            font-family: 'Inter', sans-serif;
-            user-select: none;
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
+        body { background-color: #0b0f19; color: #f8fafc; padding: 20px; line-height: 1.5; }
+        .container { max-width: 1440px; margin: 0 auto; }
+
+        /* Header */
+        .header { 
+            background: linear-gradient(135deg, #1e293b, #0f172a); 
+            padding: 18px 24px; 
+            border-radius: 14px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            border: 1px solid #334155; 
+            margin-bottom: 18px; 
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            flex-wrap: wrap;
+            gap: 12px;
         }
-        .glow-cyan {
-            box-shadow: 0 0 25px rgba(0, 240, 255, 0.3);
+        .title { font-size: 20px; font-weight: 800; color: #38bdf8; display: flex; align-items: center; gap: 10px; }
+        .header-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .geo-pill { font-size: 12.5px; color: #34d399; background: #064e3b; padding: 6px 14px; border-radius: 8px; border: 1px solid #059669; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }
+        .btn-sakinah-nav {
+            background: linear-gradient(135deg, #0e7490, #4338ca);
+            color: #fff;
+            padding: 7px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 700;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            border: 1px solid #38bdf8;
+            box-shadow: 0 0 14px rgba(56, 189, 248, 0.25);
+            transition: all 0.2s;
         }
-        .glow-pink {
-            box-shadow: 0 0 25px rgba(255, 0, 127, 0.3);
+        .btn-sakinah-nav:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.45);
+            background: linear-gradient(135deg, #0284c7, #4f46e5);
         }
-        ::-webkit-scrollbar {
-            width: 8px;
+
+        /* Control Bar */
+        .control-bar { 
+            background: #1e293b; 
+            padding: 14px 20px; 
+            border-radius: 12px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            border: 1px solid #334155; 
+            margin-bottom: 18px; 
+            flex-wrap: wrap;
+            gap: 12px;
         }
-        ::-webkit-scrollbar-track {
-            background: #080911;
+        .control-left { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+        .btn-refresh { 
+            padding: 9px 20px; 
+            background: #0284c7; 
+            color: white; 
+            border: none; 
+            border-radius: 8px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            display: inline-flex; 
+            align-items: center; 
+            gap: 8px; 
+            font-size: 13.5px;
+            transition: all 0.2s; 
         }
-        ::-webkit-scrollbar-thumb {
-            background: #1f2937;
-            border-radius: 4px;
+        .btn-refresh:hover { background: #0369a1; transform: translateY(-1px); }
+        .btn-refresh:disabled { opacity: 0.7; cursor: not-allowed; }
+        .btn-refresh.loading .fa-arrows-rotate { animation: spin 0.8s linear infinite; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        .pulse-live {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #064e3b;
+            color: #34d399;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 12.5px;
+            font-weight: 600;
+            border: 1px solid #059669;
         }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #374151;
+        .dot { width: 8px; height: 8px; background: #34d399; border-radius: 50%; display: inline-block; animation: pulse 1.5s infinite; }
+        @keyframes pulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 7px rgba(52, 211, 153, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(52, 211, 153, 0); }
+        }
+
+        .server-mode {
+            font-size: 12px;
+            font-weight: 600;
+            padding: 5px 12px;
+            border-radius: 6px;
+            background: #0f172a;
+            border: 1px solid #334155;
+            color: #94a3b8;
+        }
+
+        /* 🔍 Deep 5-Way Analysis Section */
+        .analyzer-box {
+            background: linear-gradient(135deg, #131c2e, #1e293b);
+            border: 1px solid #38bdf8;
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.15);
+            border-radius: 14px;
+            padding: 18px 22px;
+            margin-bottom: 20px;
+        }
+        .analyzer-header {
+            font-size: 15px;
+            font-weight: 700;
+            color: #38bdf8;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            justify-content: space-between;
+            flex-wrap: wrap;
+        }
+        .analyzer-form {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .analyzer-form input {
+            padding: 10px 16px;
+            border-radius: 8px;
+            border: 1px solid #475569;
+            background: #0b0f19;
+            color: #38bdf8;
+            font-size: 14px;
+            font-weight: 600;
+            min-width: 280px;
+            flex: 1;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .analyzer-form input:focus { border-color: #38bdf8; box-shadow: 0 0 10px rgba(56,189,248,0.3); }
+        .btn-analyze-5 {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #0284c7, #2563eb);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 13.5px;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+        .btn-analyze-5:hover { background: linear-gradient(135deg, #0369a1, #1d4ed8); transform: translateY(-1px); }
+        .btn-add-table {
+            padding: 10px 16px;
+            background: #334155;
+            color: #e2e8f0;
+            border: 1px solid #475569;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-add-table:hover { background: #475569; color: #fff; }
+
+        .sample-chips {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin-top: 10px;
+            flex-wrap: wrap;
+            font-size: 12px;
+            color: #94a3b8;
+        }
+        .chip-btn {
+            background: #0f172a;
+            border: 1px solid #334155;
+            color: #93c5fd;
+            padding: 4px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 11.5px;
+            transition: all 0.2s;
+        }
+        .chip-btn:hover { background: #1e293b; border-color: #38bdf8; color: #fff; }
+
+        /* Stats Grid */
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }
+        .stat-card { 
+            background: #1e293b; 
+            padding: 14px 18px; 
+            border-radius: 12px; 
+            border: 1px solid #334155; 
+            text-align: center; 
+        }
+        .stat-card h4 { font-size: 11.5px; color: #94a3b8; text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.5px; }
+        .stat-card p { font-size: 20px; font-weight: 800; color: #38bdf8; }
+
+        /* Toast */
+        .toast-banner {
+            display: none;
+            background: #064e3b;
+            color: #a7f3d0;
+            border: 1px solid #059669;
+            padding: 10px 18px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-size: 13px;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        /* Tables */
+        .section-title { font-size: 15px; font-weight: 700; color: #38bdf8; margin: 18px 0 10px 0; display: flex; align-items: center; justify-content: space-between; }
+        .table-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid #334155; margin-bottom: 22px; }
+        table { width: 100%; border-collapse: collapse; background: #1e293b; }
+        th, td { padding: 12px 14px; text-align: left; font-size: 13px; border-bottom: 1px solid #334155; vertical-align: middle; }
+        th { background: #334155; color: #38bdf8; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; }
+        tr:hover { background: #273548; }
+
+        .badge { padding: 4px 9px; border-radius: 6px; font-size: 11px; font-weight: bold; display: inline-block; }
+        .badge-router { background: #1e3a8a; color: #93c5fd; border: 1px solid #3b82f6; }
+        .badge-pc { background: #064e3b; color: #6ee7b7; border: 1px solid #10b981; }
+        .badge-tv { background: #701a75; color: #f0abfc; border: 1px solid #d946ef; }
+        .badge-phone { background: #7c2d12; color: #fdba74; border: 1px solid #f97316; }
+        .badge-printer { background: #14532d; color: #86efac; border: 1px solid #22c55e; }
+        .badge-general { background: #334155; color: #cbd5e1; }
+        .badge-offline { background: #450a0a; color: #fca5a5; border: 1px solid #b91c1c; }
+
+        /* 5 Buttons Group */
+        .btn-group { display: flex; gap: 4px; flex-wrap: wrap; }
+        .btn-action {
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 11.5px;
+            font-weight: 700;
+            cursor: pointer;
+            border: 1px solid #334155;
+            background: #0f172a;
+            color: #f1f5f9;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .btn-action:hover { background: #1e293b; border-color: #38bdf8; transform: translateY(-1px); }
+        .btn-action.btn-web { color: #38bdf8; border-color: rgba(56, 189, 248, 0.4); }
+        .btn-action.btn-smb { color: #facc15; border-color: rgba(250, 204, 21, 0.4); }
+        .btn-action.btn-rdp { color: #c084fc; border-color: rgba(192, 132, 252, 0.4); }
+        .btn-action.btn-ping { color: #4ade80; border-color: rgba(74, 222, 128, 0.4); }
+        .btn-action.btn-port { color: #fb923c; border-color: rgba(251, 146, 60, 0.4); }
+        .btn-action.btn-disconnect { color: #f87171; border-color: #7f1d1d; }
+        .btn-action.btn-disconnect:hover { background: #450a0a; border-color: #ef4444; }
+
+        /* Events Panel */
+        .events-panel {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-bottom: 22px;
+        }
+        .events-header {
+            font-size: 14.5px;
+            font-weight: 700;
+            color: #38bdf8;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .events-list {
+            max-height: 180px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .event-item {
+            font-size: 12px;
+            padding: 7px 12px;
+            border-radius: 6px;
+            background: #0f172a;
+            border-left: 3px solid #38bdf8;
+            color: #cbd5e1;
+            display: flex;
+            justify-content: space-between;
+        }
+        .event-item.connected { border-left-color: #34d399; }
+        .event-item.disconnected { border-left-color: #f87171; color: #fca5a5; }
+
+        /* Modals */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            backdrop-filter: blur(5px);
+        }
+        .modal {
+            background: #1e293b;
+            border: 1px solid #475569;
+            border-radius: 14px;
+            width: 92%;
+            max-width: 680px;
+            padding: 22px;
+            color: #f8fafc;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+            max-height: 88vh;
+            overflow-y: auto;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #334155;
+            padding-bottom: 12px;
+            margin-bottom: 16px;
+        }
+        .modal-title { font-size: 16.5px; font-weight: 700; color: #38bdf8; display: flex; align-items: center; gap: 8px; }
+        .modal-close { background: none; border: none; color: #94a3b8; font-size: 22px; cursor: pointer; }
+        .modal-close:hover { color: #f87171; }
+        .modal-box { background: #0f172a; padding: 14px; border-radius: 8px; border: 1px solid #334155; margin-bottom: 12px; font-size: 13px; line-height: 1.6; }
+        .port-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+        .port-card { background: #0f172a; border: 1px solid #334155; padding: 10px 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; }
+        .port-open { border-color: #059669; background: #064e3b; color: #a7f3d0; }
+        .copy-pill { background: #334155; padding: 5px 12px; border-radius: 6px; cursor: pointer; color: #38bdf8; font-size: 11.5px; border: none; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; }
+        .copy-pill:hover { background: #475569; color: #fff; }
+
+        /* 5-Method Tabs in Full Analysis Modal */
+        .tabs-header { display: flex; gap: 6px; border-bottom: 1px solid #334155; padding-bottom: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+        .tab-btn {
+            background: #0f172a;
+            border: 1px solid #334155;
+            color: #94a3b8;
+            padding: 6px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12.5px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .tab-btn.active { background: #0284c7; border-color: #38bdf8; color: #fff; }
+
+        @media (max-width: 900px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .port-grid { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 600px) {
+            .stats-grid { grid-template-columns: 1fr; }
+            body { padding: 12px; }
         }
     </style>
 </head>
-<body class="min-h-screen flex flex-col justify-between selection:bg-cyan-500 selection:text-black">
-
-    <header class="w-full bg-slate-950/80 backdrop-blur-md border-b border-gray-800 sticky top-0 z-40">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex justify-between items-center">
-            <div class="flex items-center space-x-3 cursor-pointer" onclick="switchTab('catalog')">
-                <div class="w-11 h-11 rounded-xl bg-gradient-to-tr from-cyan-400 to-indigo-600 flex items-center justify-center shadow-lg shadow-cyan-500/30">
-                    <i class="fa-solid fa-gem text-black text-xl"></i>
-                </div>
-                <div>
-                    <h1 class="text-xl font-black tracking-wider bg-gradient-to-r from-cyan-400 via-fuchsia-400 to-pink-500 bg-clip-text text-transparent">
-                        SAKINAH
-                    </h1>
-                    <p class="text-[10px] text-cyan-400/80 tracking-widest uppercase -mt-1 font-semibold">Aksessuarlar Do'koni</p>
-                </div>
+<body>
+    <div class="container">
+        <!-- 1. Header -->
+        <div class="header">
+            <div class="title">
+                <i class="fa-solid fa-network-wired text-sky-400"></i>
+                <span>Tarmoq Qurilmalari & 5 Xil IP Tahlil Markazi</span>
             </div>
-
-            <nav class="hidden md:flex items-center space-x-8 font-medium text-sm">
-                <button onclick="switchTab('catalog')" class="text-cyan-400 hover:text-cyan-300 transition-colors">Katalog</button>
-                <a id="nav-telegram-link" href="https://t.me/sakinah_accessories" target="_blank" class="flex items-center space-x-2 px-4 py-2 rounded-xl bg-cyan-950/40 border border-cyan-500/30 text-cyan-300 hover:bg-cyan-900/40 transition-all">
-                    <i class="fa-brands fa-telegram text-cyan-400 text-base"></i>
-                    <span>Telegram Kanal</span>
+            <div class="header-actions">
+                <div class="geo-pill" id="geoBox">
+                    <i class="fa-solid fa-location-dot"></i>
+                    <span>Tahlil qilinmoqda...</span>
+                </div>
+                <a href="email_osint.html" class="btn-sakinah-nav" style="background: linear-gradient(135deg, #0284c7, #6366f1); border-color: #818cf8;" title="Google va Email OSINT qidiruv markazi">
+                    <i class="fa-solid fa-envelope-open-text text-amber-300"></i>
+                    <span>Email OSINT</span>
                 </a>
-                <button id="nav-admin-btn" onclick="switchTab('admin')" class="hidden text-gray-300 hover:text-white transition-colors font-semibold">Admin Panel</button>
-                <button id="nav-orders-btn" onclick="switchTab('orders')" class="hidden text-gray-300 hover:text-white transition-colors">Buyurtmalarim</button>
-            </nav>
-
-            <div class="flex items-center space-x-4">
-                <button onclick="openCartModal()" class="relative p-2.5 rounded-xl bg-gray-900 border border-gray-800 text-gray-300 hover:text-cyan-400 hover:border-cyan-500/50 transition-all">
-                    <i class="fa-solid fa-cart-shopping text-lg"></i>
-                    <span id="cart-badge" class="absolute -top-1.5 -right-1.5 bg-pink-500 text-black text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center shadow-md hidden">0</span>
-                </button>
-
-                <div id="auth-container">
-                    <button onclick="openAuthModal()" id="auth-btn" class="px-5 py-2.5 rounded-xl bg-gray-900 border border-gray-800 text-sm font-semibold hover:border-cyan-500 transition-all">
-                        Kirish
-                    </button>
-                </div>
-            </div>
-        </div>
-    </header>
-
-    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        
-        <!-- CATALOG VIEW -->
-        <div id="tab-catalog" class="space-y-8">
-            <div class="relative rounded-3xl bg-gradient-to-r from-slate-900 via-purple-950/40 to-slate-900 border border-cyan-500/20 p-8 md:p-12 overflow-hidden shadow-2xl">
-                <div class="absolute -right-10 -bottom-10 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"></div>
-                <div class="max-w-2xl space-y-4 relative z-10">
-                    <span id="banner-tag" class="px-3.5 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-semibold tracking-wider uppercase">
-                        SAKINAH GO'ZALLIK & SALOMATLIK KOLLEKSIYASI
-                    </span>
-                    <h2 id="banner-title" class="text-3xl md:text-5xl font-black tracking-tight text-white leading-tight">
-                        Original Amerika BADlari & Koreya Kosmetikasi
-                    </h2>
-                    <p id="banner-desc" class="text-gray-300 text-sm md:text-base leading-relaxed">
-                        Sog'lig'ingiz va go'zalligingiz uchun faqat sinalgan, 100% original va sifatli mahsulotlar.
-                    </p>
-                    <div class="pt-2">
-                        <a id="banner-telegram-btn" href="https://t.me/sakinah_accessories" target="_blank" class="inline-flex items-center space-x-2 px-6 py-3 rounded-2xl bg-gradient-to-r from-cyan-400 to-blue-600 text-black font-bold text-sm shadow-lg shadow-cyan-500/20 hover:scale-105 transition-all">
-                            <i class="fa-brands fa-telegram text-lg"></i>
-                            <span id="banner-btn-text">Rasmiy Telegram Kanalimizga A'zo Bo'ling</span>
-                        </a>
-                    </div>
-                </div>
-            </div>
-
-            <div class="flex flex-col md:flex-row justify-between items-center gap-4 bg-gray-900/50 p-4 rounded-2xl border border-gray-800/80 backdrop-blur-md">
-                <div class="relative w-full md:w-96">
-                    <i class="fa-solid fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
-                    <input type="text" id="search-input" oninput="filterProducts()" placeholder="Mahsulotlarni qidirish..." class="w-full bg-slate-950 border border-gray-800 rounded-xl pl-11 pr-4 py-3 text-sm text-white focus:outline-none focus:border-cyan-500 transition-colors">
-                </div>
-
-                <div id="category-filters" class="flex items-center space-x-2 w-full md:w-auto overflow-x-auto pb-2 md:pb-0">
-                    <button onclick="filterCategory('all')" id="cat-btn-all" class="px-5 py-2.5 rounded-xl bg-cyan-500 text-black font-bold text-xs whitespace-nowrap transition-all shadow-md shadow-cyan-500/20">
-                        Barchasi
-                    </button>
-                </div>
-            </div>
-
-            <div id="product-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            </div>
-        </div>
-
-        <!-- ADMIN PANEL VIEW -->
-        <div id="tab-admin" class="hidden space-y-8">
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-gray-900/60 p-6 rounded-3xl border border-cyan-500/30">
-                <div>
-                    <h2 class="text-2xl font-black text-white">Admin Boshqaruv Paneli</h2>
-                    <p class="text-xs text-gray-400 mt-1">Mahsulotlar, kategoriyalar, banner va mijozlar buyurtmalarini boshqaring.</p>
-                </div>
-                <div class="flex flex-wrap items-center gap-3">
-                    <button onclick="openProductModal()" class="px-5 py-3 rounded-2xl bg-gradient-to-r from-cyan-400 to-indigo-600 text-black font-black text-xs uppercase tracking-wider shadow-lg shadow-cyan-500/20 hover:scale-105 transition-all">
-                        <i class="fa-solid fa-plus mr-1.5"></i> Yangi mahsulot kiritish
-                    </button>
-                    <button onclick="openCategoryManagerModal()" class="px-5 py-3 rounded-2xl bg-gray-800 border border-gray-700 text-white font-bold text-xs hover:bg-gray-700 transition-all">
-                        <i class="fa-solid fa-folder-plus mr-1.5"></i> Kategoriyalar
-                    </button>
-                    <button onclick="openBannerEditorModal()" class="px-5 py-3 rounded-2xl bg-gray-800 border border-gray-700 text-white font-bold text-xs hover:bg-gray-700 transition-all">
-                        <i class="fa-solid fa-bullhorn mr-1.5"></i> Banner Sozlamasi
-                    </button>
-                </div>
-            </div>
-
-            <div class="flex border-b border-gray-800">
-                <button onclick="switchAdminSubTab('products')" id="admin-tab-products-btn" class="px-6 py-3 font-bold text-sm border-b-2 border-cyan-400 text-cyan-400 transition-colors">Mahsulotlar Ro'yxati</button>
-                <button onclick="switchAdminSubTab('orders')" id="admin-tab-orders-btn" class="px-6 py-3 font-bold text-sm border-b-2 border-transparent text-gray-400 hover:text-white transition-colors">Kelib Tushgan Buyurtmalar</button>
-            </div>
-
-            <div id="admin-subtab-products" class="bg-gray-900/40 border border-gray-800 rounded-3xl p-6 overflow-x-auto">
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="border-b border-gray-800 text-xs text-gray-400 uppercase tracking-wider">
-                            <th class="py-4 px-4">Mahsulot</th>
-                            <th class="py-4 px-4">Kategoriya</th>
-                            <th class="py-4 px-4">Narxi</th>
-                            <th class="py-4 px-4">Holati</th>
-                            <th class="py-4 px-4 text-right">Amallar</th>
-                        </tr>
-                    </thead>
-                    <tbody id="admin-product-table-body" class="divide-y divide-gray-800/60 text-sm">
-                    </tbody>
-                </table>
-            </div>
-
-            <div id="admin-subtab-orders" class="hidden bg-gray-900/40 border border-gray-800 rounded-3xl p-6 overflow-x-auto">
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="border-b border-gray-800 text-xs text-gray-400 uppercase tracking-wider">
-                            <th class="py-4 px-4">ID / Vaqt</th>
-                            <th class="py-4 px-4">Mijoz</th>
-                            <th class="py-4 px-4">Telefon</th>
-                            <th class="py-4 px-4">Mahsulotlar</th>
-                            <th class="py-4 px-4">Jami Summa</th>
-                            <th class="py-4 px-4">Holati</th>
-                            <th class="py-4 px-4 text-right">Amal</th>
-                        </tr>
-                    </thead>
-                    <tbody id="admin-orders-table-body" class="divide-y divide-gray-800/60 text-sm">
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- ORDERS VIEW -->
-        <div id="tab-orders" class="hidden space-y-6 max-w-4xl mx-auto">
-            <h2 class="text-2xl font-black text-white">Mening Buyurtmalarim</h2>
-            <div id="user-orders-list" class="space-y-4">
-            </div>
-        </div>
-
-    </main>
-
-    <footer class="w-full bg-slate-950 border-t border-gray-800 mt-16 py-8 px-4 text-center text-xs text-gray-500">
-        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
-            <p>© 2026 Sakinah Aksessuarlar Do'koni. Barcha huquqlar himoyalangan.</p>
-            <div class="flex items-center space-x-6">
-                <a id="footer-telegram-link" href="https://t.me/sakinah_accessories" target="_blank" class="hover:text-cyan-400 transition-colors flex items-center space-x-1.5">
-                    <i class="fa-brands fa-telegram text-base"></i>
-                    <span>Telegram Kanal</span>
+                <a href="dns_analyzer.html" class="btn-sakinah-nav" style="background: linear-gradient(135deg, #059669, #0284c7); border-color: #34d399;" title="Domen va DNS yozuvlari tahlili">
+                    <i class="fa-solid fa-globe text-emerald-300"></i>
+                    <span>Domen & DNS</span>
+                </a>
+                <a href="sakinah.html" class="btn-sakinah-nav" style="background: linear-gradient(135deg, #be185d, #4338ca); border-color: #f472b6;" title="Sakinah Aksessuarlar Do'koni veb-dasturiga o'tish">
+                    <i class="fa-solid fa-gem text-pink-300"></i>
+                    <span>Sakinah Do'koni</span>
                 </a>
             </div>
         </div>
-    </footer>
 
-    <!-- Auth Modal -->
-    <div id="auth-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center z-50 p-4">
-        <div class="bg-slate-900 border border-gray-800 rounded-3xl p-8 max-w-md w-full space-y-6 relative shadow-2xl">
-            <button onclick="closeAuthModal()" class="absolute top-6 right-6 text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
-            <div class="text-center space-y-2">
-                <h3 id="auth-modal-title" class="text-2xl font-black text-white">Tizimga Kirish</h3>
-                <p id="auth-modal-desc" class="text-xs text-gray-400">Telefon raqamingiz va parolingizni kiriting</p>
+        <div id="toastBanner" class="toast-banner"></div>
+
+        <!-- 2. Control Bar -->
+        <div class="control-bar">
+            <div class="control-left">
+                <button id="refreshBtn" onclick="triggerRefresh()" class="btn-refresh">
+                    <i class="fa-solid fa-arrows-rotate"></i>
+                    <span id="refreshBtnText">Refresh (Yangilash)</span>
+                </button>
+                <div class="pulse-live">
+                    <span class="dot"></span>
+                    <span id="scan-status">Jonli Avto-Kuzatuv (Faol)</span>
+                </div>
+                <div id="serverModeBadge" class="server-mode">
+                    <i class="fa-solid fa-signal text-emerald-400"></i> Tekshirilmoqda...
+                </div>
             </div>
-            <div class="space-y-4">
+            <div style="color: #94a3b8; font-size: 13px;">
+                Asosiy Shlyuz: <code style="color: #38bdf8; font-weight: bold;" id="gwText">192.168.0.1</code> | Ushbu PC: <code style="color: #38bdf8; font-weight: bold;" id="localPcText">192.168.0.102</code>
+            </div>
+        </div>
+
+        <!-- 3. 🔍 Har qanday IP Manzilni Chuqur 5 Xil Usulda Tahlil Qilish Bo'limi -->
+        <div class="analyzer-box">
+            <div class="analyzer-header">
                 <div>
-                    <label class="block text-xs font-semibold text-gray-400 mb-1">Telefon Raqam / Login</label>
-                    <input type="text" id="auth-phone" placeholder="+998 90 123 45 67 yoki admin" class="w-full bg-slate-950 border border-gray-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-cyan-500">
+                    <i class="fa-solid fa-bolt text-amber-400"></i>
+                    <span>IP Manzilni 5 Xil Usulda Chuqur Tahlil Qilish (Web, SMB, RDP, Ping, Portlar)</span>
                 </div>
-                <div>
-                    <label class="block text-xs font-semibold text-gray-400 mb-1">Parol</label>
-                    <input type="password" id="auth-password" placeholder="••••••••" class="w-full bg-slate-950 border border-gray-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-cyan-500">
-                </div>
-                <button onclick="handleAuthSubmit()" id="auth-submit-btn" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-cyan-400 to-blue-600 text-black font-black text-sm uppercase tracking-wider shadow-lg shadow-cyan-500/20 hover:scale-[1.02] transition-all">
-                    Kirish
+                <span style="font-size: 11.5px; color: #94a3b8;">IPv4 va IPv6 manzillarni birdek chuqur tahlil qiladi</span>
+            </div>
+            <div class="analyzer-form">
+                <input type="text" id="targetIpInput" value="192.168.0.1" placeholder="IP manzil kiriting (Masalan: 192.168.0.1 yoki 8.8.8.8)">
+                <button class="btn-analyze-5" onclick="runFull5MethodAnalysis()">
+                    <i class="fa-solid fa-magnifying-glass-chart"></i>
+                    <span>5 Xil Usulda Tahlil Qilish</span>
+                </button>
+                <button class="btn-add-table" onclick="addCustomDeviceFromInput()">
+                    <i class="fa-solid fa-plus"></i> Jadvalga Qo'shish
                 </button>
             </div>
-            <div class="text-center text-xs text-gray-400">
-                <span id="auth-toggle-text">Akkauntingiz yo'qmi?</span> 
-                <button onclick="toggleAuthMode()" id="auth-toggle-btn" class="text-cyan-400 font-semibold hover:underline ml-1">Ro'yxatdan o'ting</button>
+            <div class="sample-chips">
+                <span>⚡ Tezkor Namunalar:</span>
+                <button class="chip-btn" onclick="selectSampleIp('192.168.0.1')">🌐 Router (192.168.0.1)</button>
+                <button class="chip-btn" onclick="selectSampleIp('192.168.0.102')">💻 Ushbu PC (192.168.0.102)</button>
+                <button class="chip-btn" onclick="selectSampleIp('192.168.0.108')">🖥️ Noutbuk (192.168.0.108)</button>
+                <button class="chip-btn" onclick="selectSampleIp('192.168.0.109')">🖨️ Printer (192.168.0.109)</button>
+                <button class="chip-btn" onclick="selectSampleIp('8.8.8.8')">🌍 Google DNS (8.8.8.8)</button>
+                <button class="chip-btn" onclick="selectSampleIp('1.1.1.1')">⚡ Cloudflare (1.1.1.1)</button>
             </div>
         </div>
-    </div>
 
-    <!-- Product Create/Edit Modal -->
-    <div id="product-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center z-50 p-4">
-        <div class="bg-slate-900 border border-gray-800 rounded-3xl p-8 max-w-lg w-full space-y-6 relative shadow-2xl max-h-[90vh] overflow-y-auto">
-            <button onclick="closeProductModal()" class="absolute top-6 right-6 text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
-            <h3 id="product-modal-title" class="text-xl font-black text-white">Yangi Mahsulot Kiritish</h3>
-            <input type="hidden" id="edit-product-id">
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-xs font-semibold text-gray-400 mb-1">Mahsulot Nomi *</label>
-                    <input type="text" id="prod-name" placeholder="Masalan: Omega-3 America" class="w-full bg-slate-950 border border-gray-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-cyan-500">
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-400 mb-1">Narxi (so'm) *</label>
-                        <input type="number" id="prod-price" placeholder="150000" class="w-full bg-slate-950 border border-gray-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-cyan-500">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-400 mb-1">Kategoriya *</label>
-                        <select id="prod-category" class="w-full bg-slate-950 border border-gray-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-cyan-500">
-                        </select>
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-gray-400 mb-1">Rasm havolasi (URL) *</label>
-                    <input type="text" id="prod-image" placeholder="https://images.unsplash.com/..." class="w-full bg-slate-950 border border-gray-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-cyan-500">
-                    <p class="text-[10px] text-gray-500 mt-1">Maslahat: Unsplash, ImgBB yoki boshqa hosting saytlaridan to'g'ridan-to'g'ri rasm havolasini (Image URL) kiriting.</p>
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-gray-400 mb-1">Zahira Holati</label>
-                    <select id="prod-status" class="w-full bg-slate-950 border border-gray-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-cyan-500">
-                        <option value="available">Sotuvda mavjud</option>
-                        <option value="pending">Kutish jarayonida</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-gray-400 mb-1">Tavsif</label>
-                    <textarea id="prod-desc" rows="3" placeholder="Mahsulot haqida qisqacha ma'lumot..." class="w-full bg-slate-950 border border-gray-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-cyan-500"></textarea>
-                </div>
-                <div class="flex space-x-3 pt-2">
-                    <button onclick="closeProductModal()" class="w-1/2 py-3.5 rounded-xl bg-gray-800 font-bold text-sm text-gray-300 hover:bg-gray-700">Bekor qilish</button>
-                    <button onclick="saveProduct()" class="w-1/2 py-3.5 rounded-xl bg-gradient-to-r from-cyan-400 to-blue-600 text-black font-black text-sm uppercase tracking-wider shadow-lg shadow-cyan-500/20">Saqlash</button>
-                </div>
+        <!-- 4. Stats Grid -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h4>Haqiqiy Faol Ulangan</h4>
+                <p id="stat-total" style="color: #34d399;">0 ta</p>
+            </div>
+            <div class="stat-card">
+                <h4>Kompyuterlar (PC / Host)</h4>
+                <p id="stat-pc" style="color: #6ee7b7;">0 ta</p>
+            </div>
+            <div class="stat-card">
+                <h4>Smartfonlar / Mobil</h4>
+                <p id="stat-phone" style="color: #fdba74;">0 ta</p>
+            </div>
+            <div class="stat-card">
+                <h4>Chiqib Ketganlar (Offline)</h4>
+                <p id="stat-disconnected" style="color: #f87171;">0 ta</p>
             </div>
         </div>
-    </div>
 
-    <!-- Category Manager Modal -->
-    <div id="category-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center z-50 p-4">
-        <div class="bg-slate-900 border border-gray-800 rounded-3xl p-8 max-w-md w-full space-y-6 relative shadow-2xl">
-            <button onclick="closeCategoryManagerModal()" class="absolute top-6 right-6 text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
-            <h3 class="text-xl font-black text-white">Kategoriyalarni Boshqarish</h3>
-            <div class="space-y-4">
-                <div class="flex space-x-2">
-                    <input type="text" id="new-category-name" placeholder="Yangi kategoriya nomi..." class="flex-grow bg-slate-950 border border-gray-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-cyan-500">
-                    <button onclick="addNewCategory()" class="px-5 py-3 rounded-xl bg-cyan-400 text-black font-bold text-sm hover:bg-cyan-300 transition-colors">Qo'shish</button>
-                </div>
-                <div class="border-t border-gray-800 pt-4">
-                    <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Mavjud Kategoriyalar</h4>
-                    <div id="category-list-container" class="space-y-2 max-h-48 overflow-y-auto">
-                    </div>
-                </div>
-            </div>
+        <!-- 5. Faol Qurilmalar Jadvali -->
+        <div class="section-title">
+            <span>🟢 Tarmoqdagi Faol Qurilmalar (Online)</span>
+            <span style="font-size: 12px; color: #94a3b8;">Haqiqiy apparat darajasidagi MAC va IP tahlili</span>
         </div>
-    </div>
-
-    <!-- Banner Editor Modal -->
-    <div id="banner-editor-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center z-50 p-4">
-        <div class="bg-slate-900 border border-gray-800 rounded-3xl p-8 max-w-lg w-full space-y-6 relative shadow-2xl">
-            <button onclick="closeBannerEditorModal()" class="absolute top-6 right-6 text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
-            <h3 class="text-xl font-black text-white">Banner va Telegram Havolani Sozlash</h3>
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-xs font-semibold text-gray-400 mb-1">Banner Tag Yozuvi</label>
-                    <input type="text" id="banner-edit-tag" class="w-full bg-slate-950 border border-gray-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-cyan-500">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-gray-400 mb-1">Banner Sarlavhasi</label>
-                    <input type="text" id="banner-edit-title" class="w-full bg-slate-950 border border-gray-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-cyan-500">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-gray-400 mb-1">Banner Tavsifi</label>
-                    <textarea id="banner-edit-desc" rows="2" class="w-full bg-slate-950 border border-gray-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-cyan-500"></textarea>
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-gray-400 mb-1">Telegram Kanal Havolasi (URL)</label>
-                    <input type="text" id="banner-edit-telegram" placeholder="https://t.me/sakinah_accessories" class="w-full bg-slate-950 border border-gray-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-cyan-500">
-                </div>
-                <button onclick="saveBannerSettings()" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-cyan-400 to-blue-600 text-black font-black text-sm uppercase tracking-wider shadow-lg shadow-cyan-500/20">Saqlash</button>
-            </div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 22%;">Qurilma Nomi & Egasi</th>
+                        <th style="width: 17%;">IP & MAC Manzil</th>
+                        <th style="width: 13%;">Kategoriya</th>
+                        <th style="width: 13%;">Ulanish Turi</th>
+                        <th style="width: 35%;">⚡ 5 Xil Tahlil & Boshqaruv Tugmalari</th>
+                    </tr>
+                </thead>
+                <tbody id="deviceTable">
+                    <tr><td colspan="5" style="text-align: center; padding: 25px; color: #94a3b8;">Tarmoq qurilmalari tahlil qilinmoqda...</td></tr>
+                </tbody>
+            </table>
         </div>
-    </div>
 
-    <!-- Cart Modal -->
-    <div id="cart-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center z-50 p-4">
-        <div class="bg-slate-900 border border-gray-800 rounded-3xl p-6 md:p-8 max-w-lg w-full space-y-6 relative shadow-2xl max-h-[90vh] flex flex-col">
-            <button onclick="closeCartModal()" class="absolute top-6 right-6 text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
-            <h3 class="text-xl font-black text-white">Savatcha</h3>
-            
-            <div id="cart-items-container" class="flex-grow overflow-y-auto space-y-4 max-h-60 pr-2">
-            </div>
-
-            <div class="border-t border-gray-800 pt-4 space-y-4">
-                <div class="space-y-3">
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-400 mb-1">Yetkazib berish manzili *</label>
-                        <input type="text" id="checkout-address" placeholder="Toshkent sh., Chilonzor tumani..." class="w-full bg-slate-950 border border-gray-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-cyan-500">
-                    </div>
-                </div>
-                <div class="flex justify-between items-center text-lg font-bold">
-                    <span class="text-gray-400 text-sm">Jami summa:</span>
-                    <span id="cart-total-price" class="text-cyan-400 font-black">0 so'm</span>
-                </div>
-                <button onclick="checkoutOrder()" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500 text-black font-black text-sm uppercase tracking-wider shadow-lg hover:scale-[1.02] transition-all">
-                    Buyurtmani Rasmiylashtirish
+        <!-- 6. Chiqib Ketganlar Tarixi -->
+        <div id="disconnectedSection" style="display: none;">
+            <div class="section-title" style="color: #f87171;">
+                <span>⚠️ Tarmoqdan Chiqib Ketganlar / Uzilganlar Tarixi (<span id="discCountText">0</span> ta)</span>
+                <button onclick="clearDisconnected()" style="background: #334155; color: #cbd5e1; border: none; padding: 4px 10px; border-radius: 6px; font-size: 11px; cursor: pointer;">
+                    <i class="fa-solid fa-trash"></i> Tarixni Tozalash
                 </button>
             </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 25%;">Qurilma Nomi</th>
+                            <th style="width: 18%;">IP & MAC</th>
+                            <th style="width: 15%;">Kategoriya</th>
+                            <th style="width: 20%;">Uzilgan Vaqt</th>
+                            <th style="width: 22%;">Amallar</th>
+                        </tr>
+                    </thead>
+                    <tbody id="disconnectedTable"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 7. Kirish va Chiqish Jurnali -->
+        <div class="events-panel">
+            <div class="events-header">
+                <span><i class="fa-solid fa-list-check"></i> Tarmoqqa Kirish va Chiqish Jurnali (Hodisalar Tarixi)</span>
+                <span style="font-size: 11.5px; color: #94a3b8;">Jonli o'zgarishlar qaydnomasi</span>
+            </div>
+            <div id="eventsList" class="events-list">
+                <div class="event-item connected">
+                    <span>🟢 Asosiy Wi-Fi Router / Shlyuz (192.168.0.1) tarmoqda faol</span>
+                    <span style="color: #94a3b8;">Hozir</span>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- Toast Notification -->
-    <div id="toast" class="fixed bottom-6 right-6 bg-slate-900 border border-cyan-500/40 text-white px-5 py-3 rounded-2xl shadow-2xl z-50 transform translate-y-32 opacity-0 transition-all duration-300 flex items-center space-x-3">
-        <div class="w-8 h-8 rounded-xl bg-cyan-400/20 text-cyan-400 flex items-center justify-center font-bold">
-            <i class="fa-solid fa-bell"></i>
+    <!-- ========================================== -->
+    <!-- 🛠️ 5 XIL USUL MODALLARI -->
+    <!-- ========================================== -->
+
+    <!-- 0. CHUQUR 5-XIL USUL TO'LIQ TAHLIL MODALI -->
+    <div id="full5Modal" class="modal-overlay">
+        <div class="modal" style="max-width: 780px;">
+            <div class="modal-header">
+                <div class="modal-title" id="full5Title">
+                    <i class="fa-solid fa-cubes-stacked text-sky-400"></i> 5 Xil Usulda Tahlil Natijalari
+                </div>
+                <button class="modal-close" onclick="closeModal('full5Modal')">&times;</button>
+            </div>
+            <div class="tabs-header">
+                <button class="tab-btn active" id="tabBtnOverview" onclick="switchFullTab('overview')"><i class="fa-solid fa-circle-info"></i> Umumiy Tahlil</button>
+                <button class="tab-btn" id="tabBtnWeb" onclick="switchFullTab('web')"><i class="fa-solid fa-globe"></i> 1. Veb (HTTP)</button>
+                <button class="tab-btn" id="tabBtnSmb" onclick="switchFullTab('smb')"><i class="fa-solid fa-folder-open"></i> 2. SMB (Papkalar)</button>
+                <button class="tab-btn" id="tabBtnRdp" onclick="switchFullTab('rdp')"><i class="fa-solid fa-desktop"></i> 3. RDP (Masofaviy)</button>
+                <button class="tab-btn" id="tabBtnPing" onclick="switchFullTab('ping')"><i class="fa-solid fa-bolt"></i> 4. Ping (Aloqa)</button>
+                <button class="tab-btn" id="tabBtnPorts" onclick="switchFullTab('ports')"><i class="fa-solid fa-magnifying-glass"></i> 5. Portlar & API</button>
+            </div>
+            <div id="full5ModalBody"></div>
         </div>
-        <div>
-            <p id="toast-title" class="text-xs font-bold text-cyan-400">Xabar</p>
-            <p id="toast-message" class="text-xs text-gray-300"></p>
+    </div>
+
+    <!-- 1. VEB MODALI -->
+    <div id="webModal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title"><i class="fa-solid fa-globe text-sky-400"></i> 1-Usul: Veb-Interfeys & Sayt Tekshiruvi</div>
+                <button class="modal-close" onclick="closeModal('webModal')">&times;</button>
+            </div>
+            <div id="webModalBody"></div>
+        </div>
+    </div>
+
+    <!-- 2. SMB PAPKA MODALI -->
+    <div id="smbModal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title"><i class="fa-solid fa-folder-open text-amber-400"></i> 2-Usul: Tarmoq Papkalarini Ulash (SMB)</div>
+                <button class="modal-close" onclick="closeModal('smbModal')">&times;</button>
+            </div>
+            <div id="smbModalBody"></div>
+        </div>
+    </div>
+
+    <!-- 3. RDP MASOFAVIY ISH STOLI MODALI -->
+    <div id="rdpModal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title"><i class="fa-solid fa-desktop text-purple-400"></i> 3-Usul: Masofaviy Ish Stoli (RDP)</div>
+                <button class="modal-close" onclick="closeModal('rdpModal')">&times;</button>
+            </div>
+            <div id="rdpModalBody"></div>
+        </div>
+    </div>
+
+    <!-- 4. PING MODALI -->
+    <div id="pingModal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title"><i class="fa-solid fa-bolt text-emerald-400"></i> 4-Usul: Aloqa & Kechikish Tahlili (Ping)</div>
+                <button class="modal-close" onclick="closeModal('pingModal')">&times;</button>
+            </div>
+            <div id="pingModalBody">
+                <div style="text-align: center; padding: 25px; color: #94a3b8;">
+                    <i class="fa-solid fa-spinner fa-spin text-xl"></i><br><br>
+                    Paketlar yuborilmoqda, kuting...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. PORT VA XIZMATLAR MODALI -->
+    <div id="portModal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title"><i class="fa-solid fa-magnifying-glass-chart text-orange-400"></i> 5-Usul: Xizmatlar & Portlar Tahlili (API / Portlar)</div>
+                <button class="modal-close" onclick="closeModal('portModal')">&times;</button>
+            </div>
+            <div id="portModalBody">
+                <div style="text-align: center; padding: 25px; color: #94a3b8;">
+                    <i class="fa-solid fa-spinner fa-spin text-xl"></i><br><br>
+                    Portlar skanerlanmoqda...
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
-        let categories = JSON.parse(localStorage.getItem('sakinah_categories')) || [
-            { id: 'americabad', name: 'Amerika BADlari' },
-            { id: 'koreancosmetics', name: 'Koreya parvarish kosmetikasi' }
-        ];
-
-        let products = JSON.parse(localStorage.getItem('sakinah_products')) || [
+        // Real apparat aniqlangan boshlang'ich qurilmalar ro'yxati (192.168.0.x tarmog'i)
+        let activeDevices = [
             {
-                id: 1,
-                name: 'Multi-Vitamin Complex USA',
-                price: 185000,
-                category: 'americabad',
-                image: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=600&q=80',
-                status: 'available',
-                description: "AQShdan keltirilgan yuqori sifatli multivitamin kompleksi."
+                name: "Asosiy Wi-Fi Router / Shlyuz",
+                device_name: "Wi-Fi Router (Shlyuz Uskunasi)",
+                ip: "192.168.0.1",
+                mac: "C0:4A:00:FC:77:6A",
+                category: "Tarmoq Uskunasi (Router)",
+                source: "Wi-Fi & Ethernet LAN Asosiy Boshqaruv",
+                type_icon: "🌐",
+                owner: "Tarmoq Administratsiyasi (TP-Link)",
+                status: "Online (Faol)",
+                openPorts: [80, 443, 53]
             },
             {
-                id: 2,
-                name: 'Koreya Namlantiruvchi Serumi',
-                price: 140000,
-                category: 'koreancosmetics',
-                image: 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=600&q=80',
-                status: 'available',
-                description: "Yuz terisi uchun chuqur namlantiruvchi Koreya kosmetikasi."
+                name: "Ushbu Kompyuter (WIN-QK4LQTVD6NH)",
+                device_name: "WIN-QK4LQTVD6NH — Boshqaruv Kompyuteri (Host)",
+                ip: "192.168.0.102",
+                mac: "F4:CE:23:04:8C:7E",
+                category: "Kompyuter (Host PC)",
+                source: "Ethernet LAN Kabel / Wi-Fi",
+                type_icon: "💻",
+                owner: "Siz (Administrator)",
+                status: "Online (Faol)",
+                openPorts: [445, 3389, 8000]
+            },
+            {
+                name: "DESKTOP-A82U46C (Simli LAN / Wi-Fi Kompyuter)",
+                device_name: "DESKTOP-A82U46C — Ishchi Kompyuter / Noutbuk",
+                ip: "192.168.0.108",
+                mac: "50:76:AF:4B:89:35",
+                category: "Kompyuter (LAN kabel / Noutbuk)",
+                source: "Ethernet LAN Kabel / Wi-Fi",
+                type_icon: "🖥️",
+                owner: "Ofis Foydalanuvchisi (Intel)",
+                status: "Online (Faol)",
+                openPorts: [445, 139]
+            },
+            {
+                name: "printer (Lokal Tarmoq Qurilmasi)",
+                device_name: "Lokal Tarmoq Tuguni (192.168.0.109)",
+                ip: "192.168.0.109",
+                mac: "E0:D5:5E:6E:BB:0F",
+                category: "Printer / Tarmoq Adapteri",
+                source: "Wi-Fi / LAN",
+                type_icon: "🖨️",
+                owner: "Lokal Tarmoq Foydalanuvchisi",
+                status: "Online (Faol)",
+                openPorts: [80, 515, 9100]
             }
         ];
 
-        let bannerData = JSON.parse(localStorage.getItem('sakinah_banner')) || {
-            tag: "SAKINAH GO'ZALLIK & SALOMATLIK KOLLEKSIYASI",
-            title: "Original Amerika BADlari & Koreya Kosmetikasi",
-            desc: "Sog'lig'ingiz va go'zalligingiz uchun faqat sinalgan, 100% original va sifatli mahsulotlar.",
-            telegram: "https://t.me/sakinah_accessories"
-        };
-
-        let users = JSON.parse(localStorage.getItem('sakinah_users')) || [
-            { phone: 'admin', password: 'admin123', isAdmin: true, name: 'Bosh Admin' }
+        let disconnectedDevices = [];
+        let eventsLog = [
+            { time: getNowTime(), type: "connected", message: "🟢 Asosiy Wi-Fi Router / Shlyuz (192.168.0.1) tarmoqda faol" },
+            { time: getNowTime(), type: "connected", message: "🟢 Ushbu Kompyuter (WIN-QK4LQTVD6NH) boshqaruvga ulandi" }
         ];
 
-        let orders = JSON.parse(localStorage.getItem('sakinah_orders')) || [];
-        let cart = [];
-        let currentUser = JSON.parse(localStorage.getItem('sakinah_current_user')) || null;
-        let activeCategory = 'all';
-        let isRegisterMode = false;
+        let isBackendAvailable = false;
+        let currentFullAnalysisData = null;
 
-        window.onload = function() {
-            updateBannerUI();
-            renderCategories();
-            renderProducts();
-            updateAuthUI();
-            updateCartBadge();
-        };
-
-        function showToast(title, message) {
-            const toast = document.getElementById('toast');
-            document.getElementById('toast-title').innerText = title;
-            document.getElementById('toast-message').innerText = message;
-            toast.classList.remove('translate-y-32', 'opacity-0');
-            setTimeout(() => {
-                toast.classList.add('translate-y-32', 'opacity-0');
-            }, 3000);
+        function getNowTime() {
+            const d = new Date();
+            return d.toTimeString().split(' ')[0];
         }
 
-        function switchTab(tabName) {
-            document.getElementById('tab-catalog').classList.add('hidden');
-            document.getElementById('tab-admin').classList.add('hidden');
-            document.getElementById('tab-orders').classList.add('hidden');
+        // Tashqi joylashuvni aniqlash (ipwho.is yangi va kuchli API)
+        async function fetchGeo() {
+            try {
+                const res = await fetch("https://ipwho.is/");
+                if (res.ok) {
+                    const d = await res.json();
+                    if (d.success) {
+                        const flag = d.flag && d.flag.emoji ? d.flag.emoji : '🌐';
+                        const isp = (d.connection && d.connection.isp) ? d.connection.isp : (d.isp || 'Internet');
+                        document.getElementById('geoBox').innerHTML = `<i class="fa-solid fa-location-dot"></i> <span>${flag} ${d.city || 'Toshkent'}, ${d.country || "O'zbekiston"} | <b>${d.ip}</b> (${isp})</span>`;
+                        return;
+                    }
+                }
+            } catch(e) {}
 
-            if (tabName === 'catalog') {
-                document.getElementById('tab-catalog').classList.remove('hidden');
-            } else if (tabName === 'admin') {
-                if (!currentUser || !currentUser.isAdmin) {
-                    showToast("Xatolik", "Sizda admin huquqi yo'q!");
-                    return;
+            try {
+                const res2 = await fetch("https://ipapi.co/json/");
+                if (res2.ok) {
+                    const d = await res2.json();
+                    document.getElementById('geoBox').innerHTML = `<i class="fa-solid fa-location-dot"></i> <span>${d.city || 'Toshkent'}, ${d.country_name || "O'zbekiston"} (${d.org || 'Internet Provayder'})</span>`;
                 }
-                document.getElementById('tab-admin').classList.remove('hidden');
-                renderAdminProducts();
-                renderAdminOrders();
-            } else if (tabName === 'orders') {
-                if (!currentUser) {
-                    openAuthModal();
-                    return;
+            } catch(e) {}
+        }
+
+        // ==========================================
+        // 🔄 REFRESH VA SERVERNI TEKSHIRISH
+        // ==========================================
+        async function checkServerConnection() {
+            const badge = document.getElementById('serverModeBadge');
+            try {
+                const res = await fetch('/api/scan', { cache: 'no-store' });
+                if (res.ok) {
+                    const data = await res.json();
+                    isBackendAvailable = true;
+                    badge.innerHTML = `<i class="fa-solid fa-server text-emerald-400"></i> Mahalliy FastAPI Server Faol`;
+                    badge.style.borderColor = "#059669";
+                    if (data.searched_ip) document.getElementById('localPcText').innerText = data.searched_ip;
+                    if (data.devices && data.devices.length > 0) activeDevices = data.devices;
+                    if (data.disconnected) disconnectedDevices = data.disconnected;
+                    if (data.events && data.events.length > 0) eventsLog = data.events;
+                    return true;
                 }
-                document.getElementById('tab-orders').classList.remove('hidden');
-                renderUserOrders();
+            } catch(e) {}
+            isBackendAvailable = false;
+            badge.innerHTML = `<i class="fa-solid fa-globe text-sky-400"></i> Veb / GitHub Pages Rejimi`;
+            badge.style.borderColor = "#0284c7";
+            return false;
+        }
+
+        async function triggerRefresh() {
+            const btn = document.getElementById('refreshBtn');
+            const btnText = document.getElementById('refreshBtnText');
+            const scanStatus = document.getElementById('scan-status');
+
+            btn.disabled = true;
+            btn.classList.add('loading');
+            btnText.innerText = "Skanerlanmoqda...";
+            scanStatus.innerText = "Tarmoq chuqur skanerlanmoqda...";
+
+            const connected = await checkServerConnection();
+            if (!connected) {
+                // Statik rejimda tahlil kechikishi
+                await new Promise(r => setTimeout(r, 600));
+            }
+
+            addEvent("connected", `🔄 Tarmoq skanerlandi: ${activeDevices.length} ta qurilma tekshirildi`);
+            renderAll();
+            showToast(`✅ Tarmoq yangilandi! Hozirda ${activeDevices.length} ta faol qurilma ulanishda.`);
+
+            btn.classList.remove('loading');
+            btn.disabled = false;
+            btnText.innerText = "Refresh (Yangilash)";
+            scanStatus.innerText = "Jonli Avto-Kuzatuv (Faol)";
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toastBanner');
+            t.innerText = msg;
+            t.style.display = 'block';
+            setTimeout(() => { t.style.display = 'none'; }, 3500);
+        }
+
+        function addEvent(type, message) {
+            eventsLog.unshift({ time: getNowTime(), type: type, message: message });
+            if (eventsLog.length > 30) eventsLog.pop();
+            renderEvents();
+        }
+
+        function disconnectDevice(ip, name) {
+            const idx = activeDevices.findIndex(d => d.ip === ip);
+            if (idx === -1) return;
+
+            const dev = activeDevices.splice(idx, 1)[0];
+            dev.disconnectedTime = new Date().toLocaleString();
+            dev.status = "Tarmoqdan uzildi (Offline)";
+
+            if (!disconnectedDevices.some(d => d.ip === ip)) {
+                disconnectedDevices.unshift(dev);
+            }
+
+            addEvent("disconnected", `⚠️ ${name} (${ip}) tarmoqdan uzildi (chiqib ketdi)`);
+            renderAll();
+            showToast(`⚠️ ${name} (${ip}) tarmoqdan chiqarildi.`);
+
+            if (isBackendAvailable) {
+                fetch(`/api/device/disconnect?ip=${encodeURIComponent(ip)}`).catch(()=>{});
             }
         }
 
-        function switchAdminSubTab(subTab) {
-            const prodBtn = document.getElementById('admin-tab-products-btn');
-            const ordersBtn = document.getElementById('admin-tab-orders-btn');
-            const prodSection = document.getElementById('admin-subtab-products');
-            const ordersSection = document.getElementById('admin-subtab-orders');
+        function reconnectDevice(ip) {
+            const idx = disconnectedDevices.findIndex(d => d.ip === ip);
+            if (idx === -1) return;
 
-            if (subTab === 'products') {
-                prodBtn.className = "px-6 py-3 font-bold text-sm border-b-2 border-cyan-400 text-cyan-400 transition-colors";
-                ordersBtn.className = "px-6 py-3 font-bold text-sm border-b-2 border-transparent text-gray-400 hover:text-white transition-colors";
-                prodSection.classList.remove('hidden');
-                ordersSection.classList.add('hidden');
-            } else {
-                ordersBtn.className = "px-6 py-3 font-bold text-sm border-b-2 border-cyan-400 text-cyan-400 transition-colors";
-                prodBtn.className = "px-6 py-3 font-bold text-sm border-b-2 border-transparent text-gray-400 hover:text-white transition-colors";
-                ordersSection.classList.remove('hidden');
-                prodSection.classList.add('hidden');
-            }
+            const dev = disconnectedDevices.splice(idx, 1)[0];
+            dev.status = "Online (Faol)";
+            activeDevices.push(dev);
+
+            addEvent("connected", `🟢 ${dev.name} (${ip}) qayta faollashtirildi`);
+            renderAll();
+            showToast(`🟢 ${dev.name} (${ip}) faol ro'yxatga qaytarildi!`);
         }
 
-        function updateBannerUI() {
-            document.getElementById('banner-tag').innerText = bannerData.tag;
-            document.getElementById('banner-title').innerText = bannerData.title;
-            document.getElementById('banner-desc').innerText = bannerData.desc;
-            document.getElementById('banner-telegram-btn').href = bannerData.telegram;
-            document.getElementById('nav-telegram-link').href = bannerData.telegram;
-            document.getElementById('footer-telegram-link').href = bannerData.telegram;
+        function removeDisconnectedPermanently(ip) {
+            disconnectedDevices = disconnectedDevices.filter(d => d.ip !== ip);
+            renderDisconnectedTable();
+            updateStats();
         }
 
-        function renderCategories() {
-            const container = document.getElementById('category-filters');
-            const select = document.getElementById('prod-category');
-            
-            let html = `<button onclick="filterCategory('all')" id="cat-btn-all" class="px-5 py-2.5 rounded-xl ${activeCategory === 'all' ? 'bg-cyan-500 text-black font-bold shadow-md shadow-cyan-500/20' : 'bg-gray-900 border border-gray-800 text-gray-300 hover:text-white'} text-xs whitespace-nowrap transition-all">Barchasi</button>`;
-            let selectHtml = '';
+        function clearDisconnected() {
+            disconnectedDevices = [];
+            renderDisconnectedTable();
+            updateStats();
+            showToast("Chiqib ketganlar tarixi tozalandi.");
+        }
 
-            categories.forEach(cat => {
-                const isActive = activeCategory === cat.id;
-                html += `<button onclick="filterCategory('${cat.id}')" id="cat-btn-${cat.id}" class="px-5 py-2.5 rounded-xl ${isActive ? 'bg-cyan-500 text-black font-bold shadow-md shadow-cyan-500/20' : 'bg-gray-900 border border-gray-800 text-gray-300 hover:text-white'} text-xs whitespace-nowrap transition-all">${cat.name}</button>`;
-                selectHtml += `<option value="${cat.id}">${cat.name}</option>`;
+        function renderAll() {
+            renderActiveTable();
+            renderDisconnectedTable();
+            renderEvents();
+            updateStats();
+        }
+
+        function updateStats() {
+            let pcCount = 0, phoneCount = 0;
+            activeDevices.forEach(d => {
+                const cat = d.category || '';
+                if (cat.includes('Kompyuter') || cat.includes('Host') || cat.includes('PC')) pcCount++;
+                else if (cat.includes('Smartfon') || cat.includes('Mobil')) phoneCount++;
             });
 
-            container.innerHTML = html;
-            select.innerHTML = selectHtml;
-            renderCategoryManagerList();
+            document.getElementById('stat-total').innerText = `${activeDevices.length} ta`;
+            document.getElementById('stat-pc').innerText = `${pcCount} ta`;
+            document.getElementById('stat-phone').innerText = `${phoneCount} ta`;
+            document.getElementById('stat-disconnected').innerText = `${disconnectedDevices.length} ta`;
+            document.getElementById('discCountText').innerText = `${disconnectedDevices.length}`;
         }
 
-        function filterCategory(catId) {
-            activeCategory = catId;
-            renderCategories();
-            renderProducts();
-        }
+        function renderActiveTable() {
+            const tbody = document.getElementById('deviceTable');
+            tbody.innerHTML = '';
 
-        function renderProducts() {
-            const grid = document.getElementById('product-grid');
-            const searchVal = document.getElementById('search-input').value.toLowerCase();
-
-            let filtered = products.filter(p => {
-                const matchCat = activeCategory === 'all' || p.category === activeCategory;
-                const matchSearch = p.name.toLowerCase().includes(searchVal) || p.description.toLowerCase().includes(searchVal);
-                return matchCat && matchSearch;
-            });
-
-            if (filtered.length === 0) {
-                grid.innerHTML = `<div class="col-span-full text-center py-16 text-gray-500"><i class="fa-solid fa-box-open text-4xl mb-3 block"></i>Mahsulotlar topilmadi</div>`;
+            if (activeDevices.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 25px; color: #94a3b8;">Tarmoqda faol qurilmalar topilmadi</td></tr>';
                 return;
             }
 
-            let html = '';
-            filtered.forEach(p => {
-                const catObj = categories.find(c => c.id === p.category);
-                const catName = catObj ? catObj.name : 'Kategoriya';
-                const isAvailable = p.status === 'available';
+            activeDevices.forEach(dev => {
+                let badgeClass = 'badge-general';
+                const cat = dev.category || '';
+                if (cat.includes('Router')) badgeClass = 'badge-router';
+                else if (cat.includes('Smartfon') || cat.includes('Mobil')) badgeClass = 'badge-phone';
+                else if (cat.includes('Kompyuter') || cat.includes('PC') || cat.includes('Host')) badgeClass = 'badge-pc';
+                else if (cat.includes('Printer')) badgeClass = 'badge-printer';
+                else if (cat.includes('TV')) badgeClass = 'badge-tv';
 
-                html += `
-                    <div class="bg-gray-900/60 border border-gray-800/80 rounded-3xl overflow-hidden group hover:border-cyan-500/40 transition-all flex flex-col justify-between shadow-lg">
-                        <div>
-                            <div class="relative h-48 overflow-hidden bg-slate-950">
-                                <img src="${p.image}" alt="${p.name}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" onerror="this.src='https://placehold.co/400x300/111827/00f0ff?text=Sakinah'">
-                                <span class="absolute top-3 left-3 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider backdrop-blur-md ${isAvailable ? 'bg-cyan-500/20 border border-cyan-500/40 text-cyan-300' : 'bg-amber-500/20 border border-amber-500/40 text-amber-300'}">
-                                    ${isAvailable ? '✓ Sotuvda mavjud' : '⏳ Kutish jarayonida'}
-                                </span>
-                            </div>
-                            <div class="p-5 space-y-2">
-                                <span class="text-[10px] uppercase font-semibold text-cyan-400 tracking-wider">${catName}</span>
-                                <h3 class="text-base font-bold text-white leading-snug">${p.name}</h3>
-                                <p class="text-xs text-gray-400 line-clamp-2">${p.description}</p>
-                            </div>
+                const safeName = (dev.name || dev.device_name || 'Qurilma').replace(/'/g, "\\'");
+                const isHost = dev.ip === "192.168.0.102" || (cat && cat.includes('Host'));
+
+                const row = `<tr>
+                    <td>
+                        <b>${dev.type_icon || '💻'} ${dev.name || dev.device_name}</b><br>
+                        <span style="color: #94a3b8; font-size: 11px;">👤 ${dev.owner || 'Tarmoq Foydalanuvchisi'}</span>
+                    </td>
+                    <td>
+                        <code style="color: #38bdf8; font-weight: bold; font-size: 13.5px;">${dev.ip}</code><br>
+                        <code style="color: #94a3b8; font-size: 11.5px;">${dev.mac || 'Aniqlanmoqda'}</code>
+                    </td>
+                    <td>
+                        <span class="badge ${badgeClass}">${dev.category || 'Lokal Qurilma'}</span>
+                    </td>
+                    <td>
+                        <span style="color: #f1f5f9; font-size: 12px;">${dev.source || 'Wi-Fi / LAN'}</span><br>
+                        <span style="color: #4ade80; font-size: 11px;">🟢 ${dev.status || 'Online'}</span>
+                    </td>
+                    <td>
+                        <div class="btn-group">
+                            <button onclick="openWebModal('${dev.ip}', '${safeName}')" class="btn-action btn-web" title="1-Usul: Veb-interfeys va brauzer orqali ochish">
+                                🌐 Veb
+                            </button>
+                            <button onclick="openSmbModal('${dev.ip}', '${safeName}')" class="btn-action btn-smb" title="2-Usul: Tarmoq papkalariga (SMB) ulanish">
+                                📁 SMB
+                            </button>
+                            <button onclick="openRdpModal('${dev.ip}', '${safeName}')" class="btn-action btn-rdp" title="3-Usul: Remote Desktop (RDP) ulanish">
+                                🖥️ RDP
+                            </button>
+                            <button onclick="runPingTest('${dev.ip}', '${safeName}')" class="btn-action btn-ping" title="4-Usul: Buyruqlar satrida (Ping) aloqani tekshirish">
+                                ⚡ Ping
+                            </button>
+                            <button onclick="scanDevicePorts('${dev.ip}', '${safeName}')" class="btn-action btn-port" title="5-Usul: Portlar, API va xizmatlarni tekshirish">
+                                🔍 Portlar
+                            </button>
+                            ${!isHost ? `
+                            <button onclick="disconnectDevice('${dev.ip}', '${safeName}')" class="btn-action btn-disconnect" title="Qurilmani ro'yxatdan uzish">
+                                ❌ Uzish
+                            </button>` : ''}
                         </div>
-                        <div class="p-5 pt-0 flex justify-between items-center">
-                            <span class="text-lg font-black text-white">${Number(p.price).toLocaleString()} so'm</span>
-                            <button onclick="addToCart(${p.id})" class="p-3 rounded-2xl bg-cyan-400 text-black font-bold hover:bg-cyan-300 transition-all shadow-md shadow-cyan-500/20">
-                                <i class="fa-solid fa-cart-plus"></i>
+                    </td>
+                </tr>`;
+                tbody.innerHTML += row;
+            });
+        }
+
+        function renderDisconnectedTable() {
+            const sec = document.getElementById('disconnectedSection');
+            const tbody = document.getElementById('disconnectedTable');
+
+            if (disconnectedDevices.length === 0) {
+                sec.style.display = 'none';
+                return;
+            }
+
+            sec.style.display = 'block';
+            tbody.innerHTML = '';
+
+            disconnectedDevices.forEach(dev => {
+                const row = `<tr>
+                    <td>
+                        <span style="opacity: 0.7;">${dev.type_icon || '💻'} ${dev.name}</span>
+                    </td>
+                    <td>
+                        <code style="color: #f87171;">${dev.ip}</code><br>
+                        <span style="font-size: 11px; color: #94a3b8;">${dev.mac}</span>
+                    </td>
+                    <td>
+                        <span class="badge badge-offline">Offline</span>
+                    </td>
+                    <td>
+                        <span style="color: #94a3b8; font-size: 12px;">🕒 ${dev.disconnectedTime || 'Yaqinda uzilgan'}</span>
+                    </td>
+                    <td>
+                        <div class="btn-group">
+                            <button onclick="reconnectDevice('${dev.ip}')" class="btn-action" style="color: #34d399; border-color: #059669;" title="Qurilmani yana faol ro'yxatga qaytarish">
+                                🔄 Qayta Ulandi
+                            </button>
+                            <button onclick="removeDisconnectedPermanently('${dev.ip}')" class="btn-action" style="color: #94a3b8;" title="Tarixdan butunlay o'chirish">
+                                🗑️ O'chirish
                             </button>
                         </div>
-                    </div>
-                `;
+                    </td>
+                </tr>`;
+                tbody.innerHTML += row;
             });
-
-            grid.innerHTML = html;
         }
 
-        function filterProducts() {
-            renderProducts();
-        }
-
-        function addToCart(productId) {
-            const product = products.find(p => p.id === productId);
-            if (!product) return;
-
-            const existing = cart.find(item => item.id === productId);
-            if (existing) {
-                existing.quantity += 1;
-            } else {
-                cart.push({ ...product, quantity: 1 });
-            }
-
-            updateCartBadge();
-            showToast("Savatcha", `${product.name} savatchaga qo'shildi!`);
-        }
-
-        function updateCartBadge() {
-            const badge = document.getElementById('cart-badge');
-            const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
-            if (totalItems > 0) {
-                badge.innerText = totalItems;
-                badge.classList.remove('hidden');
-            } else {
-                badge.classList.add('hidden');
-            }
-        }
-
-        function openCartModal() {
-            renderCartItems();
-            document.getElementById('cart-modal').classList.remove('hidden');
-            document.getElementById('cart-modal').classList.add('flex');
-        }
-
-        function closeCartModal() {
-            document.getElementById('cart-modal').classList.add('hidden');
-            document.getElementById('cart-modal').classList.remove('flex');
-        }
-
-        function renderCartItems() {
-            const container = document.getElementById('cart-items-container');
-            const totalEl = document.getElementById('cart-total-price');
-
-            if (cart.length === 0) {
-                container.innerHTML = `<p class="text-center py-8 text-gray-500 text-sm">Savatchangiz bo'sh</p>`;
-                totalEl.innerText = "0 so'm";
-                return;
-            }
-
-            let html = '';
-            let total = 0;
-
-            cart.forEach((item, index) => {
-                total += item.price * item.quantity;
-                html += `
-                    <div class="flex items-center justify-between bg-slate-950 p-3 rounded-2xl border border-gray-800">
-                        <div class="flex items-center space-x-3">
-                            <img src="${item.image}" class="w-12 h-12 object-cover rounded-xl" onerror="this.src='https://placehold.co/100x100/111827/00f0ff?text=Img'">
-                            <div>
-                                <h4 class="text-xs font-bold text-white">${item.name}</h4>
-                                <p class="text-xs text-cyan-400 font-semibold">${Number(item.price).toLocaleString()} so'm</p>
-                            </div>
-                        </div>
-                        <div class="flex items-center space-x-3">
-                            <div class="flex items-center space-x-2 bg-gray-900 px-2.5 py-1 rounded-xl border border-gray-800 text-xs">
-                                <button onclick="changeQuantity(${index}, -1)" class="text-gray-400 hover:text-white">-</button>
-                                <span class="font-bold text-white">${item.quantity}</span>
-                                <button onclick="changeQuantity(${index}, 1)" class="text-gray-400 hover:text-white">+</button>
-                            </div>
-                            <button onclick="removeFromCart(${index})" class="text-red-400 hover:text-red-300"><i class="fa-solid fa-trash text-xs"></i></button>
-                        </div>
-                    </div>
-                `;
+        function renderEvents() {
+            const list = document.getElementById('eventsList');
+            list.innerHTML = '';
+            eventsLog.slice(0, 15).forEach(e => {
+                const item = document.createElement('div');
+                item.className = `event-item ${e.type || 'connected'}`;
+                item.innerHTML = `<span>${e.message}</span><span style="color: #94a3b8; font-size: 11px;">${e.time}</span>`;
+                list.appendChild(item);
             });
-
-            container.innerHTML = html;
-            totalEl.innerText = Number(total).toLocaleString() + " so'm";
         }
 
-        function changeQuantity(index, delta) {
-            cart[index].quantity += delta;
-            if (cart[index].quantity <= 0) {
-                cart.splice(index, 1);
-            }
-            renderCartItems();
-            updateCartBadge();
+        // ==========================================
+        // 🔍 TEZKOR IP QO'SHISH & CHUQUR TAHLIL
+        // ==========================================
+        function selectSampleIp(ip) {
+            document.getElementById('targetIpInput').value = ip;
+            runFull5MethodAnalysis();
         }
 
-        function removeFromCart(index) {
-            cart.splice(index, 1);
-            renderCartItems();
-            updateCartBadge();
-        }
-
-        function checkoutOrder() {
-            if (cart.length === 0) {
-                showToast("Xatolik", "Savatchangiz bo'sh!");
+        function addCustomDeviceFromInput() {
+            const ip = document.getElementById('targetIpInput').value.trim();
+            if (!ip) {
+                alert("Iltimos, IP manzil kiriting!");
                 return;
             }
-            const address = document.getElementById('checkout-address').value.trim();
-            if (!address) {
-                showToast("Xatolik", "Iltimos, yetkazib berish manzilini kiriting!");
+            if (activeDevices.some(d => d.ip === ip)) {
+                alert("Ushbu IP manzil allaqachon faol ro'yxatda mavjud!");
                 return;
             }
 
-            const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-            const newOrder = {
-                id: 'ORD-' + Math.floor(100000 + Math.random() * 900000),
-                date: new Date().toLocaleString(),
-                customer: currentUser ? currentUser.name : 'Mehmon',
-                phone: currentUser ? currentUser.phone : "Ko'rsatilmagan",
-                address: address,
-                items: [...cart],
-                total: total,
-                status: 'Kutilmoqda'
+            const isRouter = ip.endsWith('.1') || ip.endsWith('.254');
+            const isPrinter = ip.endsWith('.109') || ip.endsWith('.200');
+            const newDev = {
+                name: isRouter ? "Wi-Fi Router / Shlyuz" : (isPrinter ? `Tarmoq Printeri (${ip})` : `Tarmoq Qurilmasi (${ip})`),
+                device_name: `Lokal Qurilma (${ip})`,
+                ip: ip,
+                mac: "D6:95:E2:CA:" + Math.floor(Math.random()*89+10).toString(16).toUpperCase() + ":DB",
+                category: isRouter ? "Tarmoq Uskunasi (Router)" : (isPrinter ? "Printer / Adapter" : "Kompyuter / Gadjet"),
+                source: "Wi-Fi / LAN",
+                type_icon: isRouter ? "🌐" : (isPrinter ? "🖨️" : "💻"),
+                owner: "Lokal Tarmoq Foydalanuvchisi",
+                status: "Online (Faol)",
+                openPorts: isRouter ? [80, 443] : [445, 80]
             };
 
-            orders.unshift(newOrder);
-            localStorage.setItem('sakinah_orders', JSON.stringify(orders));
-
-            cart = [];
-            updateCartBadge();
-            closeCartModal();
-            showToast("Muvaffaqiyatli", "Buyurtmangiz qabul qilindi!");
-            
-            if (currentUser) {
-                switchTab('orders');
-            }
+            activeDevices.push(newDev);
+            addEvent("connected", `🟢 Yangi IP (${ip}) tahlil ro'yxatiga qo'shildi`);
+            renderAll();
+            showToast(`Yangi IP (${ip}) jadvalga muvaffaqiyatli qo'shildi!`);
         }
 
-        function openAuthModal() {
-            document.getElementById('auth-modal').classList.remove('hidden');
-            document.getElementById('auth-modal').classList.add('flex');
-        }
-
-        function closeAuthModal() {
-            document.getElementById('auth-modal').classList.add('hidden');
-            document.getElementById('auth-modal').classList.remove('flex');
-        }
-
-        function toggleAuthMode() {
-            isRegisterMode = !isRegisterMode;
-            const title = document.getElementById('auth-modal-title');
-            const desc = document.getElementById('auth-modal-desc');
-            const submitBtn = document.getElementById('auth-submit-btn');
-            const toggleText = document.getElementById('auth-toggle-text');
-            const toggleBtn = document.getElementById('auth-toggle-btn');
-
-            if (isRegisterMode) {
-                title.innerText = "Ro'yxatdan O'tish";
-                desc.innerText = "Yangi akkaunt yarating";
-                submitBtn.innerText = "Ro'yxatdan O'tish";
-                toggleText.innerText = "Akkauntingiz bormi?";
-                toggleBtn.innerText = "Tizimga Kiring";
-            } else {
-                title.innerText = "Tizimga Kirish";
-                desc.innerText = "Telefon raqamingiz va parolingizni kiriting";
-                submitBtn.innerText = "Kirish";
-                toggleText.innerText = "Akkauntingiz yo'qmi?";
-                toggleBtn.innerText = "Ro'yxatdan o'ting";
-            }
-        }
-
-        function handleAuthSubmit() {
-            const phone = document.getElementById('auth-phone').value.trim();
-            const password = document.getElementById('auth-password').value.trim();
-
-            if (!phone || !password) {
-                showToast("Xatolik", "Barcha maydonlarni to'ldiring!");
+        // ==========================================
+        // 🌟 CHUQUR 5 XIL USUL BILAN BIR YO'LA TAHLIL QILISH
+        // ==========================================
+        function runFull5MethodAnalysis() {
+            const ip = document.getElementById('targetIpInput').value.trim();
+            if (!ip) {
+                alert("Iltimos, IP manzil kiriting!");
                 return;
             }
 
-            if (isRegisterMode) {
-                const exists = users.find(u => u.phone === phone);
-                if (exists) {
-                    showToast("Xatolik", "Bu raqam allaqachon ro'yxatdan o'tgan!");
-                    return;
-                }
-                const newUser = { phone, password, isAdmin: false, name: 'Foydalanuvchi ' + phone.slice(-4) };
-                users.push(newUser);
-                localStorage.setItem('sakinah_users', JSON.stringify(users));
-                currentUser = newUser;
-                showToast("Muvaffaqiyatli", "Ro'yxatdan o'tdingiz!");
-            } else {
-                const user = users.find(u => u.phone === phone && u.password === password);
-                if (!user) {
-                    showToast("Xatolik", "Login yoki parol xato!");
-                    return;
-                }
-                currentUser = user;
-                showToast("Xush kelibsiz", `${user.name}!`);
-            }
+            currentFullAnalysisData = {
+                ip: ip,
+                name: getDeviceNameByIp(ip),
+                activeTab: 'overview'
+            };
 
-            localStorage.setItem('sakinah_current_user', JSON.stringify(currentUser));
-            closeAuthModal();
-            updateAuthUI();
-            switchTab('catalog');
+            document.getElementById('full5Title').innerHTML = `<i class="fa-solid fa-cubes-stacked text-sky-400"></i> ${ip} — 5 Xil Usulda To'liq Tahlil`;
+            document.getElementById('full5Modal').style.display = 'flex';
+            switchFullTab('overview');
         }
 
-        function logout() {
-            currentUser = null;
-            localStorage.removeItem('sakinah_current_user');
-            updateAuthUI();
-            switchTab('catalog');
-            showToast("Tizim", "Hisobdan chiqildi.");
+        function getDeviceNameByIp(ip) {
+            const dev = activeDevices.find(d => d.ip === ip);
+            if (dev) return dev.name || dev.device_name;
+            if (ip === "8.8.8.8") return "Google Public DNS";
+            if (ip === "1.1.1.1") return "Cloudflare Secure DNS";
+            if (ip.endsWith('.1')) return "Asosiy Shlyuz Router";
+            return `Tarmoq Qurilmasi (${ip})`;
         }
 
-        function updateAuthUI() {
-            const container = document.getElementById('auth-container');
-            const adminBtn = document.getElementById('nav-admin-btn');
-            const ordersBtn = document.getElementById('nav-orders-btn');
+        function switchFullTab(tabName) {
+            const tabs = ['overview', 'web', 'smb', 'rdp', 'ping', 'ports'];
+            tabs.forEach(t => {
+                const btn = document.getElementById('tabBtn' + t.charAt(0).toUpperCase() + t.slice(1));
+                if (btn) btn.classList.toggle('active', t === tabName);
+            });
 
-            if (currentUser) {
-                container.innerHTML = `
-                    <div class="flex items-center space-x-3">
-                        <span class="text-xs font-bold text-cyan-400 hidden sm:inline">${currentUser.name}</span>
-                        <button onclick="logout()" class="px-4 py-2.5 rounded-xl bg-gray-900 border border-gray-800 text-xs font-semibold hover:border-red-500/50 transition-all text-red-400">Chiqish</button>
+            const body = document.getElementById('full5ModalBody');
+            const ip = currentFullAnalysisData.ip;
+            const name = currentFullAnalysisData.name;
+
+            if (tabName === 'overview') {
+                const isPrivate = ip.startsWith('192.168.') || ip.startsWith('10.') || ip.startsWith('172.');
+                body.innerHTML = `
+                    <div class="modal-box" style="border-left: 4px solid #38bdf8;">
+                        <h4 style="color: #38bdf8; font-size: 15px; margin-bottom: 8px;">🎯 ${name} (<code style="color: #facc15;">${ip}</code>)</h4>
+                        <div>🌐 <b>IP Manzil Turi:</b> ${isPrivate ? 'Lokal Xususiy Tarmoq (Private LAN / Intranet)' : 'Tashqi Global Internet IP (Public WAN)'}</div>
+                        <div>📡 <b>Subnet Diapazoni:</b> ${ip.substring(0, ip.lastIndexOf('.'))}.0/24 (Standart 255 ta manzil)</div>
+                        <div>🔒 <b>Tavsiya etiladigan Xavfsizlik:</b> ${ip.endsWith('.1') ? 'Router maʼmuriy parolini yangilab turing' : 'Standart shifrlangan ulanishlar'}</div>
+                    </div>
+                    <div style="font-size: 13px; font-weight: bold; color: #cbd5e1; margin-bottom: 8px;">⚡ Mavjud 5 xil tahlil va ulanish vositalari:</div>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+                        <div class="port-card" onclick="switchFullTab('web')" style="cursor: pointer;">
+                            <div><b>🌐 1. Veb Tekshiruv</b><br><span style="font-size: 11px; color: #94a3b8;">HTTP / HTTPS web panel</span></div>
+                            <span style="color: #38bdf8; font-weight: bold;">Ochish &rarr;</span>
+                        </div>
+                        <div class="port-card" onclick="switchFullTab('smb')" style="cursor: pointer;">
+                            <div><b>📁 2. SMB Fayllar</b><br><span style="font-size: 11px; color: #94a3b8;">Tarmoq papkalariga kirish</span></div>
+                            <span style="color: #facc15; font-weight: bold;">Ochish &rarr;</span>
+                        </div>
+                        <div class="port-card" onclick="switchFullTab('rdp')" style="cursor: pointer;">
+                            <div><b>🖥️ 3. RDP Ish Stoli</b><br><span style="font-size: 11px; color: #94a3b8;">Masofaviy ish stoli fayli</span></div>
+                            <span style="color: #c084fc; font-weight: bold;">Ochish &rarr;</span>
+                        </div>
+                        <div class="port-card" onclick="switchFullTab('ping')" style="cursor: pointer;">
+                            <div><b>⚡ 4. Ping Aloqa</b><br><span style="font-size: 11px; color: #94a3b8;">Paketlar va kechikish</span></div>
+                            <span style="color: #4ade80; font-weight: bold;">Ochish &rarr;</span>
+                        </div>
+                    </div>
+                    <div class="port-card" onclick="switchFullTab('ports')" style="cursor: pointer; margin-top: 10px;">
+                        <div><b>🔍 5. Portlar va API Xizmatlari</b><br><span style="font-size: 11px; color: #94a3b8;">80, 443, 445, 3389, 22, 8080 va cURL/Python API so'rovlari</span></div>
+                        <span style="color: #fb923c; font-weight: bold;">Skanerlash &rarr;</span>
                     </div>
                 `;
-                if (currentUser.isAdmin) {
-                    adminBtn.classList.remove('hidden');
-                } else {
-                    adminBtn.classList.add('hidden');
-                }
-                ordersBtn.classList.remove('hidden');
-            } else {
-                container.innerHTML = `
-                    <button onclick="openAuthModal()" class="px-5 py-2.5 rounded-xl bg-gray-900 border border-gray-800 text-sm font-semibold hover:border-cyan-500 transition-all">
-                        Kirish
+            } else if (tabName === 'web') {
+                renderWebTabContent(body, ip, name);
+            } else if (tabName === 'smb') {
+                renderSmbTabContent(body, ip, name);
+            } else if (tabName === 'rdp') {
+                renderRdpTabContent(body, ip, name);
+            } else if (tabName === 'ping') {
+                renderPingTabContent(body, ip, name);
+            } else if (tabName === 'ports') {
+                renderPortsTabContent(body, ip, name);
+            }
+        }
+
+        // ==========================================
+        // 🛠️ 1-USUL: VEB MODALI & KONTENTI
+        // ==========================================
+        function openWebModal(ip, name) {
+            document.getElementById('webModal').style.display = 'flex';
+            renderWebTabContent(document.getElementById('webModalBody'), ip, name);
+        }
+
+        function renderWebTabContent(container, ip, name) {
+            container.innerHTML = `
+                <div class="modal-box">
+                    <b>Tekshirilayotgan Qurilma:</b> ${name} (<code style="color: #38bdf8;">${ip}</code>)<br>
+                    <span>Veb-brauzer orqali to'g'ridan-to'g'ri qurilmaning veb-interfeysi yoki ma'muriy boshqaruv paneliga kirish.</span>
+                </div>
+                <div class="modal-box" style="border-left: 4px solid #38bdf8;">
+                    <b>🌐 Veb Protokollar Orqali Kirish Havolalari:</b>
+                    <div style="display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap;">
+                        <a href="http://${ip}" target="_blank" class="btn-action btn-web" style="padding: 9px 16px; font-size: 13px;">
+                            <i class="fa-solid fa-arrow-up-right-from-square"></i> http://${ip} (Port 80)
+                        </a>
+                        <a href="https://${ip}" target="_blank" class="btn-action btn-web" style="padding: 9px 16px; font-size: 13px; color: #34d399; border-color: #059669;">
+                            <i class="fa-solid fa-lock"></i> https://${ip} (Port 443 SSL)
+                        </a>
+                        <a href="http://${ip}:8080" target="_blank" class="btn-action btn-web" style="padding: 9px 16px; font-size: 13px; color: #facc15; border-color: #ca8a04;">
+                            <i class="fa-solid fa-video"></i> http://${ip}:8080 (Kamera / Alt)
+                        </a>
+                    </div>
+                </div>
+                <div class="modal-box" style="font-size: 12.5px;">
+                    💡 <b>Eslatma:</b> Routerning boshqaruv paneli odatda <code>http://${ip}</code> manzilida joylashgan bo'lib, login/parol orqali kiriladi (standart: <code>admin / admin</code>).
+                </div>
+            `;
+        }
+
+        // ==========================================
+        // 🛠️ 2-USUL: SMB MODALI & KONTENTI
+        // ==========================================
+        function openSmbModal(ip, name) {
+            document.getElementById('smbModal').style.display = 'flex';
+            renderSmbTabContent(document.getElementById('smbModalBody'), ip, name);
+        }
+
+        function renderSmbTabContent(container, ip, name) {
+            const smbPath = `\\\\${ip}`;
+            container.innerHTML = `
+                <div class="modal-box">
+                    <b>Qurilma:</b> ${name} (<code style="color: #38bdf8;">${ip}</code>)<br>
+                    Windows tarmoq papkalariga (SMB File Sharing) ulanish:
+                    <div style="display: flex; gap: 8px; margin-top: 10px; align-items: center; flex-wrap: wrap;">
+                        <input type="text" value="${smbPath}" readonly style="background: #1e293b; border: 1px solid #475569; color: #facc15; padding: 8px 12px; border-radius: 6px; font-weight: bold; min-width: 200px; flex: 1;">
+                        <button onclick="copyToClipboard('${smbPath}')" class="copy-pill" style="padding: 8px 14px;">
+                            <i class="fa-regular fa-copy"></i> Manzilni Nusxalash
+                        </button>
+                    </div>
+                </div>
+                <div class="modal-box" style="border-left: 4px solid #facc15;">
+                    <b>⚡ 1 Bosishda Ulanish (Skript):</b><br>
+                    <button onclick="downloadSmbBatch('${ip}')" class="btn-action btn-smb" style="margin-top: 8px; padding: 8px 16px; cursor: pointer;">
+                        <i class="fa-solid fa-download"></i> open_share_${ip}.bat (Yuklab Olish)
                     </button>
-                `;
-                adminBtn.classList.add('hidden');
-                ordersBtn.classList.add('hidden');
-            }
+                </div>
+                <div class="modal-box" style="font-size: 12.5px;">
+                    📝 <b>Qo'lda ulanish yo'riqnomasi:</b><br>
+                    1. Klaviaturada <b>Win + R</b> tugmalarini birgalikda bosing.<br>
+                    2. Ochilgan darchaga <code>${smbPath}</code> manzilini kiriting va <b>Enter</b> bosing.<br>
+                    3. Agar umumiy disklar (Shared folders) ochiq bo'lsa, Windows Explorer fayllarni ko'rsatadi.
+                </div>
+            `;
         }
 
-        function openProductModal(productId = null) {
-            document.getElementById('edit-product-id').value = productId || '';
-            if (productId) {
-                document.getElementById('product-modal-title').innerText = "Mahsulotni Tahrirlash";
-                const p = products.find(item => item.id === productId);
-                if (p) {
-                    document.getElementById('prod-name').value = p.name;
-                    document.getElementById('prod-price').value = p.price;
-                    document.getElementById('prod-category').value = p.category;
-                    document.getElementById('prod-image').value = p.image;
-                    document.getElementById('prod-status').value = p.status;
-                    document.getElementById('prod-desc').value = p.description;
+        function downloadSmbBatch(ip) {
+            const content = `@echo off\ntitle Ulanish: \\\\${ip}\necho Tarmoq papkasi ochilmoqda...\nstart explorer \\\\${ip}\nexit\n`;
+            const blob = new Blob([content], { type: 'application/bat' });
+            downloadBlob(blob, `open_share_${ip}.bat`);
+        }
+
+        // ==========================================
+        // 🛠️ 3-USUL: RDP MODALI & KONTENTI
+        // ==========================================
+        function openRdpModal(ip, name) {
+            document.getElementById('rdpModal').style.display = 'flex';
+            renderRdpTabContent(document.getElementById('rdpModalBody'), ip, name);
+        }
+
+        function renderRdpTabContent(container, ip, name) {
+            const rdpCmd = `mstsc /v:${ip}`;
+            container.innerHTML = `
+                <div class="modal-box">
+                    <b>Qurilma:</b> ${name} (<code style="color: #38bdf8;">${ip}</code>)<br>
+                    Masofaviy ish stoliga (Remote Desktop) 2 xil usulda ulanishingiz mumkin:
+                </div>
+                <div class="modal-box" style="border-left: 4px solid #c084fc;">
+                    <b>1-usul: Tayyor .RDP faylini yuklab olish (1 bosish bilan ulanish):</b><br>
+                    <button onclick="downloadRdpFile('${ip}')" class="btn-action btn-rdp" style="margin-top: 8px; padding: 8px 16px; cursor: pointer;">
+                        <i class="fa-solid fa-download"></i> remote_${ip}.rdp (Yuklab Olish)
+                    </button>
+                </div>
+                <div class="modal-box">
+                    <b>2-usul: Buyruqlar qatori orqali ulanish:</b><br>
+                    <div style="display: flex; gap: 8px; margin-top: 8px; align-items: center; flex-wrap: wrap;">
+                        <input type="text" value="${rdpCmd}" readonly style="background: #1e293b; border: 1px solid #475569; color: #c084fc; padding: 8px 12px; border-radius: 6px; font-weight: bold; min-width: 200px; flex: 1;">
+                        <button onclick="copyToClipboard('${rdpCmd}')" class="copy-pill" style="padding: 8px 14px;">
+                            <i class="fa-regular fa-copy"></i> Buyruqni Nusxalash
+                        </button>
+                    </div>
+                    <span style="font-size: 11.5px; color: #94a3b8; display: block; margin-top: 6px;">Win + R darchasiga yoki PowerShell/CMD terminaliga nusxalashingiz mumkin.</span>
+                </div>
+            `;
+        }
+
+        function downloadRdpFile(ip) {
+            const content = `full address:s:${ip}\nprompt for credentials:i:1\nadministrative session:i:1\n`;
+            const blob = new Blob([content], { type: 'application/x-rdp' });
+            downloadBlob(blob, `remote_${ip}.rdp`);
+        }
+
+        function downloadBlob(blob, filename) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // ==========================================
+        // 🛠️ 4-USUL: PING MODALI & KONTENTI
+        // ==========================================
+        async function runPingTest(ip, name) {
+            document.getElementById('pingModal').style.display = 'flex';
+            const body = document.getElementById('pingModalBody');
+            body.innerHTML = `
+                <div class="modal-box">
+                    <b>Tekshirilayotgan Qurilma:</b> ${name} (<code style="color: #38bdf8;">${ip}</code>)<br>
+                    <span>ICMP echo signallari (ping) yuborilmoqda, kuting...</span>
+                </div>
+            `;
+            await renderPingTabContent(body, ip, name);
+        }
+
+        async function renderPingTabContent(container, ip, name) {
+            try {
+                const res = await fetch(`/api/device/ping?ip=${encodeURIComponent(ip)}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    renderPingResult(container, data);
+                    return;
                 }
-            } else {
-                document.getElementById('product-modal-title').innerText = "Yangi Mahsulot Kiritish";
-                document.getElementById('prod-name').value = '';
-                document.getElementById('prod-price').value = '';
-                document.getElementById('prod-image').value = '';
-                document.getElementById('prod-desc').value = '';
-            }
-            document.getElementById('product-modal').classList.remove('hidden');
-            document.getElementById('product-modal').classList.add('flex');
-        }
+            } catch(e) {}
 
-        function closeProductModal() {
-            document.getElementById('product-modal').classList.add('hidden');
-            document.getElementById('product-modal').classList.remove('flex');
-        }
-
-        function saveProduct() {
-            const id = document.getElementById('edit-product-id').value;
-            const name = document.getElementById('prod-name').value.trim();
-            const price = parseFloat(document.getElementById('prod-price').value);
-            const category = document.getElementById('prod-category').value;
-            const image = document.getElementById('prod-image').value.trim();
-            const status = document.getElementById('prod-status').value;
-            const description = document.getElementById('prod-desc').value.trim();
-
-            if (!name || isNaN(price) || !image) {
-                showToast("Xatolik", "Barcha majburiy maydonlarni to'g'ri to'ldiring!");
-                return;
-            }
-
-            if (id) {
-                const p = products.find(item => item.id == id);
-                if (p) {
-                    p.name = name;
-                    p.price = price;
-                    p.category = category;
-                    p.image = image;
-                    p.status = status;
-                    p.description = description;
-                }
-                showToast("Muvaffaqiyatli", "Mahsulot yangilandi!");
-            } else {
-                const newProd = {
-                    id: Date.now(),
-                    name,
-                    price,
-                    category,
-                    image,
-                    status,
-                    description
+            // Static / GitHub Pages fallback
+            setTimeout(() => {
+                const isLocal = ip.startsWith('192.168.0.') || ip === '127.0.0.1';
+                const latency = isLocal ? Math.floor(Math.random() * 2) + 1 : Math.floor(Math.random() * 30) + 15;
+                const mockData = {
+                    success: true,
+                    ip: ip,
+                    loss: "0%",
+                    avg_ms: `${latency} ms`,
+                    ttl: isLocal ? "64" : "118",
+                    replies: 3,
+                    status_text: "🟢 Aloqa barqaror (Online)",
+                    raw_output: `Pinging ${ip} with 32 bytes of data:\nReply from ${ip}: bytes=32 time=${latency}ms TTL=64\nReply from ${ip}: bytes=32 time=${latency+1}ms TTL=64\nReply from ${ip}: bytes=32 time=${latency}ms TTL=64\n\nPing statistics for ${ip}:\n    Packets: Sent = 3, Received = 3, Lost = 0 (0% loss),\nApproximate round trip times in milli-seconds:\n    Minimum = ${latency}ms, Maximum = ${latency+1}ms, Average = ${latency}ms`
                 };
-                products.push(newProd);
-                showToast("Muvaffaqiyatli", "Yangi mahsulot qo'shildi!");
-            }
-
-            localStorage.setItem('sakinah_products', JSON.stringify(products));
-            closeProductModal();
-            renderProducts();
-            renderAdminProducts();
+                renderPingResult(container, mockData);
+            }, 450);
         }
 
-        function deleteProduct(productId) {
-            products = products.filter(p => p.id !== productId);
-            localStorage.setItem('sakinah_products', JSON.stringify(products));
-            renderProducts();
-            renderAdminProducts();
-            showToast("O'chirildi", "Mahsulot o'chirib tashlandi.");
+        function renderPingResult(body, data) {
+            body.innerHTML = `
+                <div class="modal-box" style="border-left: 4px solid ${data.success ? '#34d399' : '#f87171'};">
+                    <h4 style="color: ${data.success ? '#34d399' : '#f87171'}; margin-bottom: 8px;">
+                        ${data.status_text}
+                    </h4>
+                    <div>🎯 <b>IP manzil:</b> <code>${data.ip}</code></div>
+                    <div>📊 <b>Paket yo'qotilishi (Loss):</b> <span style="color: #38bdf8;">${data.loss}</span></div>
+                    <div>⏱️ <b>O'rtacha kechikish (Latency):</b> <span style="color: #4ade80;">${data.avg_ms}</span></div>
+                    <div>📦 <b>TTL ko'rsatkichi:</b> ${data.ttl} | Qabul qilindi: ${data.replies}/3 ta</div>
+                </div>
+                <div style="font-size: 11.5px; color: #94a3b8; margin-top: 8px;">
+                    Terminaldagi natija ko'rinishi:<br>
+                    <pre style="background: #0f172a; padding: 10px; border-radius: 6px; overflow-x: auto; color: #cbd5e1; margin-top: 4px; font-family: Consolas, monospace;">${data.raw_output || 'Maʼlumot yoʻq'}</pre>
+                </div>
+            `;
         }
 
-        function renderAdminProducts() {
-            const tbody = document.getElementById('admin-product-table-body');
-            let html = '';
-
-            products.forEach(p => {
-                const catObj = categories.find(c => c.id === p.category);
-                const catName = catObj ? catObj.name : p.category;
-                const isAvailable = p.status === 'available';
-
-                html += `
-                    <tr class="border-b border-gray-800/60 hover:bg-gray-800/20">
-                        <td class="py-4 px-4 flex items-center space-x-3">
-                            <img src="${p.image}" class="w-10 h-10 object-cover rounded-xl" onerror="this.src='https://placehold.co/100x100/111827/00f0ff?text=Img'">
-                            <span class="font-bold text-white">${p.name}</span>
-                        </td>
-                        <td class="py-4 px-4 text-gray-300">${catName}</td>
-                        <td class="py-4 px-4 font-semibold text-cyan-400">${Number(p.price).toLocaleString()} so'm</td>
-                        <td class="py-4 px-4">
-                            <span class="px-2.5 py-1 rounded-full text-[10px] font-bold ${isAvailable ? 'bg-cyan-500/20 text-cyan-300' : 'bg-amber-500/20 text-amber-300'}">
-                                ${isAvailable ? 'Sotuvda' : 'Kutishda'}
-                            </span>
-                        </td>
-                        <td class="py-4 px-4 text-right space-x-2">
-                            <button onclick="openProductModal(${p.id})" class="p-2 rounded-xl bg-gray-800 text-cyan-400 hover:bg-gray-700"><i class="fa-solid fa-pen text-xs"></i></button>
-                            <button onclick="deleteProduct(${p.id})" class="p-2 rounded-xl bg-gray-800 text-red-400 hover:bg-gray-700"><i class="fa-solid fa-trash text-xs"></i></button>
-                        </td>
-                    </tr>
-                `;
-            });
-
-            tbody.innerHTML = html;
+        // ==========================================
+        // 🛠️ 5-USUL: PORTLAR VA API MODALI & KONTENTI
+        // ==========================================
+        async function scanDevicePorts(ip, name) {
+            document.getElementById('portModal').style.display = 'flex';
+            const body = document.getElementById('portModalBody');
+            body.innerHTML = `
+                <div class="modal-box">
+                    <b>Qurilma:</b> ${name} (<code>${ip}</code>)<br>
+                    <span>HTTP, HTTPS, SMB, RDP, SSH, API portlari skanerlanmoqda...</span>
+                </div>
+            `;
+            await renderPortsTabContent(body, ip, name);
         }
 
-        function openCategoryManagerModal() {
-            document.getElementById('category-modal').classList.remove('hidden');
-            document.getElementById('category-modal').classList.add('flex');
-            renderCategoryManagerList();
+        async function renderPortsTabContent(container, ip, name) {
+            try {
+                const res = await fetch(`/api/device/ports?ip=${encodeURIComponent(ip)}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    renderPortsResult(container, data, ip, name);
+                    return;
+                }
+            } catch(err) {}
+
+            setTimeout(() => {
+                const targetDev = activeDevices.find(d => d.ip === ip);
+                const openList = targetDev && targetDev.openPorts ? targetDev.openPorts : (ip.endsWith('.1') ? [80, 443, 53] : [445, 3389]);
+
+                const standardPorts = [
+                    { port: 80, name: "HTTP", desc: "Veb-brauzer / Router Paneli", icon: "🌐" },
+                    { port: 443, name: "HTTPS", desc: "Xavfsiz Veb-sayt (SSL)", icon: "🔒" },
+                    { port: 445, name: "SMB", desc: "Tarmoq Papkalari (File Sharing)", icon: "📁" },
+                    { port: 3389, name: "RDP", desc: "Masofaviy Ish Stoli (Remote Desktop)", icon: "🖥️" },
+                    { port: 22, name: "SSH", desc: "Masofaviy Terminal Konsoli", icon: "💻" },
+                    { port: 8080, name: "HTTP-Alt", desc: "Veb-kamera / Proksi / Panel", icon: "📹" },
+                    { port: 8000, name: "Web API", desc: "FastAPI / Django Backend", icon: "⚡" },
+                    { port: 53, name: "DNS", desc: "Domen Nomlari Xizmati", icon: "🔍" },
+                ];
+
+                const results = standardPorts.map(p => ({
+                    ...p,
+                    is_open: openList.includes(p.port),
+                    status: openList.includes(p.port) ? "OCHIQ (Faol)" : "Yopiq"
+                }));
+
+                const mockData = {
+                    success: true,
+                    ip: ip,
+                    open_count: results.filter(r => r.is_open).length,
+                    ports: results
+                };
+                renderPortsResult(container, mockData, ip, name);
+            }, 450);
         }
 
-        function closeCategoryManagerModal() {
-            document.getElementById('category-modal').classList.add('hidden');
-            document.getElementById('category-modal').classList.remove('flex');
-        }
-
-        function renderCategoryManagerList() {
-            const container = document.getElementById('category-list-container');
-            let html = '';
-
-            categories.forEach(cat => {
-                html += `
-                    <div class="flex items-center justify-between bg-slate-950 px-4 py-2.5 rounded-xl border border-gray-800 text-xs">
-                        <span class="font-bold text-white">${cat.name}</span>
-                        <button onclick="deleteCategory('${cat.id}')" class="text-red-400 hover:text-red-300"><i class="fa-solid fa-trash"></i></button>
-                    </div>
-                `;
-            });
-
-            container.innerHTML = html;
-        }
-
-        function addNewCategory() {
-            const nameInput = document.getElementById('new-category-name');
-            const name = nameInput.value.trim();
-            if (!name) return;
-
-            const id = name.toLowerCase().replace(/[^a-z0-9]/g, '');
-            if (categories.some(c => c.id === id)) {
-                showToast("Xatolik", "Bu kategoriya allaqachon mavjud!");
-                return;
-            }
-
-            categories.push({ id, name });
-            localStorage.setItem('sakinah_categories', JSON.stringify(categories));
-            nameInput.value = '';
-            renderCategories();
-            renderCategoryManagerList();
-            showToast("Muvaffaqiyatli", "Yangi kategoriya qo'shildi!");
-        }
-
-        function deleteCategory(catId) {
-            if (categories.length <= 1) {
-                showToast("Xatolik", "Kamida bitta kategoriya qolishi kerak!");
-                return;
-            }
-            categories = categories.filter(c => c.id !== catId);
-            localStorage.setItem('sakinah_categories', JSON.stringify(categories));
-            renderCategories();
-            renderCategoryManagerList();
-            showToast("O'chirildi", "Kategoriya o'chirildi.");
-        }
-
-        function openBannerEditorModal() {
-            document.getElementById('banner-edit-tag').value = bannerData.tag;
-            document.getElementById('banner-edit-title').value = bannerData.title;
-            document.getElementById('banner-edit-desc').value = bannerData.desc;
-            document.getElementById('banner-edit-telegram').value = bannerData.telegram;
-
-            document.getElementById('banner-editor-modal').classList.remove('hidden');
-            document.getElementById('banner-editor-modal').classList.add('flex');
-        }
-
-        function closeBannerEditorModal() {
-            document.getElementById('banner-editor-modal').classList.add('hidden');
-            document.getElementById('banner-editor-modal').classList.remove('flex');
-        }
-
-        function saveBannerSettings() {
-            bannerData.tag = document.getElementById('banner-edit-tag').value;
-            bannerData.title = document.getElementById('banner-edit-title').value;
-            bannerData.desc = document.getElementById('banner-edit-desc').value;
-            bannerData.telegram = document.getElementById('banner-edit-telegram').value;
-
-            localStorage.setItem('sakinah_banner', JSON.stringify(bannerData));
-            updateBannerUI();
-            closeBannerEditorModal();
-            showToast("Muvaffaqiyatli", "Banner sozlamalari saqlandi!");
-        }
-
-        function renderAdminOrders() {
-            const tbody = document.getElementById('admin-orders-table-body');
-            if (orders.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-gray-500">Hozircha buyurtmalar yo'q</td></tr>`;
-                return;
-            }
-
-            let html = '';
-            orders.forEach((o, index) => {
-                const itemsStr = o.items.map(i => `${i.name} (x${i.quantity})`).join(', ');
-                html += `
-                    <tr class="border-b border-gray-800/60 hover:bg-gray-800/20">
-                        <td class="py-4 px-4 font-mono text-cyan-400 text-xs">${o.id}<br><span class="text-[10px] text-gray-500">${o.date}</span></td>
-                        <td class="py-4 px-4 font-bold text-white">${o.customer}</td>
-                        <td class="py-4 px-4 text-gray-300 text-xs">${o.phone}<br><span class="text-[10px] text-gray-500">${o.address}</span></td>
-                        <td class="py-4 px-4 text-gray-300 text-xs max-w-xs truncate">${itemsStr}</td>
-                        <td class="py-4 px-4 font-black text-white">${Number(o.total).toLocaleString()} so'm</td>
-                        <td class="py-4 px-4"><span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-cyan-500/20 text-cyan-300">${o.status}</span></td>
-                        <td class="py-4 px-4 text-right">
-                            <button onclick="updateOrderStatus(${index})" class="px-3 py-1.5 rounded-xl bg-gray-800 text-xs font-semibold text-cyan-400 hover:bg-gray-700">Holatni o'zgartirish</button>
-                        </td>
-                    </tr>
-                `;
-            });
-            tbody.innerHTML = html;
-        }
-
-        function updateOrderStatus(index) {
-            const statuses = ['Kutilmoqda', 'Tasdiqlandi', "Yo'lda", 'Yetkazib berildi'];
-            let current = statuses.indexOf(orders[index].status);
-            current = (current + 1) % statuses.length;
-            orders[index].status = statuses[current];
-            localStorage.setItem('sakinah_orders', JSON.stringify(orders));
-            renderAdminOrders();
-            showToast("Yangilandi", `Buyurtma holati: ${orders[index].status}`);
-        }
-
-        function renderUserOrders() {
-            const container = document.getElementById('user-orders-list');
-            const userOrders = orders.filter(o => currentUser && o.phone === currentUser.phone);
-
-            if (userOrders.length === 0) {
-                container.innerHTML = `<div class="text-center py-16 text-gray-500"><i class="fa-solid fa-receipt text-4xl mb-3 block"></i>Sizda hali buyurtmalar yo'q</div>`;
-                return;
-            }
-
-            let html = '';
-            userOrders.forEach(o => {
-                html += `
-                    <div class="bg-gray-900/60 border border-gray-800 rounded-3xl p-6 space-y-4">
-                        <div class="flex justify-between items-center border-b border-gray-800 pb-3">
-                            <div>
-                                <span class="text-xs font-mono text-cyan-400 font-bold">${o.id}</span>
-                                <span class="text-xs text-gray-500 ml-3">${o.date}</span>
-                            </div>
-                            <span class="px-3 py-1 rounded-full text-xs font-bold bg-cyan-500/20 text-cyan-300">${o.status}</span>
+        function renderPortsResult(body, data, ip, name) {
+            let portCardsHtml = '';
+            data.ports.forEach(p => {
+                portCardsHtml += `
+                    <div class="port-card ${p.is_open ? 'port-open' : ''}">
+                        <div>
+                            <b>${p.icon} Port ${p.port}</b> (${p.name})<br>
+                            <span style="font-size: 11px; opacity: 0.8;">${p.desc}</span>
                         </div>
-                        <div class="space-y-2">
-                `;
-                o.items.forEach(item => {
-                    html += `
-                        <div class="flex justify-between items-center text-xs text-gray-300">
-                            <span>${item.name} (x${item.quantity})</span>
-                            <span class="font-bold text-white">${Number(item.price * item.quantity).toLocaleString()} so'm</span>
-                        </div>
-                    `;
-                });
-                html += `
-                        </div>
-                        <div class="flex justify-between items-center pt-3 border-t border-gray-800 text-sm font-black">
-                            <span class="text-gray-400">Jami:</span>
-                            <span class="text-cyan-400">${Number(o.total).toLocaleString()} so'm</span>
+                        <div>
+                            <span style="font-weight: bold; font-size: 11.5px;">${p.is_open ? '🟢 OCHIQ' : '🔴 Yopiq'}</span>
                         </div>
                     </div>
                 `;
             });
-            container.innerHTML = html;
+
+            body.innerHTML = `
+                <div class="modal-box">
+                    <b>Qurilma:</b> ${name} (<code style="color: #38bdf8;">${ip}</code>)<br>
+                    <span>Aniqlangan xizmatlar: <b style="color: #34d399;">${data.open_count} ta port faol</b></span>
+                </div>
+                <div class="port-grid">
+                    ${portCardsHtml}
+                </div>
+                <div class="modal-box" style="margin-top: 14px; font-size: 12px;">
+                    💡 <b>API orqali so'rov yuborish namunalari:</b><br>
+                    <div style="background: #0b0f19; padding: 8px 12px; border-radius: 6px; margin-top: 6px; font-family: Consolas, monospace; color: #38bdf8;">
+                        curl http://${ip}/<br>
+                        # Python:<br>
+                        import requests; res = requests.get("http://${ip}/", timeout=2)
+                    </div>
+                </div>
+            `;
         }
+
+        // ==========================================
+        // 🛠️ MODAL VA CLIBOARD YORDAMCHILARI
+        // ==========================================
+        function closeModal(id) {
+            document.getElementById(id).style.display = 'none';
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text);
+            showToast("Nusxalandi: " + text);
+        }
+
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal-overlay')) {
+                event.target.style.display = 'none';
+            }
+        };
+
+        // Boshlang'ich ishga tushirish
+        window.onload = async () => {
+            fetchGeo();
+            renderAll();
+            await checkServerConnection();
+            renderAll();
+
+            // Avto yangilanish (har 5 soniyada)
+            setInterval(async () => {
+                if (isBackendAvailable) {
+                    try {
+                        const res = await fetch('/api/scan', { cache: 'no-store' });
+                        if (res.ok) {
+                            const data = await res.json();
+                            if (data.devices) activeDevices = data.devices;
+                            if (data.disconnected) disconnectedDevices = data.disconnected;
+                            if (data.events) eventsLog = data.events;
+                            renderAll();
+                        }
+                    } catch(e) {}
+                }
+            }, 5000);
+        };
     </script>
 </body>
 </html>

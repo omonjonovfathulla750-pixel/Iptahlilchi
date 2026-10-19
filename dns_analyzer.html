@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Domen & DNS Kiber-Tahlil Markazi | IP & Tarmoq Tahlili</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-main: #0b0f19;
+            --bg-card: #131d2e;
+            --bg-sub: #0f172a;
+            --border: #334155;
+            --primary: #38bdf8;
+            --accent-green: #34d399;
+            --accent-amber: #facc15;
+            --accent-purple: #c084fc;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
+        body { background-color: var(--bg-main); color: var(--text-main); padding: 18px; line-height: 1.5; min-height: 100vh; }
+        .container { max-width: 1440px; margin: 0 auto; }
+        code, pre { font-family: 'JetBrains Mono', monospace; }
+
+        /* Navigation */
+        .top-navbar {
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            padding: 14px 22px;
+            border-radius: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid var(--border);
+            margin-bottom: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.35);
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: inherit;
+        }
+        .brand-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #059669, #0284c7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            color: #fff;
+            box-shadow: 0 0 16px rgba(52, 211, 153, 0.4);
+        }
+        .brand-title {
+            font-size: 19px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #34d399, #38bdf8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .brand-sub {
+            font-size: 11px;
+            color: var(--text-muted);
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .nav-btn {
+            background: #0f172a;
+            border: 1px solid var(--border);
+            color: #cbd5e1;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            transition: all 0.2s;
+        }
+        .nav-btn:hover {
+            border-color: var(--primary);
+            color: #fff;
+            background: #1e293b;
+            transform: translateY(-1px);
+        }
+        .nav-btn.active {
+            background: linear-gradient(135deg, #059669, #0284c7);
+            color: #fff;
+            border-color: #34d399;
+            box-shadow: 0 0 14px rgba(52, 211, 153, 0.3);
+        }
+        .nav-btn-pink {
+            border-color: rgba(244, 114, 182, 0.4);
+            color: #f472b6;
+        }
+        .nav-btn-pink:hover {
+            border-color: #ec4899;
+            background: rgba(236, 72, 153, 0.15);
+            color: #fff;
+        }
+
+        /* Search Hero */
+        .search-hero {
+            background: linear-gradient(135deg, #131d2e, #1e293b);
+            border: 1px solid #34d399;
+            box-shadow: 0 0 25px rgba(52, 211, 153, 0.15);
+            border-radius: 16px;
+            padding: 24px 28px;
+            margin-bottom: 24px;
+        }
+        .hero-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .hero-title h2 {
+            font-size: 19px;
+            font-weight: 800;
+            color: #34d399;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .input-row {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .input-wrapper {
+            flex: 1;
+            position: relative;
+            min-width: 300px;
+        }
+        .input-wrapper i {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #64748b;
+            font-size: 16px;
+        }
+        .input-wrapper input {
+            width: 100%;
+            padding: 13px 18px 13px 44px;
+            background: #0b0f19;
+            border: 1px solid #475569;
+            border-radius: 10px;
+            color: #34d399;
+            font-size: 15px;
+            font-weight: 600;
+            outline: none;
+            transition: all 0.2s;
+        }
+        .input-wrapper input:focus {
+            border-color: #34d399;
+            box-shadow: 0 0 15px rgba(52, 211, 153, 0.3);
+        }
+
+        .btn-dns {
+            padding: 13px 26px;
+            background: linear-gradient(135deg, #059669, #0284c7);
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            font-size: 14.5px;
+            font-weight: 800;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 9px;
+            transition: all 0.2s;
+        }
+        .btn-dns:hover {
+            transform: translateY(-1px);
+            background: linear-gradient(135deg, #047857, #0369a1);
+        }
+        .btn-dns.loading i { animation: spin 0.8s linear infinite; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        .chip-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 14px;
+            flex-wrap: wrap;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+        .sample-chip {
+            background: #0f172a;
+            border: 1px solid var(--border);
+            color: #6ee7b7;
+            padding: 5px 12px;
+            border-radius: 7px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .sample-chip:hover {
+            border-color: #34d399;
+            color: #fff;
+            background: #1e293b;
+        }
+
+        /* DNS Records Grid */
+        .record-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+            gap: 18px;
+            margin-bottom: 24px;
+        }
+        .record-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 18px 20px;
+        }
+        .record-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 10px;
+            margin-bottom: 12px;
+        }
+        .record-type-badge {
+            font-size: 13px;
+            font-weight: 800;
+            padding: 4px 10px;
+            border-radius: 6px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .type-a { background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); }
+        .type-aaaa { background: rgba(192, 132, 252, 0.15); color: #c084fc; border: 1px solid rgba(192, 132, 252, 0.3); }
+        .type-mx { background: rgba(250, 204, 21, 0.15); color: #facc15; border: 1px solid rgba(250, 204, 21, 0.3); }
+        .type-txt { background: rgba(52, 211, 153, 0.15); color: #34d399; border: 1px solid rgba(52, 211, 153, 0.3); }
+        .type-ns { background: rgba(244, 114, 182, 0.15); color: #f472b6; border: 1px solid rgba(244, 114, 182, 0.3); }
+
+        .record-item {
+            background: #0f172a;
+            border: 1px solid var(--border);
+            padding: 10px 14px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            word-break: break-all;
+        }
+        .record-item code {
+            color: #f1f5f9;
+            font-weight: 600;
+        }
+
+        .btn-jump-ip {
+            background: #1e293b;
+            color: #38bdf8;
+            border: 1px solid #38bdf8;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.2s;
+            margin-left: 8px;
+            white-space: nowrap;
+        }
+        .btn-jump-ip:hover {
+            background: #0284c7;
+            color: #fff;
+        }
+
+        @media (max-width: 768px) {
+            .record-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 1. Top Unified Navigation Bar -->
+        <header class="top-navbar">
+            <a href="index.html" class="brand">
+                <div class="brand-icon">
+                    <i class="fa-solid fa-globe"></i>
+                </div>
+                <div>
+                    <h1 class="brand-title">DNS & DOMEN INTEL</h1>
+                    <p class="brand-sub">DNS over HTTPS Kiber-Tahlil Markazi</p>
+                </div>
+            </a>
+            <nav class="nav-links">
+                <a href="index.html" class="nav-btn" title="IP va tarmoq qurilmalari markazi">
+                    <i class="fa-solid fa-network-wired text-sky-400"></i>
+                    <span>IP & Tarmoq Tahlili</span>
+                </a>
+                <a href="email_osint.html" class="nav-btn" title="Google va email razvedka">
+                    <i class="fa-solid fa-envelope-open-text text-amber-400"></i>
+                    <span>Google & Email OSINT</span>
+                </a>
+                <a href="dns_analyzer.html" class="nav-btn active" title="Domen va DNS tahlili">
+                    <i class="fa-solid fa-globe text-emerald-400"></i>
+                    <span>Domen & DNS</span>
+                </a>
+                <a href="sakinah.html" class="nav-btn nav-btn-pink" title="Sakinah do'koniga o'tish">
+                    <i class="fa-solid fa-gem text-pink-400"></i>
+                    <span>Sakinah Do'koni</span>
+                </a>
+            </nav>
+        </header>
+
+        <!-- 2. Search Hero -->
+        <section class="search-hero">
+            <div class="hero-title">
+                <h2>
+                    <i class="fa-solid fa-dna text-emerald-400"></i>
+                    <span>Domen va DNS Yozuvlarini Chuqur Skanerlash (Google DoH)</span>
+                </h2>
+                <div style="font-size: 12px; color: #94a3b8;">
+                    A, AAAA, MX, TXT, NS, CNAME yozuvlari va IP tahlil
+                </div>
+            </div>
+            <div class="input-row">
+                <div class="input-wrapper">
+                    <i class="fa-solid fa-globe"></i>
+                    <input type="text" id="targetDomainInput" placeholder="Domen nomini kiriting (Masalan: google.com yoki kun.uz)" value="google.com">
+                </div>
+                <button class="btn-dns" id="dnsBtn" onclick="runDnsScan()">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <span id="dnsBtnText">DNS Tahlilni Boshlash</span>
+                </button>
+            </div>
+            <div class="chip-container">
+                <span>⚡ Ommabop Namunalar:</span>
+                <button class="sample-chip" onclick="selectDomain('google.com')">🌐 google.com</button>
+                <button class="sample-chip" onclick="selectDomain('kun.uz')">🇺🇿 kun.uz</button>
+                <button class="sample-chip" onclick="selectDomain('github.com')">🐙 github.com</button>
+                <button class="sample-chip" onclick="selectDomain('telegram.org')">✈️ telegram.org</button>
+                <button class="sample-chip" onclick="selectDomain('cloudflare.com')">⚡ cloudflare.com</button>
+            </div>
+        </section>
+
+        <!-- 3. Record Results Grid -->
+        <main class="record-grid" id="dnsResultsGrid">
+            <!-- Dynamically injected -->
+        </main>
+    </div>
+
+    <script>
+        const recordTypes = [
+            { type: "A", name: "IPv4 Manzillar (A Records)", badgeClass: "type-a", icon: "fa-solid fa-network-wired" },
+            { type: "AAAA", name: "IPv6 Manzillar (AAAA Records)", badgeClass: "type-aaaa", icon: "fa-solid fa-bolt" },
+            { type: "MX", name: "Pochta Serverlari (MX Records)", badgeClass: "type-mx", icon: "fa-solid fa-envelope" },
+            { type: "TXT", name: "Xavfsizlik & SPF/DMARC (TXT)", badgeClass: "type-txt", icon: "fa-solid fa-shield-halved" },
+            { type: "NS", name: "DNS Serverlar (NS Records)", badgeClass: "type-ns", icon: "fa-solid fa-server" }
+        ];
+
+        async function runDnsScan() {
+            const input = document.getElementById('targetDomainInput');
+            let domain = (input.value || "").trim().toLowerCase();
+            domain = domain.replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+
+            if (!domain || !domain.includes('.')) {
+                alert("Iltimos, to'g'ri domen kiriting!");
+                return;
+            }
+
+            const btn = document.getElementById('dnsBtn');
+            const btnText = document.getElementById('dnsBtnText');
+            btn.classList.add('loading');
+            btnText.innerText = "Skanerlanmoqda...";
+
+            const grid = document.getElementById('dnsResultsGrid');
+            grid.innerHTML = '<div style="color: #94a3b8; text-align: center; padding: 40px; grid-column: 1 / -1;"><i class="fa-solid fa-spinner fa-spin text-2xl text-emerald-400"></i><br><br>Google DoH orqali DNS yozuvlari so\'ralmoqda...</div>';
+
+            const results = {};
+
+            for (const r of recordTypes) {
+                try {
+                    const res = await fetch(`https://dns.google/resolve?name=${encodeURIComponent(domain)}&type=${r.type}`);
+                    if (res.ok) {
+                        const data = await res.json();
+                        results[r.type] = data.Answer || [];
+                    } else {
+                        results[r.type] = [];
+                    }
+                } catch(e) {
+                    results[r.type] = [];
+                }
+            }
+
+            renderDnsCards(domain, results);
+
+            btn.classList.remove('loading');
+            btnText.innerText = "DNS Tahlilni Boshlash";
+        }
+
+        function renderDnsCards(domain, results) {
+            const grid = document.getElementById('dnsResultsGrid');
+            grid.innerHTML = '';
+
+            recordTypes.forEach(r => {
+                const answers = results[r.type] || [];
+                let itemsHtml = '';
+
+                if (answers.length === 0) {
+                    itemsHtml = '<div style="color: #64748b; font-size: 12.5px; padding: 10px 0;">Yozuvlar topilmadi yoki mavjud emas.</div>';
+                } else {
+                    answers.forEach(ans => {
+                        const isIp = r.type === 'A' || r.type === 'AAAA';
+                        itemsHtml += `
+                            <div class="record-item">
+                                <code>${ans.data}</code>
+                                <div style="display: flex; align-items: center;">
+                                    <span style="font-size: 11px; color: #94a3b8;">TTL: ${ans.TTL}s</span>
+                                    ${isIp ? `<a href="index.html" class="btn-jump-ip" title="IP tahlilida ochish"><i class="fa-solid fa-arrow-up-right-from-square"></i> IP Markaz</a>` : ''}
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+
+                grid.innerHTML += `
+                    <div class="record-card">
+                        <div class="record-card-header">
+                            <span class="record-type-badge ${r.badgeClass}">
+                                <i class="${r.icon}"></i> ${r.name}
+                            </span>
+                            <span style="font-size: 12px; color: #94a3b8;">${answers.length} ta yozuv</span>
+                        </div>
+                        <div>${itemsHtml}</div>
+                    </div>
+                `;
+            });
+        }
+
+        function selectDomain(dom) {
+            document.getElementById('targetDomainInput').value = dom;
+            runDnsScan();
+        }
+
+        window.onload = () => {
+            runDnsScan();
+        };
+    </script>
+</body>
+</html>
