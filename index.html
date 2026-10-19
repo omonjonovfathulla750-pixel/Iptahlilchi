@@ -390,8 +390,12 @@
                     <i class="fa-solid fa-envelope-open-text text-amber-300"></i>
                     <span>Email OSINT</span>
                 </a>
-                <a href="dns_analyzer.html" class="btn-sakinah-nav" style="background: linear-gradient(135deg, #059669, #0284c7); border-color: #34d399;" title="Domen va DNS yozuvlari tahlili">
-                    <i class="fa-solid fa-globe text-emerald-300"></i>
+                <a href="phone_osint.html" class="btn-sakinah-nav" style="background: linear-gradient(135deg, #059669, #10b981); border-color: #34d399;" title="Telefon raqamlar razvedkasi va operator tahlili">
+                    <i class="fa-solid fa-phone-volume text-emerald-300"></i>
+                    <span>Telefon OSINT</span>
+                </a>
+                <a href="dns_analyzer.html" class="btn-sakinah-nav" style="background: linear-gradient(135deg, #059669, #0284c7); border-color: #38bdf8;" title="Domen va DNS yozuvlari tahlili">
+                    <i class="fa-solid fa-globe text-cyan-300"></i>
                     <span>Domen & DNS</span>
                 </a>
                 <a href="login.html" class="btn-sakinah-nav" id="navAuthLink" style="background: linear-gradient(135deg, #4f46e5, #7c3aed); border-color: #a78bfa;" title="Tahlilchi kabineti va tizimga kirish">
@@ -545,7 +549,12 @@
                 <div class="modal-title" id="full5Title">
                     <i class="fa-solid fa-cubes-stacked text-sky-400"></i> 5 Xil Usulda Tahlil Natijalari
                 </div>
-                <button class="modal-close" onclick="closeModal('full5Modal')">&times;</button>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <button onclick="window.print()" style="background: #1e293b; border: 1px solid #38bdf8; color: #38bdf8; padding: 5px 12px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;" title="PDF hisobot chop etish yoki saqlash">
+                        <i class="fa-solid fa-file-pdf"></i> PDF Hisobot
+                    </button>
+                    <button class="modal-close" onclick="closeModal('full5Modal')">&times;</button>
+                </div>
             </div>
             <div class="tabs-header">
                 <button class="tab-btn active" id="tabBtnOverview" onclick="switchFullTab('overview')"><i class="fa-solid fa-circle-info"></i> Umumiy Tahlil</button>

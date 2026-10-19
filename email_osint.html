@@ -607,10 +607,43 @@
             body { padding: 10px; }
             .input-wrapper { min-width: 100%; }
         }
+
+        /* 🖨️ PDF & PRINT REPORT STYLES */
+        @media print {
+            body { background: #ffffff !important; color: #0f172a !important; padding: 0 !important; }
+            .top-navbar, .search-hero, .tab-bar, .action-links, .btn-export, .btn-osint, .chip-container, .toast {
+                display: none !important;
+            }
+            .results-grid { display: block !important; }
+            .profile-card, .details-wrapper, .card-box, .hl-card, .tab-content {
+                background: #ffffff !important;
+                border: 1px solid #cbd5e1 !important;
+                color: #0f172a !important;
+                box-shadow: none !important;
+                page-break-inside: avoid;
+            }
+            .profile-name, .profile-email-badge, .meta-val, .hl-data p {
+                color: #0f172a !important;
+            }
+            .tab-pane { display: block !important; margin-bottom: 20px; }
+            .print-header {
+                display: block !important;
+                border-bottom: 2px solid #0f172a;
+                padding-bottom: 12px;
+                margin-bottom: 20px;
+            }
+        }
+        .print-header { display: none; }
     </style>
 </head>
 <body>
     <div class="container">
+        <!-- 0. Printable Header for PDF Reports -->
+        <div class="print-header">
+            <h1 style="font-size: 22px; font-weight: 800; color: #0f172a;">CYBER INTELLIGENCE OSINT DOSSIER</h1>
+            <p style="font-size: 12px; color: #64748b;" id="printEmailMeta">Google & Email Akkaunt Kiber-Razvedka Dosyesi</p>
+        </div>
+
         <!-- 1. Top Unified Navigation Bar -->
         <header class="top-navbar">
             <a href="index.html" class="brand">
@@ -631,8 +664,12 @@
                     <i class="fa-solid fa-envelope-open-text text-amber-400"></i>
                     <span>Google & Email OSINT</span>
                 </a>
+                <a href="phone_osint.html" class="nav-btn" title="Telefon raqamlar razvedkasi va operator tahlili">
+                    <i class="fa-solid fa-phone-volume text-emerald-400"></i>
+                    <span>Telefon OSINT</span>
+                </a>
                 <a href="dns_analyzer.html" class="nav-btn" title="Domen va DNS yozuvlarini tahlil qilish">
-                    <i class="fa-solid fa-globe text-emerald-400"></i>
+                    <i class="fa-solid fa-globe text-cyan-400"></i>
                     <span>Domen & DNS</span>
                 </a>
                 <a href="login.html" class="nav-btn" style="border-color: #818cf8; color: #a5b4fc;" title="Tahlilchi kabineti va login">
@@ -663,9 +700,13 @@
                     <i class="fa-solid fa-arrows-rotate"></i>
                     <span id="scanBtnText">OSINT Tahlilni Boshlash</span>
                 </button>
-                <button class="btn-export" onclick="exportOsintReport()">
+                <button class="btn-export" onclick="exportOsintReport()" title="JSON formatda yuklash">
                     <i class="fa-solid fa-file-arrow-down"></i>
-                    <span>Hisobot (Export)</span>
+                    <span>JSON Dosye</span>
+                </button>
+                <button class="btn-export" onclick="window.print()" style="background: linear-gradient(135deg, #059669, #0284c7); border-color: #34d399;" title="Rasmiy PDF dosye hisobotini saqlash yoki chop etish">
+                    <i class="fa-solid fa-file-pdf"></i>
+                    <span>PDF Hisobot</span>
                 </button>
             </div>
             <div class="chip-container">
@@ -1876,6 +1917,9 @@
                 riskEl.className = "risk-pill risk-high";
                 riskEl.innerHTML = `<i class="fa-solid fa-skull-crossbones"></i> Xavf Darajasi: Yuqori (${breachCount} ta ma'lumotlar oqishi)`;
             }
+
+            const printEl = document.getElementById('printEmailMeta');
+            if (printEl) printEl.innerText = `Kiberxavfsizlik Email Dosyesi: ${currentOsintData.email} | Nomi: ${currentOsintData.name} | Sana: ${new Date().toLocaleDateString()}`;
 
             document.getElementById('metaProvider').innerText = currentOsintData.provider;
             document.getElementById('metaEmailType').innerText = currentOsintData.isGoogle ? "Google Shaxsiy / Biznes" : "Oddiy Pochta";

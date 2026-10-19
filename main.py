@@ -470,6 +470,16 @@ def email_osint_page():
     return "<h1>email_osint.html fayli topilmadi</h1>"
 
 
+@app.get("/phone_osint", response_class=HTMLResponse)
+@app.get("/phone_osint.html", response_class=HTMLResponse)
+def phone_osint_page():
+    html_path = os.path.join(os.path.dirname(__file__), "phone_osint.html")
+    if os.path.exists(html_path):
+        with open(html_path, "r", encoding="utf-8") as f:
+            return f.read()
+    return "<h1>phone_osint.html fayli topilmadi</h1>"
+
+
 @app.get("/dns_analyzer", response_class=HTMLResponse)
 @app.get("/dns_analyzer.html", response_class=HTMLResponse)
 def dns_analyzer_page():

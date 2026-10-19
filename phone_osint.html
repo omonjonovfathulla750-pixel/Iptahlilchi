@@ -1,0 +1,1330 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Telefon Raqam OSINT & Operator Tahlili | Kiber-Tahlil Markazi</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-main: #0b0f19;
+            --bg-card: #131d2e;
+            --bg-card-hover: #1a273e;
+            --bg-sub: #0f172a;
+            --border: #334155;
+            --primary: #38bdf8;
+            --accent-green: #34d399;
+            --accent-amber: #facc15;
+            --accent-red: #f87171;
+            --accent-purple: #c084fc;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
+        body { background-color: var(--bg-main); color: var(--text-main); padding: 18px; line-height: 1.5; min-height: 100vh; }
+        .container { max-width: 1440px; margin: 0 auto; }
+        code, pre { font-family: 'JetBrains Mono', monospace; }
+
+        /* Navigation */
+        .top-navbar {
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            padding: 14px 22px;
+            border-radius: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid var(--border);
+            margin-bottom: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.35);
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: inherit;
+        }
+        .brand-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #059669, #10b981);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            color: #fff;
+            box-shadow: 0 0 16px rgba(16, 185, 129, 0.4);
+        }
+        .brand-title {
+            font-size: 19px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #34d399, #38bdf8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .brand-sub {
+            font-size: 11px;
+            color: var(--text-muted);
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .nav-btn {
+            background: #0f172a;
+            border: 1px solid var(--border);
+            color: #cbd5e1;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            transition: all 0.2s;
+        }
+        .nav-btn:hover {
+            border-color: var(--primary);
+            color: #fff;
+            background: #1e293b;
+            transform: translateY(-1px);
+        }
+        .nav-btn.active {
+            background: linear-gradient(135deg, #059669, #0284c7);
+            color: #fff;
+            border-color: #34d399;
+            box-shadow: 0 0 14px rgba(52, 211, 153, 0.3);
+        }
+
+        /* Search Hero Section */
+        .search-hero {
+            background: linear-gradient(135deg, #131d2e, #1e293b);
+            border: 1px solid #10b981;
+            box-shadow: 0 0 25px rgba(16, 185, 129, 0.15);
+            border-radius: 16px;
+            padding: 24px 28px;
+            margin-bottom: 24px;
+        }
+        .hero-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .hero-title h2 {
+            font-size: 19px;
+            font-weight: 800;
+            color: #34d399;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .hero-badge {
+            font-size: 11.5px;
+            font-weight: 700;
+            background: rgba(16, 185, 129, 0.15);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.4);
+            padding: 4px 12px;
+            border-radius: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .input-row {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .input-wrapper {
+            flex: 1;
+            position: relative;
+            min-width: 320px;
+        }
+        .input-wrapper i {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #10b981;
+            font-size: 16px;
+        }
+        .input-wrapper input {
+            width: 100%;
+            padding: 13px 18px 13px 44px;
+            background: #0b0f19;
+            border: 1px solid #475569;
+            border-radius: 10px;
+            color: #34d399;
+            font-size: 16px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            outline: none;
+            transition: all 0.2s;
+        }
+        .input-wrapper input:focus {
+            border-color: #10b981;
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.35);
+        }
+
+        .btn-probe {
+            padding: 13px 24px;
+            background: linear-gradient(135deg, #059669, #0284c7);
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            font-size: 14.5px;
+            font-weight: 800;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 9px;
+            transition: all 0.2s;
+        }
+        .btn-probe:hover {
+            transform: translateY(-1px);
+            background: linear-gradient(135deg, #047857, #0369a1);
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+        }
+        .btn-probe.loading i { animation: spin 0.8s linear infinite; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        .btn-print {
+            padding: 13px 18px;
+            background: #1e293b;
+            color: #38bdf8;
+            border: 1px solid #38bdf8;
+            border-radius: 10px;
+            font-size: 13.5px;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+        .btn-print:hover {
+            background: #38bdf8;
+            color: #0b0f19;
+        }
+
+        .chip-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 14px;
+            flex-wrap: wrap;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+        .sample-chip {
+            background: #0f172a;
+            border: 1px solid var(--border);
+            color: #6ee7b7;
+            padding: 5px 12px;
+            border-radius: 7px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .sample-chip:hover {
+            border-color: #34d399;
+            color: #fff;
+            background: #1e293b;
+        }
+
+        /* Results Layout Grid */
+        .results-grid {
+            display: grid;
+            grid-template-columns: 360px 1fr;
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        /* Left Phone Profile Card */
+        .phone-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+        .phone-badge-wrap {
+            text-align: center;
+            position: relative;
+        }
+        .phone-flag-icon {
+            font-size: 56px;
+            line-height: 1;
+            margin-bottom: 10px;
+            filter: drop-shadow(0 4px 10px rgba(0,0,0,0.5));
+        }
+        .phone-display {
+            font-size: 20px;
+            font-weight: 800;
+            color: #fff;
+            letter-spacing: 0.5px;
+        }
+        .phone-country-badge {
+            display: inline-block;
+            font-size: 12.5px;
+            font-weight: 700;
+            color: #34d399;
+            background: rgba(52, 211, 153, 0.1);
+            border: 1px solid rgba(52, 211, 153, 0.3);
+            padding: 4px 12px;
+            border-radius: 12px;
+            margin-top: 6px;
+        }
+
+        .risk-gauge-box {
+            background: #0f172a;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px;
+            text-align: center;
+        }
+        .risk-gauge-title {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+        .risk-status {
+            font-size: 15px;
+            font-weight: 800;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .risk-low { color: #34d399; }
+        .risk-medium { color: #facc15; }
+        .risk-high { color: #f87171; }
+
+        .meta-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            border-top: 1px solid var(--border);
+            padding-top: 16px;
+        }
+        .meta-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+        }
+        .meta-label { color: var(--text-muted); }
+        .meta-val { font-weight: 700; color: #f1f5f9; text-align: right; }
+
+        .action-links {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 6px;
+        }
+        .action-link {
+            flex: 1;
+            background: #0b0f19;
+            border: 1px solid var(--border);
+            color: #38bdf8;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .action-link:hover {
+            border-color: #38bdf8;
+            background: #1e293b;
+            color: #fff;
+        }
+
+        /* Right Tabs Section */
+        .details-wrapper {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .tab-bar {
+            display: flex;
+            background: #0f172a;
+            border-bottom: 1px solid var(--border);
+            padding: 8px 12px 0 12px;
+            gap: 6px;
+            overflow-x: auto;
+        }
+        .tab-item {
+            padding: 10px 18px;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-muted);
+            border-radius: 8px 8px 0 0;
+            border: 1px solid transparent;
+            border-bottom: none;
+            background: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .tab-item:hover { color: #f1f5f9; background: rgba(255,255,255,0.03); }
+        .tab-item.active {
+            background: var(--bg-card);
+            color: #34d399;
+            border-color: var(--border);
+            border-bottom: 2px solid #34d399;
+        }
+
+        .tab-content {
+            padding: 24px;
+            flex: 1;
+        }
+
+        /* Card boxes inside tabs */
+        .card-box {
+            background: #0f172a;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 18px;
+            margin-bottom: 16px;
+        }
+        .card-box-header {
+            font-size: 14.5px;
+            font-weight: 700;
+            color: #34d399;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 12px;
+        }
+        .info-item {
+            background: #1e293b;
+            border: 1px solid var(--border);
+            padding: 12px 14px;
+            border-radius: 8px;
+        }
+        .info-item-label { font-size: 11px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 4px; }
+        .info-item-val { font-size: 14px; font-weight: 700; color: #f8fafc; }
+
+        /* Messengers Grid */
+        .app-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 14px;
+        }
+        .app-card {
+            background: #0f172a;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.2s;
+        }
+        .app-card:hover {
+            border-color: #34d399;
+            transform: translateY(-2px);
+            background: #131d2e;
+        }
+        .app-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .app-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 19px;
+            color: #fff;
+        }
+        .app-name { font-size: 13.5px; font-weight: 700; color: #f8fafc; }
+        .app-sub { font-size: 11.5px; color: var(--text-muted); margin-top: 2px; }
+        .app-btn {
+            background: #1e293b;
+            color: #38bdf8;
+            border: 1px solid #38bdf8;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 700;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.2s;
+        }
+        .app-btn:hover { background: #38bdf8; color: #0b0f19; }
+
+        /* Dork Cards */
+        .dork-item {
+            background: #0f172a;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .dork-query {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            color: #6ee7b7;
+            word-break: break-all;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: #064e3b;
+            color: #a7f3d0;
+            border: 1px solid #059669;
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-size: 13.5px;
+            font-weight: 700;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            display: none;
+            z-index: 10000;
+            animation: slideUp 0.3s ease;
+        }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        /* Media Queries */
+        @media (max-width: 960px) {
+            .results-grid { grid-template-columns: 1fr; }
+            body { padding: 12px; }
+        }
+
+        /* 🖨️ PDF & PRINT REPORT STYLES */
+        @media print {
+            body {
+                background: #ffffff !important;
+                color: #0f172a !important;
+                padding: 0 !important;
+            }
+            .top-navbar, .search-hero, .tab-bar, .action-links, .app-btn, .btn-print, .btn-probe, .chip-container {
+                display: none !important;
+            }
+            .results-grid {
+                display: block !important;
+            }
+            .phone-card, .details-wrapper, .card-box, .info-item, .dork-item {
+                background: #ffffff !important;
+                border: 1px solid #cbd5e1 !important;
+                color: #0f172a !important;
+                box-shadow: none !important;
+                page-break-inside: avoid;
+            }
+            .meta-val, .info-item-val, .phone-display, .app-name {
+                color: #0f172a !important;
+            }
+            .print-header {
+                display: block !important;
+                border-bottom: 2px solid #0f172a;
+                padding-bottom: 12px;
+                margin-bottom: 20px;
+            }
+        }
+        .print-header { display: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 0. Printable Header for PDF Reports -->
+        <div class="print-header">
+            <h1 style="font-size: 22px; font-weight: 800; color: #0f172a;">CYBER INTELLIGENCE OSINT DOSSIER</h1>
+            <p style="font-size: 12px; color: #64748b;" id="printReportMeta">Kiberxavfsizlik va Telefon Raqam Tahlilnomasi</p>
+        </div>
+
+        <!-- 1. Top Unified Navigation Bar -->
+        <header class="top-navbar">
+            <a href="index.html" class="brand">
+                <div class="brand-icon">
+                    <i class="fa-solid fa-phone-volume"></i>
+                </div>
+                <div>
+                    <h1 class="brand-title">TELEFON OSINT INTEL</h1>
+                    <p class="brand-sub">Raqamlar, Operatorlar & Messenjerlar Razvedkasi</p>
+                </div>
+            </a>
+            <nav class="nav-links">
+                <a href="index.html" class="nav-btn" title="IP va tarmoq qurilmalari markazi">
+                    <i class="fa-solid fa-network-wired text-sky-400"></i>
+                    <span>IP & Tarmoq</span>
+                </a>
+                <a href="email_osint.html" class="nav-btn" title="Google va email razvedka">
+                    <i class="fa-solid fa-envelope-open-text text-amber-400"></i>
+                    <span>Email OSINT</span>
+                </a>
+                <a href="phone_osint.html" class="nav-btn active" title="Telefon raqamlar razvedkasi">
+                    <i class="fa-solid fa-phone-volume text-emerald-400"></i>
+                    <span>Telefon OSINT</span>
+                </a>
+                <a href="dns_analyzer.html" class="nav-btn" title="Domen va DNS tahlili">
+                    <i class="fa-solid fa-globe text-cyan-400"></i>
+                    <span>Domen & DNS</span>
+                </a>
+                <a href="login.html" class="nav-btn" style="border-color: #818cf8; color: #a5b4fc;" title="Tahlilchi kabineti va login">
+                    <i class="fa-solid fa-user-shield text-indigo-400"></i>
+                    <span id="navAuthText">Kirish / Kabinet</span>
+                </a>
+            </nav>
+        </header>
+
+        <!-- 2. Search Hero -->
+        <section class="search-hero">
+            <div class="hero-title">
+                <h2>
+                    <i class="fa-solid fa-sim-card text-emerald-400"></i>
+                    <span>Xalqaro & Milliy Telefon Raqamlarini Chuqur OSINT Tahlili</span>
+                </h2>
+                <div class="hero-badge">
+                    <i class="fa-solid fa-shield-halved"></i>
+                    <span>Telekom Operator, Telegram, WhatsApp & Dorks</span>
+                </div>
+            </div>
+            <div class="input-row">
+                <div class="input-wrapper">
+                    <i class="fa-solid fa-phone"></i>
+                    <input type="tel" id="targetPhoneInput" placeholder="Masalan: +998901234567 yoki +14155552671" value="+998901234567">
+                </div>
+                <button class="btn-probe" id="probeBtn" onclick="runPhoneOsint()">
+                    <i class="fa-solid fa-satellite-dish"></i>
+                    <span>OSINT Razvedka Boshlash</span>
+                </button>
+                <button class="btn-print" onclick="window.print()" title="PDF hisobot yuklab olish yoki chop etish">
+                    <i class="fa-solid fa-file-pdf"></i>
+                    <span>PDF Hisobot</span>
+                </button>
+            </div>
+            <div class="chip-container">
+                <span><i class="fa-solid fa-bolt"></i> Tezkor namunalar:</span>
+                <span class="sample-chip" onclick="selectPhone('+998901234567')">🇺🇿 +998 90 Beeline</span>
+                <span class="sample-chip" onclick="selectPhone('+998991234567')">🇺🇿 +998 99 UzMobile</span>
+                <span class="sample-chip" onclick="selectPhone('+998931234567')">🇺🇿 +998 93 Ucell</span>
+                <span class="sample-chip" onclick="selectPhone('+998971234567')">🇺🇿 +998 97 Mobiuz</span>
+                <span class="sample-chip" onclick="selectPhone('+998712000000')">🇺🇿 +998 71 Toshkent Shahar</span>
+                <span class="sample-chip" onclick="selectPhone('+14155552671')">🇺🇸 +1 415 San Francisco</span>
+                <span class="sample-chip" onclick="selectPhone('+79991234567')">🇷🇺 +7 999 Rossiya</span>
+                <span class="sample-chip" onclick="selectPhone('+905321234567')">🇹🇷 +90 Turkiya</span>
+            </div>
+        </section>
+
+        <!-- 3. Results Section -->
+        <div class="results-grid">
+            <!-- Left Profile Card -->
+            <div class="phone-card">
+                <div class="phone-badge-wrap">
+                    <div class="phone-flag-icon" id="flagIcon">🇺🇿</div>
+                    <div class="phone-display" id="formattedNumber">+998 90 123 45 67</div>
+                    <div class="phone-country-badge" id="countryBadge">O'zbekiston (UZ)</div>
+                </div>
+
+                <div class="risk-gauge-box">
+                    <div class="risk-gauge-title">Xavf & Firibgarlik Bahosi</div>
+                    <div class="risk-status risk-low" id="riskStatus">
+                        <i class="fa-solid fa-circle-check"></i>
+                        <span>Xavfsiz / Standart Mobil Aloqa</span>
+                    </div>
+                </div>
+
+                <div class="meta-list">
+                    <div class="meta-row">
+                        <span class="meta-label">Telekom Operator:</span>
+                        <span class="meta-val" id="operatorVal">Beeline (Unitel MChJ)</span>
+                    </div>
+                    <div class="meta-row">
+                        <span class="meta-label">Tarmoq Turi:</span>
+                        <span class="meta-val" id="lineTypeVal">Mobil Aloqa (GSM/LTE/5G)</span>
+                    </div>
+                    <div class="meta-row">
+                        <span class="meta-label">Mintaqa / Hudud:</span>
+                        <span class="meta-val" id="regionVal">Toshkent viloyati / Respublika</span>
+                    </div>
+                    <div class="meta-row">
+                        <span class="meta-label">Xalqaro Format (E.164):</span>
+                        <span class="meta-val" id="e164Val">+998901234567</span>
+                    </div>
+                    <div class="meta-row">
+                        <span class="meta-label">Mahalliy Format:</span>
+                        <span class="meta-val" id="nationalVal">090 123 45 67</span>
+                    </div>
+                    <div class="meta-row">
+                        <span class="meta-label">Vaqt Mintaqasi:</span>
+                        <span class="meta-val" id="tzVal">Asia/Tashkent (UTC+5)</span>
+                    </div>
+                </div>
+
+                <div class="action-links">
+                    <button class="action-link" onclick="saveToCabinet()">
+                        <i class="fa-solid fa-bookmark text-indigo-400"></i>
+                        <span>Kabinetga Saqlash</span>
+                    </button>
+                    <button class="action-link" onclick="exportPhoneJson()">
+                        <i class="fa-solid fa-file-arrow-down text-emerald-400"></i>
+                        <span>JSON Dosye</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Right Details Tabs -->
+            <div class="details-wrapper">
+                <div class="tab-bar">
+                    <button class="tab-item active" onclick="switchTab(0, this)">
+                        <i class="fa-solid fa-tower-broadcast"></i> Operator & Tarmoq
+                    </button>
+                    <button class="tab-item" onclick="switchTab(1, this)">
+                        <i class="fa-solid fa-comments"></i> Messenjerlar & Ilovalar
+                    </button>
+                    <button class="tab-item" onclick="switchTab(2, this)">
+                        <i class="fa-brands fa-google"></i> Google Dorks & Izlar
+                    </button>
+                    <button class="tab-item" onclick="switchTab(3, this)">
+                        <i class="fa-solid fa-shield-virus"></i> Firibgarlik & Xavfsizlik
+                    </button>
+                </div>
+
+                <div class="tab-content">
+                    <!-- TAB 0: Operator & Tarmoq -->
+                    <div id="tabContent0">
+                        <div class="card-box">
+                            <div class="card-box-header">
+                                <span><i class="fa-solid fa-circle-info"></i> Texnik Tarmoq Parametrlari</span>
+                                <span style="font-size: 12px; color: #94a3b8;">ITU-T E.164 Standarti</span>
+                            </div>
+                            <div class="info-grid">
+                                <div class="info-item">
+                                    <div class="info-item-label">Mamlakat Kodi (Country Code)</div>
+                                    <div class="info-item-val" id="ccVal">+998</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-item-label">Operator Prefiksi (NDC)</div>
+                                    <div class="info-item-val" id="ndcVal">90</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-item-label">ISO Mamlakat Standarti</div>
+                                    <div class="info-item-val" id="isoVal">UZ / UZB</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-item-label">MCC / MNC Kodlari</div>
+                                    <div class="info-item-val" id="mccVal">434 / 04</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-item-label">Raqam Uzunligi</div>
+                                    <div class="info-item-val" id="lenVal">12 belgi (To'g'ri)</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-item-label">Xalqaro Terish Prefiksi</div>
+                                    <div class="info-item-val" id="dialVal">00 yoki +</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card-box">
+                            <div class="card-box-header">
+                                <span><i class="fa-solid fa-map-location-dot"></i> Geografik Joylashuv & Operator Haqida</span>
+                            </div>
+                            <div style="font-size: 13.5px; line-height: 1.7; color: #cbd5e1;" id="telecomDesc">
+                                Ushbu raqam O'zbekiston Respublikasining telekommunikatsiya infratuzilmasiga tegishli. Raqam "Unitel MChJ" (Beeline savdo belgisi) GSM/UMTS/LTE uyali aloqa tarmog'ida ro'yxatga olingan.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB 1: Messenjerlar & Ilovalar -->
+                    <div id="tabContent1" style="display: none;">
+                        <div class="card-box">
+                            <div class="card-box-header">
+                                <span><i class="fa-solid fa-link"></i> To'g'ridan-to'g'ri Aloqa & Profil Havolalari</span>
+                                <span style="font-size: 12px; color: #94a3b8;">1 bosish bilan profilni ochish</span>
+                            </div>
+                            <div class="app-grid" id="appsGrid">
+                                <!-- Dinamik ravishda render qilinadi -->
+                            </div>
+                        </div>
+
+                        <div class="card-box">
+                            <div class="card-box-header">
+                                <span><i class="fa-solid fa-address-book"></i> Caller ID & Raqam Egasi Qidiruv Xizmatlari</span>
+                            </div>
+                            <div class="app-grid" id="callerIdGrid">
+                                <!-- Caller ID linklari -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB 2: Google Dorks & Izlar -->
+                    <div id="tabContent2" style="display: none;">
+                        <div class="card-box">
+                            <div class="card-box-header">
+                                <span><i class="fa-solid fa-magnifying-glass-chart"></i> Kiber Razvedka Google Dork So'rovlari</span>
+                                <span style="font-size: 12px; color: #94a3b8;">Ochiq manbalarda qoldirilgan izlar</span>
+                            </div>
+                            <div id="dorksContainer">
+                                <!-- Dorks render qilinadi -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB 3: Firibgarlik & Xavfsizlik -->
+                    <div id="tabContent3" style="display: none;">
+                        <div class="card-box">
+                            <div class="card-box-header">
+                                <span><i class="fa-solid fa-shield-halved"></i> Kiber-Xavfsizlik & Firibgarlik Ehtimolligi</span>
+                            </div>
+                            <div class="info-grid">
+                                <div class="info-item">
+                                    <div class="info-item-label">Virtual (VoIP) Raqam</div>
+                                    <div class="info-item-val" id="voipVal">Ehtimoli Past (Jismoniy SIM)</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-item-label">Bir Martalik (Disposable) SMS</div>
+                                    <div class="info-item-val" id="tempVal">Aniqlanmadi (Toza)</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-item-label">Wangiri / Qo'ng'iroq Qopqoni</div>
+                                    <div class="info-item-val" id="wangiriVal">Xavfsiz Hudud</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-item-label">Umumiy Firibgarlik Xavfi</div>
+                                    <div class="info-item-val" id="fraudVal" style="color: #34d399;">Past (0-15%)</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card-box">
+                            <div class="card-box-header">
+                                <span><i class="fa-solid fa-user-lock"></i> Kiberxavfsizlik Tavsiyalari</span>
+                            </div>
+                            <ul style="padding-left: 20px; font-size: 13.5px; line-height: 1.8; color: #cbd5e1;" id="securityTips">
+                                <li>Raqam xalqaro telekom standartlariga muvofiq, litsenziyalangan milliy provayderga tegishli.</li>
+                                <li>Messenjerlarda (Telegram, WhatsApp) tekshiruv o'tkazish orqali profil rasmi, ismi va bio ma'lumotlarini tasdiqlashingiz mumkin.</li>
+                                <li>Agar ushbu raqamdan notanish moliyaviy so'rovlar yoki SMS kodlar talab qilinsa, hech qachon shaxsiy bank parollarini taqdim etmang.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script>
+        // Global saqlanadigan tahlil ma'lumotlari
+        let currentPhoneData = null;
+
+        // Xalqaro mamlakatlar ma'lumotlar bazasi
+        const COUNTRY_DB = [
+            { code: "998", name: "O'zbekiston", iso: "UZ / UZB", flag: "🇺🇿", len: 12, tz: "Asia/Tashkent (UTC+5)" },
+            { code: "1", name: "AQSh / Kanada", iso: "US / CA", flag: "🇺🇸", len: 11, tz: "America/New_York (UTC-5 / -8)" },
+            { code: "7", name: "Rossiya / Qozog'iston", iso: "RU / KZ", flag: "🇷🇺", len: 11, tz: "Europe/Moscow (UTC+3)" },
+            { code: "44", name: "Buyuk Britaniya", iso: "GB / GBR", flag: "🇬🇧", len: 12, tz: "Europe/London (UTC+0)" },
+            { code: "49", name: "Germaniya", iso: "DE / DEU", flag: "🇩🇪", len: 12, tz: "Europe/Berlin (UTC+1)" },
+            { code: "33", name: "Fransiya", iso: "FR / FRA", flag: "🇫🇷", len: 11, tz: "Europe/Paris (UTC+1)" },
+            { code: "90", name: "Turkiya", iso: "TR / TUR", flag: "🇹🇷", len: 12, tz: "Europe/Istanbul (UTC+3)" },
+            { code: "971", name: "Birlashgan Arab Amirliklari", iso: "AE / ARE", flag: "🇦🇪", len: 12, tz: "Asia/Dubai (UTC+4)" },
+            { code: "966", name: "Saudiya Arabistoni", iso: "SA / SAU", flag: "🇸🇦", len: 12, tz: "Asia/Riyadh (UTC+3)" },
+            { code: "86", name: "Xitoy", iso: "CN / CHN", flag: "🇨🇳", len: 13, tz: "Asia/Shanghai (UTC+8)" },
+            { code: "91", name: "Hindiston", iso: "IN / IND", flag: "🇮🇳", len: 12, tz: "Asia/Kolkata (UTC+5:30)" },
+            { code: "81", name: "Yaponiya", iso: "JP / JPN", flag: "🇯🇵", len: 12, tz: "Asia/Tokyo (UTC+9)" },
+            { code: "82", name: "Janubiy Koreya", iso: "KR / KOR", flag: "🇰🇷", len: 12, tz: "Asia/Seoul (UTC+9)" },
+            { code: "380", name: "Ukraina", iso: "UA / UKR", flag: "🇺🇦", len: 12, tz: "Europe/Kyiv (UTC+2)" },
+            { code: "375", name: "Belarus", iso: "BY / BLR", flag: "🇧🇾", len: 12, tz: "Europe/Minsk (UTC+3)" },
+            { code: "992", name: "Tojikiston", iso: "TJ / TJK", flag: "🇹🇯", len: 12, tz: "Asia/Dushanbe (UTC+5)" },
+            { code: "996", name: "Qirg'iziston", iso: "KG / KGZ", flag: "🇰🇬", len: 12, tz: "Asia/Bishkek (UTC+6)" },
+            { code: "993", name: "Turkmaniston", iso: "TM / TKM", flag: "🇹🇲", len: 11, tz: "Asia/Ashgabat (UTC+5)" },
+            { code: "994", name: "Ozarbayjon", iso: "AZ / AZE", flag: "🇦🇿", len: 12, tz: "Asia/Baku (UTC+4)" },
+            { code: "995", name: "Gruziya", iso: "GE / GEO", flag: "🇬🇪", len: 12, tz: "Asia/Tbilisi (UTC+4)" },
+            { code: "374", name: "Armaniston", iso: "AM / ARM", flag: "🇦🇲", len: 11, tz: "Asia/Yerevan (UTC+4)" },
+            { code: "48", name: "Polsha", iso: "PL / POL", flag: "🇵🇱", len: 11, tz: "Europe/Warsaw (UTC+1)" },
+            { code: "39", name: "Italiya", iso: "IT / ITA", flag: "🇮🇹", len: 12, tz: "Europe/Rome (UTC+1)" },
+            { code: "34", name: "Ispaniya", iso: "ES / ESP", flag: "🇪🇸", len: 11, tz: "Europe/Madrid (UTC+1)" },
+            { code: "55", name: "Braziliya", iso: "BR / BRA", flag: "🇧🇷", len: 13, tz: "America/Sao_Paulo (UTC-3)" }
+        ];
+
+        // O'zbekiston operatorlari va shahar kodlari
+        const UZ_OPERATORS = {
+            "90": { name: "Beeline (Unitel MChJ)", type: "Mobil Aloqa (GSM/LTE/5G)", mcc: "434", mnc: "04", region: "Toshkent / Respublika" },
+            "91": { name: "Beeline (Unitel MChJ)", type: "Mobil Aloqa (GSM/LTE/5G)", mcc: "434", mnc: "04", region: "Toshkent / Respublika" },
+            "93": { name: "Ucell (Coscom MChJ)", type: "Mobil Aloqa (GSM/LTE/5G)", mcc: "434", mnc: "05", region: "Toshkent / Respublika" },
+            "94": { name: "Ucell (Coscom MChJ)", type: "Mobil Aloqa (GSM/LTE/5G)", mcc: "434", mnc: "05", region: "Toshkent / Respublika" },
+            "95": { name: "UzMobile (O'zbektelekom AK)", type: "Mobil Aloqa (CDMA/GSM/LTE)", mcc: "434", mnc: "06", region: "Respublika bo'ylab" },
+            "99": { name: "UzMobile (O'zbektelekom AK)", type: "Mobil Aloqa (GSM/LTE/5G)", mcc: "434", mnc: "06", region: "Respublika bo'ylab" },
+            "97": { name: "Mobiuz (UMS MChJ)", type: "Mobil Aloqa (GSM/LTE/5G)", mcc: "434", mnc: "07", region: "Respublika bo'ylab" },
+            "88": { name: "Mobiuz (UMS MChJ)", type: "Mobil Aloqa (GSM/LTE/5G)", mcc: "434", mnc: "07", region: "Respublika bo'ylab" },
+            "33": { name: "Humans (Humans MChJ MVNO)", type: "Virtual Mobil Aloqa (MVNO)", mcc: "434", mnc: "08", region: "Respublika bo'ylab" },
+            "20": { name: "OQ (Digital Mobile)", type: "Virtual Raqamli Mobil Aloqa", mcc: "434", mnc: "04", region: "Respublika bo'ylab" },
+            "71": { name: "Toshkent Shahar Telefon Tarmog'i", type: "Statsionar Shahar Telefoni (PSTN)", mcc: "434", mnc: "01", region: "Toshkent shahri" },
+            "78": { name: "O'zbektelekom & Aloqa Operatorlari", type: "Statsionar / Korporativ Aloqa", mcc: "434", mnc: "01", region: "Toshkent shahri" },
+            "72": { name: "Jizzax Telekom", type: "Statsionar Shahar Telefoni", mcc: "434", mnc: "01", region: "Jizzax viloyati" },
+            "73": { name: "Farg'ona Telekom", type: "Statsionar Shahar Telefoni", mcc: "434", mnc: "01", region: "Farg'ona viloyati" },
+            "74": { name: "Andijon Telekom", type: "Statsionar Shahar Telefoni", mcc: "434", mnc: "01", region: "Andijon viloyati" },
+            "75": { name: "Qashqadaryo Telekom", type: "Statsionar Shahar Telefoni", mcc: "434", mnc: "01", region: "Qashqadaryo viloyati" },
+            "76": { name: "Surxondaryo Telekom", type: "Statsionar Shahar Telefoni", mcc: "434", mnc: "01", region: "Surxondaryo viloyati" },
+            "77": { name: "Toshkent Viloyat Telekom", type: "Statsionar Shahar Telefoni", mcc: "434", mnc: "01", region: "Toshkent viloyati" },
+            "79": { name: "Navoiy Telekom", type: "Statsionar Shahar Telefoni", mcc: "434", mnc: "01", region: "Navoiy viloyati" },
+            "65": { name: "Buxoro Telekom", type: "Statsionar Shahar Telefoni", mcc: "434", mnc: "01", region: "Buxoro viloyati" },
+            "66": { name: "Samarqand Telekom", type: "Statsionar Shahar Telefoni", mcc: "434", mnc: "01", region: "Samarqand viloyati" },
+            "69": { name: "Namangan Telekom", type: "Statsionar Shahar Telefoni", mcc: "434", mnc: "01", region: "Namangan viloyati" },
+            "61": { name: "Qoraqalpog'iston Telekom", type: "Statsionar Shahar Telefoni", mcc: "434", mnc: "01", region: "Qoraqalpog'iston Respublikasi" },
+            "62": { name: "Xorazm Telekom", type: "Statsionar Shahar Telefoni", mcc: "434", mnc: "01", region: "Xorazm viloyati" }
+        };
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.innerText = msg;
+            t.style.display = 'block';
+            setTimeout(() => { t.style.display = 'none'; }, 3200);
+        }
+
+        function switchTab(index, btn) {
+            for (let i = 0; i < 4; i++) {
+                const el = document.getElementById(`tabContent${i}`);
+                if (el) el.style.display = (i === index) ? 'block' : 'none';
+            }
+            document.querySelectorAll('.tab-item').forEach(b => b.classList.remove('active'));
+            if (btn) btn.classList.add('active');
+        }
+
+        function selectPhone(num) {
+            document.getElementById('targetPhoneInput').value = num;
+            runPhoneOsint();
+        }
+
+        function runPhoneOsint() {
+            const raw = document.getElementById('targetPhoneInput').value.trim();
+            if (!raw) {
+                showToast("Iltimos, telefon raqamini kiriting!");
+                return;
+            }
+
+            const btn = document.getElementById('probeBtn');
+            btn.classList.add('loading');
+
+            // Faqat raqamlar va plyus belgisini qoldirish
+            let clean = raw.replace(/[^0-9+]/g, '');
+            if (!clean.startsWith('+')) {
+                // Agar plyus qo'yilmagan bo'lsa, agar 998 bilan boshlansa yoki mahalliy bo'lsa
+                if (clean.startsWith('998')) clean = '+' + clean;
+                else if (clean.startsWith('9') && clean.length === 9) clean = '+998' + clean;
+                else if (clean.startsWith('8') && clean.length === 11) clean = '+7' + clean.slice(1);
+                else clean = '+' + clean;
+            }
+
+            const digitsOnly = clean.replace(/\D/g, '');
+
+            // Mamlakatni aniqlash
+            let matchedCountry = null;
+            for (const c of COUNTRY_DB) {
+                if (digitsOnly.startsWith(c.code)) {
+                    // Agar 7 bo'lsa, Qozog'iston (+76, +77) yoki Rossiya (+79, +73, ...)
+                    if (c.code === "7") {
+                        if (digitsOnly.startsWith("76") || digitsOnly.startsWith("77")) {
+                            matchedCountry = { code: "7", name: "Qozog'iston", iso: "KZ / KAZ", flag: "🇰🇿", len: 11, tz: "Asia/Almaty (UTC+5 / +6)" };
+                        } else {
+                            matchedCountry = { code: "7", name: "Rossiya", iso: "RU / RUS", flag: "🇷🇺", len: 11, tz: "Europe/Moscow (UTC+3)" };
+                        }
+                    } else {
+                        matchedCountry = c;
+                    }
+                    break;
+                }
+            }
+
+            if (!matchedCountry) {
+                matchedCountry = { code: digitsOnly.slice(0, 3), name: "Xalqaro Hudud / Boshqa", iso: "XX / INT", flag: "🌐", len: digitsOnly.length, tz: "UTC Mintaqa" };
+            }
+
+            // O'zbekiston uchun chuqur operator tahlili
+            let operatorInfo = { name: "Xalqaro / Noma'lum Operator", type: "Mobil yoki Statsionar Aloqa", mcc: "N/A", mnc: "N/A", region: matchedCountry.name };
+            let ndc = "";
+
+            if (matchedCountry.code === "998") {
+                const rest = digitsOnly.slice(3); // 998 dan keyingi qism
+                ndc = rest.slice(0, 2);
+                if (UZ_OPERATORS[ndc]) {
+                    operatorInfo = UZ_OPERATORS[ndc];
+                } else {
+                    operatorInfo = { name: `O'zbekiston Aloqa Tarmog'i (${ndc}-prefiks)`, type: "Mobil / Statsionar Aloqa", mcc: "434", mnc: "N/A", region: "O'zbekiston" };
+                }
+            } else if (matchedCountry.code === "1") {
+                ndc = digitsOnly.slice(1, 4);
+                operatorInfo = { name: `Shimoliy Amerika Aloqa Tarmog'i (${ndc})`, type: "Mobil / VoIP / Shahar", mcc: "310", mnc: "N/A", region: "AQSh / Kanada" };
+            } else if (matchedCountry.code === "7") {
+                ndc = digitsOnly.slice(1, 4);
+                operatorInfo = { name: `MTS / MegaFon / Beeline / Tele2 (${ndc})`, type: "Mobil GSM Aloqa", mcc: "250", mnc: "N/A", region: matchedCountry.name };
+            }
+
+            // Chiroyli formatlash
+            let formattedDisplay = clean;
+            let nationalDisplay = digitsOnly;
+            if (matchedCountry.code === "998" && digitsOnly.length >= 12) {
+                formattedDisplay = `+998 ${digitsOnly.slice(3, 5)} ${digitsOnly.slice(5, 8)} ${digitsOnly.slice(8, 10)} ${digitsOnly.slice(10, 12)}`;
+                nationalDisplay = `(0 ${digitsOnly.slice(3, 5)}) ${digitsOnly.slice(5, 8)}-${digitsOnly.slice(8, 10)}-${digitsOnly.slice(10, 12)}`;
+            } else if (matchedCountry.code === "1" && digitsOnly.length >= 11) {
+                formattedDisplay = `+1 (${digitsOnly.slice(1, 4)}) ${digitsOnly.slice(4, 7)}-${digitsOnly.slice(7, 11)}`;
+                nationalDisplay = `(${digitsOnly.slice(1, 4)}) ${digitsOnly.slice(4, 7)}-${digitsOnly.slice(7, 11)}`;
+            } else if (matchedCountry.code === "7" && digitsOnly.length >= 11) {
+                formattedDisplay = `+7 (${digitsOnly.slice(1, 4)}) ${digitsOnly.slice(4, 7)}-${digitsOnly.slice(7, 9)}-${digitsOnly.slice(9, 11)}`;
+                nationalDisplay = `8 (${digitsOnly.slice(1, 4)}) ${digitsOnly.slice(4, 7)}-${digitsOnly.slice(7, 9)}-${digitsOnly.slice(9, 11)}`;
+            }
+
+            // Xavf tahlili
+            let riskClass = "risk-low";
+            let riskTitle = "Xavfsiz / Standart Aloqa";
+            let fraudText = "Past (0-15%)";
+            let voipText = "Ehtimoli Past (Jismoniy SIM)";
+
+            if (operatorInfo.type.includes("Virtual") || operatorInfo.type.includes("VoIP") || ["33", "20"].includes(ndc)) {
+                riskClass = "risk-medium";
+                riskTitle = "O'rtacha / Virtual SIM (MVNO)";
+                fraudText = "O'rtacha (25-45%)";
+                voipText = "Virtual MVNO / Raqamli SIM";
+            }
+
+            currentPhoneData = {
+                e164: clean,
+                raw: raw,
+                digits: digitsOnly,
+                formatted: formattedDisplay,
+                national: nationalDisplay,
+                country: matchedCountry,
+                operator: operatorInfo,
+                ndc: ndc,
+                risk: { class: riskClass, title: riskTitle, fraud: fraudText, voip: voipText },
+                date: new Date().toLocaleDateString()
+            };
+
+            // UI ni yangilash
+            setTimeout(() => {
+                btn.classList.remove('loading');
+                renderPhoneData();
+                showToast("✅ Telefon raqami bo'yicha OSINT razvedkasi yakunlandi!");
+            }, 300);
+        }
+
+        function renderPhoneData() {
+            if (!currentPhoneData) return;
+            const d = currentPhoneData;
+
+            document.getElementById('flagIcon').innerText = d.country.flag;
+            document.getElementById('formattedNumber').innerText = d.formatted;
+            document.getElementById('countryBadge').innerText = `${d.country.name} (${d.country.iso.split('/')[0].trim()})`;
+
+            const rEl = document.getElementById('riskStatus');
+            rEl.className = `risk-status ${d.risk.class}`;
+            rEl.innerHTML = `<i class="fa-solid fa-circle-check"></i> <span>${d.risk.title}</span>`;
+
+            document.getElementById('operatorVal').innerText = d.operator.name;
+            document.getElementById('lineTypeVal').innerText = d.operator.type;
+            document.getElementById('regionVal').innerText = d.operator.region;
+            document.getElementById('e164Val').innerText = d.e164;
+            document.getElementById('nationalVal').innerText = d.national;
+            document.getElementById('tzVal').innerText = d.country.tz;
+
+            // Tab 0 ma'lumotlari
+            document.getElementById('ccVal').innerText = `+${d.country.code}`;
+            document.getElementById('ndcVal').innerText = d.ndc || "Standart";
+            document.getElementById('isoVal').innerText = d.country.iso;
+            document.getElementById('mccVal').innerText = `${d.operator.mcc || 'N/A'} / ${d.operator.mnc || 'N/A'}`;
+            document.getElementById('lenVal').innerText = `${d.digits.length} ta raqam (${d.digits.length === d.country.len ? 'Standard' : 'Nostandart'})`;
+            document.getElementById('dialVal').innerText = "00 yoki +";
+            document.getElementById('telecomDesc').innerText = `Ushbu raqam ${d.country.name} davlatining telekommunikatsiya infratuzilmasiga qarashli. Operator: "${d.operator.name}". Hudud: ${d.operator.region}. Aloqa turi: ${d.operator.type}.`;
+
+            // Tab 3 ma'lumotlari
+            document.getElementById('voipVal').innerText = d.risk.voip;
+            document.getElementById('fraudVal').innerText = d.risk.fraud;
+            document.getElementById('fraudVal').style.color = d.risk.class === 'risk-low' ? '#34d399' : '#facc15';
+
+            // Print report sarlavhasi
+            document.getElementById('printReportMeta').innerText = `Kiberxavfsizlik Telefon Dosyesi: ${d.formatted} | ${d.country.name} | Sana: ${d.date}`;
+
+            // Tab 1: Messenjerlar
+            renderMessengers(d);
+
+            // Tab 2: Dorks
+            renderDorks(d);
+        }
+
+        function renderMessengers(d) {
+            const grid = document.getElementById('appsGrid');
+            const callerGrid = document.getElementById('callerIdGrid');
+
+            // Telegram, WhatsApp, Viber
+            const apps = [
+                {
+                    name: "Telegram Messenger",
+                    sub: "To'g'ridan-to'g'ri profil & chat",
+                    icon: "fa-brands fa-telegram",
+                    bg: "#0088cc",
+                    url: `https://t.me/+${d.digits}`,
+                    label: "Telegramda Ochish"
+                },
+                {
+                    name: "WhatsApp Web / App",
+                    sub: "To'g'ridan-to'g'ri xabar yuborish",
+                    icon: "fa-brands fa-whatsapp",
+                    bg: "#25D366",
+                    url: `https://wa.me/${d.digits}`,
+                    label: "WhatsAppda Ochish"
+                },
+                {
+                    name: "Viber Messenger",
+                    sub: "Viber orqali qo'ng'iroq / chat",
+                    icon: "fa-brands fa-viber",
+                    bg: "#7360f2",
+                    url: `viber://chat?number=%2B${d.digits}`,
+                    label: "Viberda Ochish"
+                },
+                {
+                    name: "SMS & Tel Protokoli",
+                    sub: "Qurilma orqali bevosita qo'ng'iroq",
+                    icon: "fa-solid fa-phone",
+                    bg: "#059669",
+                    url: `tel:${d.e164}`,
+                    label: "Qo'ng'iroq Qilish"
+                }
+            ];
+
+            grid.innerHTML = apps.map(a => `
+                <div class="app-card">
+                    <div class="app-left">
+                        <div class="app-icon" style="background: ${a.bg};">
+                            <i class="${a.icon}"></i>
+                        </div>
+                        <div>
+                            <div class="app-name">${a.name}</div>
+                            <div class="app-sub">${a.sub}</div>
+                        </div>
+                    </div>
+                    <a href="${a.url}" target="_blank" rel="noopener noreferrer" class="app-btn">
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i> ${a.label}
+                    </a>
+                </div>
+            `).join('');
+
+            // Caller ID platformalari
+            const callers = [
+                {
+                    name: "Truecaller Qidiruv",
+                    sub: "Global Caller ID & Ism bazasi",
+                    icon: "fa-solid fa-id-badge",
+                    bg: "#0087ff",
+                    url: `https://www.truecaller.com/search/${d.country.iso.split('/')[0].trim().toLowerCase()}/${d.digits}`,
+                    label: "Truecallerda Qidirish"
+                },
+                {
+                    name: "Sync.ME Kontakt Tahlili",
+                    sub: "Ijtimoiy tarmoqlar bilan sinxron",
+                    icon: "fa-solid fa-arrows-rotate",
+                    bg: "#2b56f5",
+                    url: `https://sync.me/search/?number=%2B${d.digits}`,
+                    label: "Sync.ME Tekshiruvi"
+                },
+                {
+                    name: "NumBuster & Spam Audit",
+                    sub: "Spam va firibgarlik reytingi",
+                    icon: "fa-solid fa-shield-virus",
+                    bg: "#e11d48",
+                    url: `https://numbuster.com/`,
+                    label: "Spam Audit"
+                },
+                {
+                    name: "Google Global Qidiruv",
+                    sub: "Barcha formatdagi ochiq eslatmalar",
+                    icon: "fa-brands fa-google",
+                    bg: "#ea4335",
+                    url: `https://www.google.com/search?q=${encodeURIComponent('"' + d.e164 + '" OR "' + d.formatted + '"')}`,
+                    label: "Google'da Izlash"
+                }
+            ];
+
+            callerGrid.innerHTML = callers.map(c => `
+                <div class="app-card">
+                    <div class="app-left">
+                        <div class="app-icon" style="background: ${c.bg};">
+                            <i class="${c.icon}"></i>
+                        </div>
+                        <div>
+                            <div class="app-name">${c.name}</div>
+                            <div class="app-sub">${c.sub}</div>
+                        </div>
+                    </div>
+                    <a href="${c.url}" target="_blank" rel="noopener noreferrer" class="app-btn">
+                        <i class="fa-solid fa-magnifying-glass"></i> ${c.label}
+                    </a>
+                </div>
+            `).join('');
+        }
+
+        function renderDorks(d) {
+            const container = document.getElementById('dorksContainer');
+            const dorks = [
+                {
+                    title: "Barcha formatdagi raqam izlari (Aniq matn)",
+                    query: `intext:"${d.e164}" OR intext:"${d.digits}"`,
+                    url: `https://www.google.com/search?q=${encodeURIComponent('intext:"' + d.e164 + '" OR intext:"' + d.digits + '"')}`
+                },
+                {
+                    title: "Telegram ommaviy postlari va kanallari",
+                    query: `site:t.me "${d.digits}" OR site:t.me "${d.e164}"`,
+                    url: `https://www.google.com/search?q=${encodeURIComponent('site:t.me "' + d.digits + '" OR site:t.me "' + d.e164 + '"')}`
+                },
+                {
+                    title: "Facebook va Instagram profillari",
+                    query: `site:facebook.com "${d.digits}" OR site:instagram.com "${d.digits}"`,
+                    url: `https://www.google.com/search?q=${encodeURIComponent('site:facebook.com "' + d.digits + '" OR site:instagram.com "' + d.digits + '"')}`
+                },
+                {
+                    title: "OLX.uz va e'lonlar doskasi (O'zbekiston)",
+                    query: `site:olx.uz "${d.digits.slice(3)}" OR site:olx.uz "${d.digits}"`,
+                    url: `https://www.google.com/search?q=${encodeURIComponent('site:olx.uz "' + d.digits.slice(3) + '" OR site:olx.uz "' + d.digits + '"')}`
+                },
+                {
+                    title: "Sizib chiqqan hujjatlar & Bazalar (PDF, XLSX, CSV)",
+                    query: `filetype:pdf OR filetype:xlsx OR filetype:csv "${d.digits}"`,
+                    url: `https://www.google.com/search?q=${encodeURIComponent('filetype:pdf OR filetype:xlsx OR filetype:csv "' + d.digits + '"')}`
+                },
+                {
+                    title: "GitHub & GitLab ochiq kodlari (Hardcoded raqamlar)",
+                    query: `site:github.com "${d.e164}" OR site:gitlab.com "${d.digits}"`,
+                    url: `https://www.google.com/search?q=${encodeURIComponent('site:github.com "' + d.e164 + '"')}`
+                }
+            ];
+
+            container.innerHTML = dorks.map(dk => `
+                <div class="dork-item">
+                    <div>
+                        <div style="font-weight: 700; font-size: 13.5px; color: #f1f5f9; margin-bottom: 4px;">
+                            <i class="fa-solid fa-terminal text-emerald-400"></i> ${dk.title}
+                        </div>
+                        <div class="dork-query">${dk.query}</div>
+                    </div>
+                    <a href="${dk.url}" target="_blank" rel="noopener noreferrer" class="app-btn">
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i> Dorkni Ishga Tushirish
+                    </a>
+                </div>
+            `).join('');
+        }
+
+        function exportPhoneJson() {
+            if (!currentPhoneData) return;
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(currentPhoneData, null, 2));
+            const dlAnchor = document.createElement('a');
+            dlAnchor.setAttribute("href", dataStr);
+            dlAnchor.setAttribute("download", `phone_osint_${currentPhoneData.digits}.json`);
+            document.body.appendChild(dlAnchor);
+            dlAnchor.click();
+            dlAnchor.remove();
+            showToast("📥 JSON dosye fayli yuklandi!");
+        }
+
+        function saveToCabinet() {
+            if (!currentPhoneData) return;
+            try {
+                const INVS_KEY = "cyber_portal_saved_invs";
+                const storedInvs = JSON.parse(localStorage.getItem(INVS_KEY) || "[]");
+                const newInv = {
+                    id: Date.now(),
+                    type: "phone",
+                    target: currentPhoneData.formatted,
+                    summary: `${currentPhoneData.country.name} | ${currentPhoneData.operator.name} (${currentPhoneData.operator.type})`,
+                    date: new Date().toLocaleDateString()
+                };
+                storedInvs.unshift(newInv);
+                if (storedInvs.length > 50) storedInvs.pop();
+                localStorage.setItem(INVS_KEY, JSON.stringify(storedInvs));
+
+                // Backend API orqali ham saqlash
+                const rawAuth = localStorage.getItem("cyber_portal_auth_user");
+                if (rawAuth) {
+                    const token = JSON.parse(rawAuth).token;
+                    fetch('/api/auth/investigations', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                        body: JSON.stringify({ target_type: 'phone', target_value: currentPhoneData.formatted, summary: newInv.summary })
+                    }).catch(()=>{});
+                }
+            } catch(e) {}
+
+            showToast("💾 Telefon dosyasi Tahlilchi Kabinetiga saqlandi!");
+        }
+
+        window.onload = () => {
+            const input = document.getElementById('targetPhoneInput');
+            if (input) {
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') runPhoneOsint();
+                });
+            }
+
+            // Foydalanuvchi seansini aniqlash
+            try {
+                const rawAuth = localStorage.getItem("cyber_portal_auth_user");
+                if (rawAuth) {
+                    const u = JSON.parse(rawAuth).user;
+                    if (u) {
+                        const txt = document.getElementById('navAuthText');
+                        if (txt) txt.innerText = u.full_name || u.email.split('@')[0];
+                    }
+                }
+            } catch(e) {}
+
+            // URL query parametridan raqamni olish (?phone=...)
+            const urlParams = new URLSearchParams(window.location.search);
+            const queryPhone = urlParams.get('phone');
+            if (queryPhone) {
+                input.value = queryPhone;
+            }
+
+            runPhoneOsint();
+        };
+    </script>
+</body>
+</html>

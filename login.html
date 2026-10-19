@@ -365,8 +365,12 @@
                     <i class="fa-solid fa-envelope-open-text text-amber-400"></i>
                     <span>Google & Email OSINT</span>
                 </a>
+                <a href="phone_osint.html" class="nav-btn" title="Telefon raqamlar razvedkasi va operator tahlili">
+                    <i class="fa-solid fa-phone-volume text-emerald-400"></i>
+                    <span>Telefon OSINT</span>
+                </a>
                 <a href="dns_analyzer.html" class="nav-btn" title="Domen va DNS tahlili">
-                    <i class="fa-solid fa-globe text-emerald-400"></i>
+                    <i class="fa-solid fa-globe text-cyan-400"></i>
                     <span>Domen & DNS</span>
                 </a>
                 <a href="login.html" class="nav-btn active" title="Tizimga kirish va kabinet">
@@ -681,7 +685,8 @@
                 // Namuna sifatida boshlang'ich dosyelar
                 const sampleInvs = [
                     { id: 1, type: "email", target: "omonjonovfathulla750@gmail.com", summary: "40+ Servislar tahlili va Google DoH MX tekshiruvi", date: new Date().toLocaleDateString() },
-                    { id: 2, type: "ip", target: "8.8.8.8", summary: "Google Public DNS (Mountain View, USA) 5 xil chuqur tahlili", date: new Date().toLocaleDateString() }
+                    { id: 2, type: "phone", target: "+998 90 123 45 67", summary: "O'zbekiston | Beeline (GSM/LTE) va Telegram/WhatsApp tekshiruvi", date: new Date().toLocaleDateString() },
+                    { id: 3, type: "ip", target: "8.8.8.8", summary: "Google Public DNS (Mountain View, USA) 5 xil chuqur tahlili", date: new Date().toLocaleDateString() }
                 ];
                 localStorage.setItem(INVS_STORAGE_KEY, JSON.stringify(sampleInvs));
                 return sampleInvs;
@@ -703,13 +708,13 @@
             list.forEach(inv => {
                 const targetLink = inv.type === 'email' 
                     ? `email_osint.html` 
-                    : (inv.type === 'domain' ? `dns_analyzer.html` : `index.html?ip=${encodeURIComponent(inv.target)}`);
+                    : (inv.type === 'domain' ? `dns_analyzer.html` : (inv.type === 'phone' ? `phone_osint.html?phone=${encodeURIComponent(inv.target)}` : `index.html?ip=${encodeURIComponent(inv.target)}`));
 
                 html += `
                     <div class="inv-item">
                         <div>
                             <div class="inv-target">
-                                <i class="${inv.type === 'email' ? 'fa-solid fa-envelope' : (inv.type === 'domain' ? 'fa-solid fa-globe' : 'fa-solid fa-network-wired')}"></i>
+                                <i class="${inv.type === 'email' ? 'fa-solid fa-envelope' : (inv.type === 'domain' ? 'fa-solid fa-globe' : (inv.type === 'phone' ? 'fa-solid fa-phone' : 'fa-solid fa-network-wired'))}"></i>
                                 ${inv.target}
                             </div>
                             <div style="font-size: 12.5px; color: #cbd5e1; margin-top: 2px;">${inv.summary}</div>
