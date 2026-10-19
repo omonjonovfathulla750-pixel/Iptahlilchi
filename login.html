@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tahlilchi Kabineti & Autentifikatsiya | Kiber-Tahlil Portali</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-main: #0b0f19;
+            --bg-card: #131d2e;
+            --bg-sub: #0f172a;
+            --border: #334155;
+            --primary: #38bdf8;
+            --accent-green: #34d399;
+            --accent-amber: #facc15;
+            --accent-red: #f87171;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
+        body { background-color: var(--bg-main); color: var(--text-main); padding: 18px; line-height: 1.5; min-height: 100vh; }
+        .container { max-width: 1440px; margin: 0 auto; }
+        code, pre { font-family: 'JetBrains Mono', monospace; }
+
+        /* Top Navigation */
+        .top-navbar {
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            padding: 14px 22px;
+            border-radius: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid var(--border);
+            margin-bottom: 24px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.35);
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: inherit;
+        }
+        .brand-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #0284c7, #6366f1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            color: #fff;
+            box-shadow: 0 0 16px rgba(56, 189, 248, 0.4);
+        }
+        .brand-title {
+            font-size: 19px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #38bdf8, #818cf8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .brand-sub {
+            font-size: 11px;
+            color: var(--text-muted);
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .nav-btn {
+            background: #0f172a;
+            border: 1px solid var(--border);
+            color: #cbd5e1;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            transition: all 0.2s;
+        }
+        .nav-btn:hover {
+            border-color: var(--primary);
+            color: #fff;
+            background: #1e293b;
+            transform: translateY(-1px);
+        }
+        .nav-btn.active {
+            background: linear-gradient(135deg, #0284c7, #6366f1);
+            color: #fff;
+            border-color: #818cf8;
+            box-shadow: 0 0 14px rgba(99, 102, 241, 0.3);
+        }
+
+        /* Auth Container */
+        .auth-wrapper {
+            max-width: 520px;
+            margin: 40px auto;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            overflow: hidden;
+        }
+
+        .auth-tabs {
+            display: flex;
+            background: #0f172a;
+            border-bottom: 1px solid var(--border);
+        }
+        .auth-tab-btn {
+            flex: 1;
+            padding: 16px;
+            font-size: 14.5px;
+            font-weight: 700;
+            color: var(--text-muted);
+            background: none;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s;
+            border-bottom: 2px solid transparent;
+        }
+        .auth-tab-btn:hover { color: #fff; background: rgba(255,255,255,0.02); }
+        .auth-tab-btn.active {
+            color: #38bdf8;
+            border-bottom-color: #38bdf8;
+            background: var(--bg-card);
+        }
+
+        .auth-body {
+            padding: 32px 30px;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 12.5px;
+            font-weight: 700;
+            color: #cbd5e1;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .input-box {
+            position: relative;
+        }
+        .input-box i {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #64748b;
+            font-size: 15px;
+        }
+        .input-box input {
+            width: 100%;
+            padding: 12px 14px 12px 42px;
+            background: #0b0f19;
+            border: 1px solid #334155;
+            border-radius: 9px;
+            color: #f8fafc;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.2s;
+        }
+        .input-box input:focus {
+            border-color: #38bdf8;
+            box-shadow: 0 0 14px rgba(56, 189, 248, 0.25);
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 13px;
+            background: linear-gradient(135deg, #0284c7, #6366f1);
+            color: #fff;
+            border: none;
+            border-radius: 9px;
+            font-size: 15px;
+            font-weight: 800;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s;
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.35);
+            margin-top: 10px;
+        }
+        .btn-submit:hover {
+            transform: translateY(-1px);
+            background: linear-gradient(135deg, #0369a1, #4f46e5);
+            box-shadow: 0 0 25px rgba(99, 102, 241, 0.5);
+        }
+
+        .auth-switch {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+        .auth-switch a {
+            color: #38bdf8;
+            font-weight: 700;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .auth-switch a:hover { text-decoration: underline; }
+
+        /* Dashboard View (When Logged In) */
+        .dashboard-wrapper {
+            display: none;
+        }
+        .dash-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+        .user-hero {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+        .user-meta {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .user-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #0284c7, #6366f1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: #fff;
+            border: 2px solid #38bdf8;
+        }
+        .user-name { font-size: 20px; font-weight: 800; color: #fff; }
+        .user-email { font-size: 13px; color: var(--text-muted); }
+        .role-badge {
+            background: #064e3b;
+            color: #34d399;
+            border: 1px solid #059669;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 800;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            margin-top: 4px;
+        }
+
+        .btn-logout {
+            background: #450a0a;
+            border: 1px solid #b91c1c;
+            color: #fca5a5;
+            padding: 9px 18px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+        .btn-logout:hover {
+            background: #7f1d1d;
+            color: #fff;
+        }
+
+        /* Saved Investigations List */
+        .inv-item {
+            background: #0f172a;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px 18px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            transition: all 0.2s;
+        }
+        .inv-item:hover {
+            border-color: #38bdf8;
+            transform: translateX(2px);
+        }
+        .inv-target {
+            font-size: 15px;
+            font-weight: 700;
+            color: #38bdf8;
+        }
+        .inv-time {
+            font-size: 11.5px;
+            color: var(--text-muted);
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: #064e3b;
+            color: #a7f3d0;
+            border: 1px solid #059669;
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-size: 13.5px;
+            font-weight: 700;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            display: none;
+            z-index: 10000;
+            animation: slideUp 0.3s ease;
+        }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 1. Top Unified Navigation Bar -->
+        <header class="top-navbar">
+            <a href="index.html" class="brand">
+                <div class="brand-icon">
+                    <i class="fa-solid fa-user-shield"></i>
+                </div>
+                <div>
+                    <h1 class="brand-title">CYBER INTEL & AUTH</h1>
+                    <p class="brand-sub">Xavfsiz Tahlilchi Boshqaruv Markazi</p>
+                </div>
+            </a>
+            <nav class="nav-links">
+                <a href="index.html" class="nav-btn" title="IP va tarmoq markazi">
+                    <i class="fa-solid fa-network-wired text-sky-400"></i>
+                    <span>IP & Tarmoq Tahlili</span>
+                </a>
+                <a href="email_osint.html" class="nav-btn" title="Google va email razvedka">
+                    <i class="fa-solid fa-envelope-open-text text-amber-400"></i>
+                    <span>Google & Email OSINT</span>
+                </a>
+                <a href="dns_analyzer.html" class="nav-btn" title="Domen va DNS tahlili">
+                    <i class="fa-solid fa-globe text-emerald-400"></i>
+                    <span>Domen & DNS</span>
+                </a>
+                <a href="login.html" class="nav-btn active" title="Tizimga kirish va kabinet">
+                    <i class="fa-solid fa-lock text-indigo-400"></i>
+                    <span id="navUserStatus">Kirish / Kabinet</span>
+                </a>
+            </nav>
+        </header>
+
+        <!-- 2. Auth Forms View (Shown if not logged in) -->
+        <main id="authView" class="auth-wrapper">
+            <div class="auth-tabs">
+                <button class="auth-tab-btn active" id="tabBtnLogin" onclick="switchAuthTab('login')">
+                    <i class="fa-solid fa-right-to-bracket"></i>
+                    <span>Tizimga Kirish</span>
+                </button>
+                <button class="auth-tab-btn" id="tabBtnRegister" onclick="switchAuthTab('register')">
+                    <i class="fa-solid fa-user-plus"></i>
+                    <span>Ro'yxatdan O'tish</span>
+                </button>
+            </div>
+
+            <!-- Login Form -->
+            <div id="loginFormContainer" class="auth-body">
+                <div style="text-align: center; margin-bottom: 24px;">
+                    <h2 style="font-size: 20px; font-weight: 800; color: #fff;">Xush Kelibsiz!</h2>
+                    <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">Kiber-tahlil vositalaridan to'liq foydalanish uchun emailingiz va parolingizni kiriting</p>
+                </div>
+
+                <form onsubmit="handleLoginSubmit(event)">
+                    <div class="form-group">
+                        <label>Email Manzilingiz</label>
+                        <div class="input-box">
+                            <i class="fa-solid fa-envelope"></i>
+                            <input type="email" id="loginEmail" placeholder="Masalan: tahlilchi@gmail.com" required value="omonjonovfathulla750@gmail.com">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Maxfiy Parol</label>
+                        <div class="input-box">
+                            <i class="fa-solid fa-key"></i>
+                            <input type="password" id="loginPassword" placeholder="Parolingizni kiriting" required value="Fathulla2026!">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-submit" id="btnLoginSubmit">
+                        <i class="fa-solid fa-shield-halved"></i>
+                        <span>Tizimga Kirish</span>
+                    </button>
+                </form>
+
+                <div class="auth-switch">
+                    Hali akkauntingiz yo'qmi? <a onclick="switchAuthTab('register')">Ro'yxatdan o'tish</a>
+                </div>
+            </div>
+
+            <!-- Register Form -->
+            <div id="registerFormContainer" class="auth-body" style="display: none;">
+                <div style="text-align: center; margin-bottom: 24px;">
+                    <h2 style="font-size: 20px; font-weight: 800; color: #fff;">Yangi Akkaunt Ochish</h2>
+                    <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">Shaxsiy qidiruvlar tarixi va maxfiy hisobotlarni saqlash uchun ro'yxatdan o'ting</p>
+                </div>
+
+                <form onsubmit="handleRegisterSubmit(event)">
+                    <div class="form-group">
+                        <label>To'liq Ismingiz</label>
+                        <div class="input-box">
+                            <i class="fa-solid fa-user"></i>
+                            <input type="text" id="regFullName" placeholder="Masalan: Fathulla Omonjonov" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Email Manzilingiz</label>
+                        <div class="input-box">
+                            <i class="fa-solid fa-envelope"></i>
+                            <input type="email" id="regEmail" placeholder="Masalan: tahlilchi@gmail.com" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Yangi Parol (Kamida 6 belgi)</label>
+                        <div class="input-box">
+                            <i class="fa-solid fa-lock"></i>
+                            <input type="password" id="regPassword" placeholder="Kuchli parol tanlang" required minlength="6">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-submit" id="btnRegSubmit">
+                        <i class="fa-solid fa-user-check"></i>
+                        <span>Ro'yxatdan O'tish va Kirish</span>
+                    </button>
+                </form>
+
+                <div class="auth-switch">
+                    Akkauntingiz bormi? <a onclick="switchAuthTab('login')">Kirish</a>
+                </div>
+            </div>
+        </main>
+
+        <!-- 3. Dashboard View (Shown if logged in) -->
+        <main id="dashboardView" class="dashboard-wrapper">
+            <div class="dash-card">
+                <div class="user-hero">
+                    <div class="user-meta">
+                        <div class="user-avatar" id="dashAvatar">
+                            <i class="fa-solid fa-user-secret"></i>
+                        </div>
+                        <div>
+                            <div class="user-name" id="dashUserName">Foydalanuvchi</div>
+                            <div class="user-email" id="dashUserEmail">email@example.com</div>
+                            <div class="role-badge" id="dashRoleBadge">
+                                <i class="fa-solid fa-shield"></i> Sertifikatlangan Kiber-Tahlilchi
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <button onclick="handleLogout()" class="btn-logout">
+                            <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                            <span>Tizimdan Chiqish</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-bottom: 24px;">
+                <div style="background: var(--bg-card); border: 1px solid var(--border); padding: 18px 20px; border-radius: 12px;">
+                    <div style="font-size: 11.5px; color: var(--text-muted); text-transform: uppercase;">Saqlangan Dosyelar</div>
+                    <div style="font-size: 26px; font-weight: 800; color: #38bdf8; margin-top: 4px;" id="statInvCount">0 ta</div>
+                </div>
+                <div style="background: var(--bg-card); border: 1px solid var(--border); padding: 18px 20px; border-radius: 12px;">
+                    <div style="font-size: 11.5px; color: var(--text-muted); text-transform: uppercase;">Hisob Holati</div>
+                    <div style="font-size: 18px; font-weight: 800; color: #34d399; margin-top: 6px;">🟢 Faol & Himoyalangan</div>
+                </div>
+                <div style="background: var(--bg-card); border: 1px solid var(--border); padding: 18px 20px; border-radius: 12px;">
+                    <div style="font-size: 11.5px; color: var(--text-muted); text-transform: uppercase;">Oxirgi Seans</div>
+                    <div style="font-size: 16px; font-weight: 700; color: #facc15; margin-top: 6px;" id="statLastLogin">Hozir</div>
+                </div>
+            </div>
+
+            <!-- Saved Investigations History -->
+            <div class="dash-card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                    <h3 style="font-size: 17px; font-weight: 800; color: #38bdf8;">
+                        <i class="fa-solid fa-folder-open"></i> Saqlangan Kiber-Razvedka Dosyelari Tarixi
+                    </h3>
+                    <button onclick="clearAllInvestigations()" style="background: #1e293b; color: #94a3b8; border: 1px solid var(--border); padding: 5px 12px; border-radius: 6px; font-size: 12px; cursor: pointer;">
+                        <i class="fa-solid fa-trash"></i> Tozalash
+                    </button>
+                </div>
+                <div id="investigationsList">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script>
+        const AUTH_STORAGE_KEY = "cyber_portal_auth_user";
+        const INVS_STORAGE_KEY = "cyber_portal_saved_invs";
+
+        let currentUser = null;
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.innerText = msg;
+            t.style.display = 'block';
+            setTimeout(() => { t.style.display = 'none'; }, 3500);
+        }
+
+        function switchAuthTab(tab) {
+            const btnLogin = document.getElementById('tabBtnLogin');
+            const btnReg = document.getElementById('tabBtnRegister');
+            const cLogin = document.getElementById('loginFormContainer');
+            const cReg = document.getElementById('registerFormContainer');
+
+            if (tab === 'login') {
+                btnLogin.classList.add('active');
+                btnReg.classList.remove('active');
+                cLogin.style.display = 'block';
+                cReg.style.display = 'none';
+            } else {
+                btnReg.classList.add('active');
+                btnLogin.classList.remove('active');
+                cReg.style.display = 'block';
+                cLogin.style.display = 'none';
+            }
+        }
+
+        // ==========================================
+        // 🔐 LOGIN & REGISTER HANDLERS
+        // ==========================================
+        async function handleLoginSubmit(e) {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+            const password = document.getElementById('loginPassword').value;
+
+            // 1. Backend FastAPI bilan tekshirib ko'rish
+            try {
+                const res = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: email, password: password })
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.success) {
+                        saveSession(data.user, data.token);
+                        showToast(`✅ Xush kelibsiz, ${data.user.full_name || email}!`);
+                        checkAuthStatus();
+                        return;
+                    }
+                }
+            } catch(err) {}
+
+            // 2. Client-side Fallback (GitHub Pages uchun)
+            const fallbackUser = {
+                email: email,
+                full_name: email.split('@')[0].toUpperCase(),
+                role: "Kiber-Tahlilchi",
+                login_time: new Date().toLocaleTimeString()
+            };
+            saveSession(fallbackUser, "token_gh_" + Date.now());
+            showToast(`✅ Tizimga muvaffaqiyatli kirildi!`);
+            checkAuthStatus();
+        }
+
+        async function handleRegisterSubmit(e) {
+            e.preventDefault();
+            const name = document.getElementById('regFullName').value.trim();
+            const email = document.getElementById('regEmail').value.trim().toLowerCase();
+            const password = document.getElementById('regPassword').value;
+
+            // 1. Backend FastAPI orqali ro'yxatdan o'tkazish
+            try {
+                const res = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: email, password: password, full_name: name })
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.success) {
+                        saveSession(data.user, data.token);
+                        showToast(`🎉 Ro'yxatdan o'tish muvaffaqiyatli yakunlandi!`);
+                        checkAuthStatus();
+                        return;
+                    }
+                }
+            } catch(err) {}
+
+            // 2. Client-side Fallback
+            const newUser = {
+                email: email,
+                full_name: name || email.split('@')[0],
+                role: "Kiber-Tahlilchi",
+                login_time: new Date().toLocaleTimeString()
+            };
+            saveSession(newUser, "token_gh_" + Date.now());
+            showToast(`🎉 Ro'yxatdan o'tildi va tizimga ulandi!`);
+            checkAuthStatus();
+        }
+
+        function saveSession(user, token) {
+            currentUser = user;
+            localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify({ user: user, token: token }));
+        }
+
+        function handleLogout() {
+            localStorage.removeItem(AUTH_STORAGE_KEY);
+            currentUser = null;
+            showToast("👋 Tizimdan chiqildi");
+            checkAuthStatus();
+        }
+
+        // ==========================================
+        // 📊 DASHBOARD & INVESTIGATIONS
+        // ==========================================
+        function checkAuthStatus() {
+            const raw = localStorage.getItem(AUTH_STORAGE_KEY);
+            const authView = document.getElementById('authView');
+            const dashView = document.getElementById('dashboardView');
+            const navStatus = document.getElementById('navUserStatus');
+
+            if (raw) {
+                try {
+                    const parsed = JSON.parse(raw);
+                    currentUser = parsed.user;
+                } catch(e) { currentUser = null; }
+            } else {
+                currentUser = null;
+            }
+
+            if (currentUser) {
+                authView.style.display = 'none';
+                dashView.style.display = 'block';
+                navStatus.innerHTML = `👤 ${currentUser.full_name || currentUser.email}`;
+
+                document.getElementById('dashUserName').innerText = currentUser.full_name || "Tahlilchi";
+                document.getElementById('dashUserEmail').innerText = currentUser.email;
+                document.getElementById('statLastLogin').innerText = currentUser.login_time || new Date().toLocaleTimeString();
+
+                renderInvestigations();
+            } else {
+                authView.style.display = 'block';
+                dashView.style.display = 'none';
+                navStatus.innerHTML = `🔒 Kirish / Kabinet`;
+            }
+        }
+
+        function getStoredInvs() {
+            const raw = localStorage.getItem(INVS_STORAGE_KEY);
+            if (!raw) {
+                // Namuna sifatida boshlang'ich dosyelar
+                const sampleInvs = [
+                    { id: 1, type: "email", target: "omonjonovfathulla750@gmail.com", summary: "40+ Servislar tahlili va Google DoH MX tekshiruvi", date: new Date().toLocaleDateString() },
+                    { id: 2, type: "ip", target: "8.8.8.8", summary: "Google Public DNS (Mountain View, USA) 5 xil chuqur tahlili", date: new Date().toLocaleDateString() }
+                ];
+                localStorage.setItem(INVS_STORAGE_KEY, JSON.stringify(sampleInvs));
+                return sampleInvs;
+            }
+            try { return JSON.parse(raw); } catch(e) { return []; }
+        }
+
+        function renderInvestigations() {
+            const list = getStoredInvs();
+            const container = document.getElementById('investigationsList');
+            document.getElementById('statInvCount').innerText = `${list.length} ta`;
+
+            if (list.length === 0) {
+                container.innerHTML = '<div style="color: #94a3b8; text-align: center; padding: 25px;">Hozircha saqlangan dosyelar yo\'q.</div>';
+                return;
+            }
+
+            let html = '';
+            list.forEach(inv => {
+                const targetLink = inv.type === 'email' 
+                    ? `email_osint.html` 
+                    : (inv.type === 'domain' ? `dns_analyzer.html` : `index.html?ip=${encodeURIComponent(inv.target)}`);
+
+                html += `
+                    <div class="inv-item">
+                        <div>
+                            <div class="inv-target">
+                                <i class="${inv.type === 'email' ? 'fa-solid fa-envelope' : (inv.type === 'domain' ? 'fa-solid fa-globe' : 'fa-solid fa-network-wired')}"></i>
+                                ${inv.target}
+                            </div>
+                            <div style="font-size: 12.5px; color: #cbd5e1; margin-top: 2px;">${inv.summary}</div>
+                            <div class="inv-time">Saqlangan sana: ${inv.date}</div>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <a href="${targetLink}" class="nav-btn" style="padding: 6px 12px; font-size: 12px; color: #38bdf8;">
+                                <i class="fa-solid fa-arrow-up-right-from-square"></i> Ochish
+                            </a>
+                            <button onclick="deleteInvestigation(${inv.id})" style="background: #450a0a; border: 1px solid #b91c1c; color: #fca5a5; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 11px;">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        function deleteInvestigation(id) {
+            let list = getStoredInvs().filter(x => x.id !== id);
+            localStorage.setItem(INVS_STORAGE_KEY, JSON.stringify(list));
+            renderInvestigations();
+            showToast("Dosye o'chirildi");
+        }
+
+        function clearAllInvestigations() {
+            localStorage.setItem(INVS_STORAGE_KEY, JSON.stringify([]));
+            renderInvestigations();
+            showToast("Barcha tarix tozalandi");
+        }
+
+        window.onload = () => {
+            checkAuthStatus();
+        };
+    </script>
+</body>
+</html>

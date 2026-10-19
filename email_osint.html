@@ -635,6 +635,10 @@
                     <i class="fa-solid fa-globe text-emerald-400"></i>
                     <span>Domen & DNS</span>
                 </a>
+                <a href="login.html" class="nav-btn" style="border-color: #818cf8; color: #a5b4fc;" title="Tahlilchi kabineti va login">
+                    <i class="fa-solid fa-user-shield text-indigo-400"></i>
+                    <span id="navAuthText">Kirish / Kabinet</span>
+                </a>
             </nav>
         </header>
 
@@ -2286,7 +2290,33 @@
             document.body.appendChild(dlAnchor);
             dlAnchor.click();
             dlAnchor.remove();
-            showToast("📥 OSINT Dossier fayli yuklab olindi (JSON)!");
+            // Dosyeni foydalanuvchi kabinetiga ham avtomatik saqlash
+            try {
+                const storedInvs = JSON.parse(localStorage.getItem("cyber_portal_saved_invs") || "[]");
+                const newInv = {
+                    id: Date.now(),
+                    type: "email",
+                    target: currentOsintData.email,
+                    summary: `${currentOsintData.breaches.length} ta sizib chiqish, ${currentOsintData.platforms.filter(p=>p.found).length} ta tasdiqlangan ilovalar`,
+                    date: new Date().toLocaleDateString()
+                };
+                storedInvs.unshift(newInv);
+                if (storedInvs.length > 50) storedInvs.pop();
+                localStorage.setItem("cyber_portal_saved_invs", JSON.stringify(storedInvs));
+
+                // Backend API orqali ham saqlash
+                const rawAuth = localStorage.getItem("cyber_portal_auth_user");
+                if (rawAuth) {
+                    const token = JSON.parse(rawAuth).token;
+                    fetch('/api/auth/investigations', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                        body: JSON.stringify({ target_type: 'email', target_value: currentOsintData.email, summary: newInv.summary })
+                    }).catch(()=>{});
+                }
+            } catch(e) {}
+
+            showToast("📥 OSINT Dossier fayli yuklandi va kabinetga saqlandi!");
         }
 
         // Dastlabki yuklanishda avtomatik tahlil
@@ -2297,6 +2327,19 @@
                     if (e.key === 'Enter') runEmailOsint();
                 });
             }
+
+            // Foydalanuvchi seansini aniqlash
+            try {
+                const rawAuth = localStorage.getItem("cyber_portal_auth_user");
+                if (rawAuth) {
+                    const u = JSON.parse(rawAuth).user;
+                    if (u) {
+                        const txt = document.getElementById('navAuthText');
+                        if (txt) txt.innerText = u.full_name || u.email.split('@')[0];
+                    }
+                }
+            } catch(e) {}
+
             runEmailOsint();
         };
     </script>

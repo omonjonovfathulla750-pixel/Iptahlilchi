@@ -10,8 +10,12 @@ import subprocess
 from datetime import datetime, timedelta
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import asynccontextmanager
+import sqlite3
+import hashlib
+import secrets
+from pydantic import BaseModel
 
-from fastapi import FastAPI, Query, Response
+from fastapi import FastAPI, Query, Response, Header, HTTPException, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 import uvicorn
 
@@ -474,6 +478,238 @@ def dns_analyzer_page():
         with open(html_path, "r", encoding="utf-8") as f:
             return f.read()
     return "<h1>dns_analyzer.html fayli topilmadi</h1>"
+
+
+@app.get("/login", response_class=HTMLResponse)
+@app.get("/login.html", response_class=HTMLResponse)
+def login_page():
+    html_path = os.path.join(os.path.dirname(__file__), "login.html")
+    if os.path.exists(html_path):
+        with open(html_path, "r", encoding="utf-8") as f:
+            return f.read()
+    return "<h1>login.html fayli topilmadi</h1>"
+
+
+# ========================================================
+# 🔐 AUTENTIFIKATSIYA VA FOYDALANUVCHILAR BAZASI (SQLite)
+# ========================================================
+AUTH_DB_PATH = os.path.join(os.path.dirname(__file__), "auth_database.db")
+
+
+def init_auth_db():
+    conn = sqlite3.connect(AUTH_DB_PATH)
+    cur = conn.cursor()
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            email TEXT UNIQUE NOT NULL,
+            password_hash TEXT NOT NULL,
+            salt TEXT NOT NULL,
+            full_name TEXT,
+            role TEXT DEFAULT 'analyst',
+            created_at TEXT
+        )
+    """)
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS sessions (
+            token TEXT PRIMARY KEY,
+            user_id INTEGER NOT NULL,
+            created_at TEXT
+        )
+    """)
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS saved_investigations (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            target_type TEXT,
+            target_value TEXT,
+            summary TEXT,
+            created_at TEXT
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+
+init_auth_db()
+
+
+def hash_pwd(password: str, salt: str = None):
+    if not salt:
+        salt = secrets.token_hex(16)
+    pwd_hash = hashlib.sha256((password + salt).encode("utf-8")).hexdigest()
+    return pwd_hash, salt
+
+
+class RegisterModel(BaseModel):
+    email: str
+    password: str
+    full_name: str = ""
+
+
+class LoginModel(BaseModel):
+    email: str
+    password: str
+
+
+class InvestigationModel(BaseModel):
+    target_type: str
+    target_value: str
+    summary: str = ""
+
+
+def get_user_by_token(token: str):
+    if not token:
+        return None
+    token = token.replace("Bearer ", "").strip()
+    conn = sqlite3.connect(AUTH_DB_PATH)
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT u.id, u.email, u.full_name, u.role
+        FROM sessions s
+        JOIN users u ON s.user_id = u.id
+        WHERE s.token = ?
+    """, (token,))
+    row = cur.fetchone()
+    conn.close()
+    if row:
+        return {"id": row[0], "email": row[1], "full_name": row[2], "role": row[3]}
+    return None
+
+
+@app.post("/api/auth/register")
+def register_user(data: RegisterModel):
+    email = data.email.strip().lower()
+    if not email or "@" not in email:
+        return JSONResponse(status_code=400, content={"success": False, "message": "Email noto'g'ri"})
+    if len(data.password) < 6:
+        return JSONResponse(status_code=400, content={"success": False, "message": "Parol kamida 6 belgi bo'lishi kerak"})
+
+    pwd_hash, salt = hash_pwd(data.password)
+    now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    conn = sqlite3.connect(AUTH_DB_PATH)
+    cur = conn.cursor()
+    try:
+        cur.execute("""
+            INSERT INTO users (email, password_hash, salt, full_name, created_at)
+            VALUES (?, ?, ?, ?, ?)
+        """, (email, pwd_hash, salt, data.full_name or email.split("@")[0], now_str))
+        user_id = cur.lastrowid
+        token = secrets.token_urlsafe(32)
+        cur.execute("INSERT INTO sessions (token, user_id, created_at) VALUES (?, ?, ?)", (token, user_id, now_str))
+        conn.commit()
+    except sqlite3.IntegrityError:
+        conn.close()
+        return JSONResponse(status_code=400, content={"success": False, "message": "Bu email ro'yxatdan o'tgan"})
+    conn.close()
+
+    user_info = {"id": user_id, "email": email, "full_name": data.full_name or email.split("@")[0], "role": "analyst"}
+    return {"success": True, "token": token, "user": user_info}
+
+
+@app.post("/api/auth/login")
+def login_user(data: LoginModel):
+    email = data.email.strip().lower()
+    conn = sqlite3.connect(AUTH_DB_PATH)
+    cur = conn.cursor()
+    cur.execute("SELECT id, password_hash, salt, full_name, role FROM users WHERE email = ?", (email,))
+    row = cur.fetchone()
+
+    if not row:
+        conn.close()
+        return JSONResponse(status_code=401, content={"success": False, "message": "Email yoki parol xato"})
+
+    user_id, stored_hash, salt, full_name, role = row
+    test_hash, _ = hash_pwd(data.password, salt)
+
+    if test_hash != stored_hash:
+        conn.close()
+        return JSONResponse(status_code=401, content={"success": False, "message": "Email yoki parol xato"})
+
+    token = secrets.token_urlsafe(32)
+    now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    cur.execute("INSERT INTO sessions (token, user_id, created_at) VALUES (?, ?, ?)", (token, user_id, now_str))
+    conn.commit()
+    conn.close()
+
+    user_info = {"id": user_id, "email": email, "full_name": full_name, "role": role}
+    return {"success": True, "token": token, "user": user_info}
+
+
+@app.get("/api/auth/me")
+def get_me(authorization: str = Header(None)):
+    user = get_user_by_token(authorization)
+    if not user:
+        return JSONResponse(status_code=401, content={"success": False, "message": "Avtorizatsiyadan o'tilmagan"})
+    return {"success": True, "user": user}
+
+
+@app.post("/api/auth/logout")
+def logout_user(authorization: str = Header(None)):
+    if authorization:
+        token = authorization.replace("Bearer ", "").strip()
+        conn = sqlite3.connect(AUTH_DB_PATH)
+        cur = conn.cursor()
+        cur.execute("DELETE FROM sessions WHERE token = ?", (token,))
+        conn.commit()
+        conn.close()
+    return {"success": True, "message": "Chiqildi"}
+
+
+@app.post("/api/auth/investigations")
+def save_investigation(data: InvestigationModel, authorization: str = Header(None)):
+    user = get_user_by_token(authorization)
+    user_id = user["id"] if user else 1
+    now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    conn = sqlite3.connect(AUTH_DB_PATH)
+    cur = conn.cursor()
+    cur.execute("""
+        INSERT INTO saved_investigations (user_id, target_type, target_value, summary, created_at)
+        VALUES (?, ?, ?, ?, ?)
+    """, (user_id, data.target_type, data.target_value, data.summary, now_str))
+    inv_id = cur.lastrowid
+    conn.commit()
+    conn.close()
+    return {"success": True, "id": inv_id, "message": "Dosye saqlandi"}
+
+
+@app.get("/api/auth/investigations")
+def list_investigations(authorization: str = Header(None)):
+    user = get_user_by_token(authorization)
+    user_id = user["id"] if user else 1
+
+    conn = sqlite3.connect(AUTH_DB_PATH)
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT id, target_type, target_value, summary, created_at
+        FROM saved_investigations
+        WHERE user_id = ?
+        ORDER BY id DESC
+    """, (user_id,))
+    rows = cur.fetchall()
+    conn.close()
+
+    items = [
+        {"id": r[0], "type": r[1], "target": r[2], "summary": r[3], "date": r[4]}
+        for r in rows
+    ]
+    return {"success": True, "investigations": items}
+
+
+@app.delete("/api/auth/investigations/{inv_id}")
+def delete_investigation(inv_id: int, authorization: str = Header(None)):
+    user = get_user_by_token(authorization)
+    conn = sqlite3.connect(AUTH_DB_PATH)
+    cur = conn.cursor()
+    if user:
+        cur.execute("DELETE FROM saved_investigations WHERE id = ? AND user_id = ?", (inv_id, user["id"]))
+    else:
+        cur.execute("DELETE FROM saved_investigations WHERE id = ?", (inv_id,))
+    conn.commit()
+    conn.close()
+    return {"success": True, "message": "O'chirildi"}
 
 
 if __name__ == "__main__":

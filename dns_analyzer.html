@@ -328,6 +328,10 @@
                     <i class="fa-solid fa-globe text-emerald-400"></i>
                     <span>Domen & DNS</span>
                 </a>
+                <a href="login.html" class="nav-btn" style="border-color: #818cf8; color: #a5b4fc;" title="Tahlilchi kabineti va login">
+                    <i class="fa-solid fa-user-shield text-indigo-400"></i>
+                    <span id="navAuthText">Kirish / Kabinet</span>
+                </a>
             </nav>
         </header>
 
@@ -471,6 +475,19 @@
                     if (e.key === 'Enter') runDnsScan();
                 });
             }
+
+            // Foydalanuvchi seansini aniqlash
+            try {
+                const rawAuth = localStorage.getItem("cyber_portal_auth_user");
+                if (rawAuth) {
+                    const u = JSON.parse(rawAuth).user;
+                    if (u) {
+                        const txt = document.getElementById('navAuthText');
+                        if (txt) txt.innerText = u.full_name || u.email.split('@')[0];
+                    }
+                }
+            } catch(e) {}
+
             runDnsScan();
         };
     </script>
