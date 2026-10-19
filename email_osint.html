@@ -629,10 +629,6 @@
                     <i class="fa-solid fa-globe text-emerald-400"></i>
                     <span>Domen & DNS</span>
                 </a>
-                <a href="sakinah.html" class="nav-btn nav-btn-pink" title="Sakinah do'koniga o'tish">
-                    <i class="fa-solid fa-gem text-pink-400"></i>
-                    <span>Sakinah Do'koni</span>
-                </a>
             </nav>
         </header>
 
@@ -1068,11 +1064,15 @@
         }
 
         // ==========================================
-        // 🌐 DNS over HTTPS (DoH) MX Yozuvlar
+        // 🌐 DNS over HTTPS (DoH) MX, SPF & DMARC
         // ==========================================
         async function fetchDnsMxRecords(domain) {
             currentOsintData.mxRecords = [];
+            currentOsintData.spfRecord = null;
+            currentOsintData.dmarcRecord = null;
+
             try {
+                // 1. MX so'rovi
                 const res = await fetch(`https://dns.google/resolve?name=${encodeURIComponent(domain)}&type=MX`);
                 if (res.ok) {
                     const data = await res.json();
@@ -1087,6 +1087,25 @@
                         });
                     }
                 }
+
+                // 2. TXT (SPF) so'rovi
+                const txtRes = await fetch(`https://dns.google/resolve?name=${encodeURIComponent(domain)}&type=TXT`);
+                if (txtRes.ok) {
+                    const txtData = await txtRes.json();
+                    if (txtData.Answer) {
+                        const spf = txtData.Answer.find(a => (a.data || "").includes("v=spf1"));
+                        if (spf) currentOsintData.spfRecord = spf.data.replace(/"/g, '');
+                    }
+                }
+
+                // 3. DMARC so'rovi
+                const dmarcRes = await fetch(`https://dns.google/resolve?name=_dmarc.${encodeURIComponent(domain)}&type=TXT`);
+                if (dmarcRes.ok) {
+                    const dmarcData = await dmarcRes.json();
+                    if (dmarcData.Answer && dmarcData.Answer.length > 0) {
+                        currentOsintData.dmarcRecord = dmarcData.Answer[0].data.replace(/"/g, '');
+                    }
+                }
             } catch(e) {}
 
             if (currentOsintData.mxRecords.length === 0) {
@@ -1094,9 +1113,10 @@
                 if (domain === 'gmail.com') {
                     currentOsintData.mxRecords = [
                         { priority: "5", server: "gmail-smtp-in.l.google.com.", ttl: 300 },
-                        { priority: "10", server: "alt1.gmail-smtp-in.l.google.com.", ttl: 300 },
-                        { priority: "20", server: "alt2.gmail-smtp-in.l.google.com.", ttl: 300 }
+                        { priority: "10", server: "alt1.gmail-smtp-in.l.google.com.", ttl: 300 }
                     ];
+                    currentOsintData.spfRecord = "v=spf1 redirect=_spf.google.com";
+                    currentOsintData.dmarcRecord = "v=DMARC1; p=reject; sp=reject;";
                 } else {
                     currentOsintData.mxRecords = [
                         { priority: "10", server: `mail.${domain}`, ttl: 3600 }
@@ -1389,6 +1409,9 @@
                 <a href="https://contacts.google.com" target="_blank" class="action-link" title="Google Contacts orqali tekshirish">
                     <i class="fa-brands fa-google text-red-400"></i> Google Profil
                 </a>
+                <a href="https://calendar.google.com/calendar/u/0/embed?src=${encodeURIComponent(currentOsintData.email)}" target="_blank" class="action-link" title="Google Calendar ochiq jadval tekshiruvi">
+                    <i class="fa-solid fa-calendar-days text-amber-400"></i> Google Taqvim
+                </a>
                 <a href="https://www.google.com/search?q=${encodeURIComponent(currentOsintData.email)}" target="_blank" class="action-link" title="Google orqali izlash">
                     <i class="fa-solid fa-magnifying-glass text-sky-400"></i> Google Qidiruv
                 </a>
@@ -1572,15 +1595,33 @@
                     `;
                 });
 
+                const spfCard = currentOsintData.spfRecord
+                    ? `<div style="background: #064e3b; border: 1px solid #059669; padding: 10px 14px; border-radius: 8px; margin-bottom: 10px; font-size: 12.5px;">
+                        <span style="color: #34d399; font-weight: bold;"><i class="fa-solid fa-shield-halved"></i> SPF Himoyasi Mavjud:</span> <code style="color: #a7f3d0; margin-left: 6px;">${currentOsintData.spfRecord}</code>
+                       </div>`
+                    : `<div style="background: #450a0a; border: 1px solid #b91c1c; padding: 10px 14px; border-radius: 8px; margin-bottom: 10px; font-size: 12.5px; color: #fca5a5;">
+                        <i class="fa-solid fa-triangle-exclamation"></i> SPF yozuvi aniqlanmadi (Email soxtalashtirish xavfi bor)
+                       </div>`;
+
+                const dmarcCard = currentOsintData.dmarcRecord
+                    ? `<div style="background: #064e3b; border: 1px solid #059669; padding: 10px 14px; border-radius: 8px; margin-bottom: 14px; font-size: 12.5px;">
+                        <span style="color: #34d399; font-weight: bold;"><i class="fa-solid fa-lock"></i> DMARC Kiber-Siyosati:</span> <code style="color: #a7f3d0; margin-left: 6px;">${currentOsintData.dmarcRecord}</code>
+                       </div>`
+                    : `<div style="background: #1e293b; border: 1px solid #334155; padding: 10px 14px; border-radius: 8px; margin-bottom: 14px; font-size: 12.5px; color: #94a3b8;">
+                        <i class="fa-solid fa-circle-info"></i> DMARC yozuvi aniqlanmadi
+                       </div>`;
+
                 area.innerHTML = `
                     <div class="card-box">
                         <div class="card-box-header">
-                            <span><i class="fa-solid fa-dna"></i> Domen MX (Mail Exchanger) Yozuvlari</span>
+                            <span><i class="fa-solid fa-dna"></i> Domen MX (Mail Exchanger) & Xavfsizlik Yozuvlari</span>
                             <span style="font-size: 12px; color: #c084fc;">Google DoH Orqali Olingan</span>
                         </div>
-                        <p style="font-size: 12.5px; color: #94a3b8; margin-bottom: 14px;">
-                            ${currentOsintData.domain} domenining xabarlarni qabul qiluvchi rasmiy pochta serverlari:
+                        <p style="font-size: 12.5px; color: #94a3b8; margin-bottom: 12px;">
+                            ${currentOsintData.domain} domenining pochta xavfsizligi va qabul qiluvchi serverlari:
                         </p>
+                        ${spfCard}
+                        ${dmarcCard}
                         <div style="overflow-x: auto; border-radius: 8px; border: 1px solid var(--border);">
                             <table style="width: 100%; border-collapse: collapse; background: #1e293b; font-size: 12.5px; text-align: left;">
                                 <thead>
@@ -1651,6 +1692,12 @@
 
         // Dastlabki yuklanishda avtomatik tahlil
         window.onload = () => {
+            const input = document.getElementById('targetEmailInput');
+            if (input) {
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') runEmailOsint();
+                });
+            }
             runEmailOsint();
         };
     </script>

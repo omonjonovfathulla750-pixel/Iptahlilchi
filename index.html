@@ -394,10 +394,6 @@
                     <i class="fa-solid fa-globe text-emerald-300"></i>
                     <span>Domen & DNS</span>
                 </a>
-                <a href="sakinah.html" class="btn-sakinah-nav" style="background: linear-gradient(135deg, #be185d, #4338ca); border-color: #f472b6;" title="Sakinah Aksessuarlar Do'koni veb-dasturiga o'tish">
-                    <i class="fa-solid fa-gem text-pink-300"></i>
-                    <span>Sakinah Do'koni</span>
-                </a>
             </div>
         </div>
 
@@ -1048,7 +1044,8 @@
             const name = currentFullAnalysisData.name;
 
             if (tabName === 'overview') {
-                const isPrivate = ip.startsWith('192.168.') || ip.startsWith('10.') || ip.startsWith('172.');
+                const isPrivate = ip.startsWith('192.168.') || ip.startsWith('10.') || ip.startsWith('172.') || ip === '127.0.0.1' || ip === 'localhost';
+                
                 body.innerHTML = `
                     <div class="modal-box" style="border-left: 4px solid #38bdf8;">
                         <h4 style="color: #38bdf8; font-size: 15px; margin-bottom: 8px;">🎯 ${name} (<code style="color: #facc15;">${ip}</code>)</h4>
@@ -1056,7 +1053,8 @@
                         <div>📡 <b>Subnet Diapazoni:</b> ${ip.substring(0, ip.lastIndexOf('.'))}.0/24 (Standart 255 ta manzil)</div>
                         <div>🔒 <b>Tavsiya etiladigan Xavfsizlik:</b> ${ip.endsWith('.1') ? 'Router maʼmuriy parolini yangilab turing' : 'Standart shifrlangan ulanishlar'}</div>
                     </div>
-                    <div style="font-size: 13px; font-weight: bold; color: #cbd5e1; margin-bottom: 8px;">⚡ Mavjud 5 xil tahlil va ulanish vositalari:</div>
+                    <div id="wanGeoCard"></div>
+                    <div style="font-size: 13px; font-weight: bold; color: #cbd5e1; margin-bottom: 8px; margin-top: 10px;">⚡ Mavjud 5 xil tahlil va ulanish vositalari:</div>
                     <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
                         <div class="port-card" onclick="switchFullTab('web')" style="cursor: pointer;">
                             <div><b>🌐 1. Veb Tekshiruv</b><br><span style="font-size: 11px; color: #94a3b8;">HTTP / HTTPS web panel</span></div>
@@ -1080,6 +1078,39 @@
                         <span style="color: #fb923c; font-weight: bold;">Skanerlash &rarr;</span>
                     </div>
                 `;
+
+                if (!isPrivate) {
+                    const wanBox = document.getElementById('wanGeoCard');
+                    wanBox.innerHTML = `
+                        <div class="modal-box" style="border-left: 4px solid #34d399; margin-top: 10px;">
+                            <i class="fa-solid fa-spinner fa-spin text-sky-400"></i> Global GeoIP va ISP ma'lumotlari so'ralmoqda (ipwho.is)...
+                        </div>
+                    `;
+                    fetch(`https://ipwho.is/${encodeURIComponent(ip)}`)
+                        .then(r => r.json())
+                        .then(d => {
+                            if (d.success) {
+                                const flag = d.flag && d.flag.emoji ? d.flag.emoji : '🌍';
+                                const isVpn = d.security && (d.security.vpn || d.security.proxy || d.security.tor);
+                                wanBox.innerHTML = `
+                                    <div class="modal-box" style="border-left: 4px solid #34d399; margin-top: 10px;">
+                                        <div style="font-size: 14.5px; font-weight: 700; color: #34d399; margin-bottom: 6px;">
+                                            ${flag} ${d.country || 'Global'}, ${d.city || ''} (${d.country_code || ''})
+                                        </div>
+                                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; font-size: 12.5px;">
+                                            <div>🏢 <b>Provayder (ISP):</b> ${d.connection ? d.connection.isp : (d.isp || 'Nomaʼlum')}</div>
+                                            <div>🔢 <b>ASN:</b> ${d.connection ? d.connection.asn : ''} (${d.connection ? d.connection.org : ''})</div>
+                                            <div>🕒 <b>Vaqt Zonasi:</b> ${d.timezone ? d.timezone.id : ''} (UTC ${d.timezone ? d.timezone.utc : ''})</div>
+                                            <div>🛡️ <b>VPN / Proxy Xavfi:</b> <span style="color: ${isVpn ? '#f87171' : '#34d399'}; font-weight: bold;">${isVpn ? '⚠️ VPN/Proxy Aniqlangan' : '✅ Toza (Rezidental/ISP)'}</span></div>
+                                        </div>
+                                    </div>
+                                `;
+                            } else {
+                                wanBox.innerHTML = '';
+                            }
+                        })
+                        .catch(() => { wanBox.innerHTML = ''; });
+                }
             } else if (tabName === 'web') {
                 renderWebTabContent(body, ip, name);
             } else if (tabName === 'smb') {
@@ -1394,6 +1425,24 @@
         window.onload = async () => {
             fetchGeo();
             renderAll();
+
+            const ipInput = document.getElementById('targetIpInput');
+            if (ipInput) {
+                ipInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') runFull5MethodAnalysis();
+                });
+            }
+
+            // URL orqali kelgan IP manzilni avtomatik tahlil qilish (masalan index.html?ip=8.8.8.8)
+            const urlParams = new URLSearchParams(window.location.search);
+            const queryIp = urlParams.get('ip');
+            if (queryIp) {
+                if (ipInput) ipInput.value = queryIp;
+                setTimeout(() => {
+                    runFull5MethodAnalysis(queryIp);
+                }, 300);
+            }
+
             await checkServerConnection();
             renderAll();
 

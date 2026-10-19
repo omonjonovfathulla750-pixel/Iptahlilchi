@@ -328,10 +328,6 @@
                     <i class="fa-solid fa-globe text-emerald-400"></i>
                     <span>Domen & DNS</span>
                 </a>
-                <a href="sakinah.html" class="nav-btn nav-btn-pink" title="Sakinah do'koniga o'tish">
-                    <i class="fa-solid fa-gem text-pink-400"></i>
-                    <span>Sakinah Do'koni</span>
-                </a>
             </nav>
         </header>
 
@@ -378,7 +374,10 @@
             { type: "AAAA", name: "IPv6 Manzillar (AAAA Records)", badgeClass: "type-aaaa", icon: "fa-solid fa-bolt" },
             { type: "MX", name: "Pochta Serverlari (MX Records)", badgeClass: "type-mx", icon: "fa-solid fa-envelope" },
             { type: "TXT", name: "Xavfsizlik & SPF/DMARC (TXT)", badgeClass: "type-txt", icon: "fa-solid fa-shield-halved" },
-            { type: "NS", name: "DNS Serverlar (NS Records)", badgeClass: "type-ns", icon: "fa-solid fa-server" }
+            { type: "NS", name: "DNS Serverlar (NS Records)", badgeClass: "type-ns", icon: "fa-solid fa-server" },
+            { type: "CNAME", name: "Kanonik Nomlar (CNAME)", badgeClass: "type-a", icon: "fa-solid fa-arrow-turn-down" },
+            { type: "CAA", name: "SSL Vakolatlari (CAA)", badgeClass: "type-txt", icon: "fa-solid fa-certificate" },
+            { type: "SOA", name: "Boshqaruv Zonasi (SOA)", badgeClass: "type-mx", icon: "fa-solid fa-sitemap" }
         ];
 
         async function runDnsScan() {
@@ -439,7 +438,7 @@
                                 <code>${ans.data}</code>
                                 <div style="display: flex; align-items: center;">
                                     <span style="font-size: 11px; color: #94a3b8;">TTL: ${ans.TTL}s</span>
-                                    ${isIp ? `<a href="index.html" class="btn-jump-ip" title="IP tahlilida ochish"><i class="fa-solid fa-arrow-up-right-from-square"></i> IP Markaz</a>` : ''}
+                                    ${isIp ? `<a href="index.html?ip=${encodeURIComponent(ans.data)}" class="btn-jump-ip" title="Ushbu IP manzilni chuqur 5 xil usulda tahlil qilish"><i class="fa-solid fa-magnifying-glass-chart"></i> IP Tahlil</a>` : ''}
                                 </div>
                             </div>
                         `;
@@ -466,6 +465,12 @@
         }
 
         window.onload = () => {
+            const input = document.getElementById('targetDomainInput');
+            if (input) {
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') runDnsScan();
+                });
+            }
             runDnsScan();
         };
     </script>
