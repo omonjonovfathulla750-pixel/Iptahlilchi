@@ -267,6 +267,12 @@
             color: #fff;
             background: #1e293b;
         }
+        .active-cat-btn {
+            background: linear-gradient(135deg, #0284c7, #2563eb) !important;
+            color: #fff !important;
+            border-color: #38bdf8 !important;
+            box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
+        }
 
         /* Quick Stat Highlights */
         .highlights-grid {
@@ -765,7 +771,7 @@
                     </button>
                     <button class="tab-item" onclick="switchOsintTab('platforms')" id="tabPlatforms">
                         <i class="fa-solid fa-share-nodes text-sky-400"></i>
-                        <span>2. Ro'yxatdan O'tgan Saytlar</span>
+                        <span>2. Ilovalar & Saytlar (<span id="tabPlatformCount">40+</span>)</span>
                     </button>
                     <button class="tab-item" onclick="switchOsintTab('devices')" id="tabDevices">
                         <i class="fa-solid fa-mobile-screen text-amber-400"></i>
@@ -1046,7 +1052,7 @@
             await checkBreaches(email);
 
             // 5. Ijtimoiy tarmoqlar va xizmatlar mavjudligini hisoblash
-            evaluatePlatforms(email, username, domain);
+            await evaluatePlatforms(email, username, domain);
 
             // 6. Qurilma va mobil ekotizimini baholash
             evaluateDeviceFootprint();
@@ -1170,83 +1176,562 @@
         }
 
         // ==========================================
-        // 📱 RO'YXATDAN O'TGAN SAYTLAR & ILOVALAR
+        // 📱 RO'YXATDAN O'TGAN SAYTLAR & ILOVALAR (40+ XIZMATLAR)
         // ==========================================
-        function evaluatePlatforms(email, username, domain) {
+        let currentPlatformCategory = 'all';
+        let currentPlatformFilterText = '';
+
+        async function evaluatePlatforms(email, username, domain) {
+            // 40+ Ommabop Platformalar Ro'yxati
             currentOsintData.platforms = [
-                {
-                    name: "Google Services (YouTube, Drive, Maps)",
-                    icon: "fa-brands fa-google",
-                    color: "#ea4335",
-                    status: currentOsintData.isGoogle ? "Faol (Ro'yxatda)" : "Google ID Bog'lanishi Mumkin",
-                    found: currentOsintData.isGoogle,
-                    directLink: `https://myaccount.google.com/?email=${encodeURIComponent(email)}`,
-                    note: "Android & Play Store ekotizimiga ulangan"
-                },
-                {
-                    name: "Gravatar & WordPress Profil",
-                    icon: "fa-solid fa-circle-user",
-                    color: "#1d4ed8",
-                    status: "Tekshirildi (Avatar / Identicon)",
-                    found: true,
-                    directLink: `https://en.gravatar.com/${currentOsintData.hash}`,
-                    note: "MD5 hash orqali ochiq avatar va bio"
-                },
-                {
-                    name: "GitHub / Developer Account",
-                    icon: "fa-brands fa-github",
-                    color: "#f8fafc",
-                    status: "Qidiruv Havolasi Mavjud",
-                    found: true,
-                    directLink: `https://github.com/search?q=${encodeURIComponent(email)}&type=users`,
-                    note: "GitHub foydalanuvchi commitlari va email indeksi"
-                },
+                // 1. Ijtimoiy Tarmoqlar & Messenjerlar
                 {
                     name: "Telegram Messenger",
+                    category: "social",
                     icon: "fa-brands fa-telegram",
                     color: "#38bdf8",
-                    status: "Ochiq Qidiruv Mavjud",
-                    found: true,
+                    status: "Ochiq Havola / Qidiruv",
+                    found: false,
                     directLink: `https://t.me/${encodeURIComponent(username)}`,
-                    note: "Username orqali to'g'ridan-to'g'ri kanal/profil tekshiruvi"
+                    note: "Username bo'yicha to'g'ridan-to'g'ri tekshirish"
                 },
                 {
-                    name: "LinkedIn Karyera Profili",
-                    icon: "fa-brands fa-linkedin",
-                    color: "#0a66c2",
-                    status: "OSINT Qidiruv",
-                    found: true,
-                    directLink: `https://www.google.com/search?q=site:linkedin.com/in+${encodeURIComponent(username)}+OR+${encodeURIComponent(email)}`,
-                    note: "Google dorking orqali LinkedIn profilini topish"
-                },
-                {
-                    name: "Twitter / X Profili",
-                    icon: "fa-brands fa-x-twitter",
-                    color: "#ffffff",
-                    status: "Foydalanuvchi Nomi Qidiruvi",
-                    found: true,
-                    directLink: `https://twitter.com/${encodeURIComponent(username)}`,
-                    note: "Ehtimoliy X / Twitter akkaunti"
+                    name: "WhatsApp Messenger",
+                    category: "social",
+                    icon: "fa-brands fa-whatsapp",
+                    color: "#22c55e",
+                    status: "Hisob Tekshiruvi",
+                    found: false,
+                    directLink: `https://web.whatsapp.com/`,
+                    note: "WhatsApp Web orqali akkaunt tekshiruvi"
                 },
                 {
                     name: "Instagram",
+                    category: "social",
                     icon: "fa-brands fa-instagram",
                     color: "#e1306c",
-                    status: "Foydalanuvchi Nomi Qidiruvi",
-                    found: true,
-                    directLink: `https://instagram.com/${encodeURIComponent(username)}`,
-                    note: "Instagram sahifasi ochiq tekshiruvi"
+                    status: "Profil Qidiruvi",
+                    found: false,
+                    directLink: `https://www.instagram.com/${encodeURIComponent(username)}/`,
+                    note: "Instagram profil sahifasi"
                 },
                 {
-                    name: "Pinterest & Spotify",
+                    name: "Twitter / X",
+                    category: "social",
+                    icon: "fa-brands fa-x-twitter",
+                    color: "#ffffff",
+                    status: "Profil Qidiruvi",
+                    found: false,
+                    directLink: `https://twitter.com/${encodeURIComponent(username)}`,
+                    note: "X / Twitter foydalanuvchi sahifasi"
+                },
+                {
+                    name: "TikTok",
+                    category: "social",
+                    icon: "fa-brands fa-tiktok",
+                    color: "#00f2fe",
+                    status: "Profil Qidiruvi",
+                    found: false,
+                    directLink: `https://www.tiktok.com/@${encodeURIComponent(username)}`,
+                    note: "TikTok video profili"
+                },
+                {
+                    name: "LinkedIn",
+                    category: "social",
+                    icon: "fa-brands fa-linkedin",
+                    color: "#0a66c2",
+                    status: "Karyera Profili Qidiruvi",
+                    found: false,
+                    directLink: `https://www.google.com/search?q=site:linkedin.com/in+${encodeURIComponent(username)}+OR+${encodeURIComponent(email)}`,
+                    note: "LinkedIn professional profili"
+                },
+                {
+                    name: "Facebook",
+                    category: "social",
+                    icon: "fa-brands fa-facebook",
+                    color: "#1877f2",
+                    status: "Profil Qidiruvi",
+                    found: false,
+                    directLink: `https://www.facebook.com/${encodeURIComponent(username)}`,
+                    note: "Facebook akkaunt qidiruvi"
+                },
+                {
+                    name: "Reddit",
+                    category: "social",
+                    icon: "fa-brands fa-reddit",
+                    color: "#ff4500",
+                    status: "Foydalanuvchi Profili",
+                    found: false,
+                    directLink: `https://www.reddit.com/user/${encodeURIComponent(username)}`,
+                    note: "Reddit munozara profili"
+                },
+                {
+                    name: "Pinterest",
+                    category: "social",
                     icon: "fa-brands fa-pinterest",
                     color: "#e60023",
-                    status: "Profil Bog'lanishi",
-                    found: true,
+                    status: "Profil Sahifasi",
+                    found: false,
                     directLink: `https://www.pinterest.com/${encodeURIComponent(username)}/`,
-                    note: "Media va musiqiy profillar"
+                    note: "Pinterest doskalari va suratlari"
+                },
+                {
+                    name: "Discord",
+                    category: "social",
+                    icon: "fa-brands fa-discord",
+                    color: "#5865f2",
+                    status: "Messenjer / Qidiruv",
+                    found: false,
+                    directLink: `https://discord.com/login`,
+                    note: "Discord hamjamiyat akkaunti"
+                },
+                {
+                    name: "Snapchat",
+                    category: "social",
+                    icon: "fa-brands fa-snapchat",
+                    color: "#fffc00",
+                    status: "Profil Sahifasi",
+                    found: false,
+                    directLink: `https://www.snapchat.com/add/${encodeURIComponent(username)}`,
+                    note: "Snapchat do'st qo'shish sahifasi"
+                },
+                {
+                    name: "VKontakte (VK)",
+                    category: "social",
+                    icon: "fa-brands fa-vk",
+                    color: "#4680c2",
+                    status: "Profil Qidiruvi",
+                    found: false,
+                    directLink: `https://vk.com/${encodeURIComponent(username)}`,
+                    note: "VK ijtimoiy tarmog'i"
+                },
+
+                // 2. Dasturlash & IT Xizmatlari
+                {
+                    name: "GitHub (Jonli API)",
+                    category: "dev",
+                    icon: "fa-brands fa-github",
+                    color: "#f8fafc",
+                    status: "Jonli Skanerlanmoqda...",
+                    found: false,
+                    directLink: `https://github.com/search?q=${encodeURIComponent(email)}&type=users`,
+                    note: "GitHub dasturchilar hamjamiyati"
+                },
+                {
+                    name: "Gravatar / WordPress (Jonli API)",
+                    category: "dev",
+                    icon: "fa-solid fa-circle-user",
+                    color: "#1d4ed8",
+                    status: "Jonli Skanerlanmoqda...",
+                    found: false,
+                    directLink: `https://en.gravatar.com/${currentOsintData.hash}`,
+                    note: "MD5 asosidagi ochiq profil va avatar"
+                },
+                {
+                    name: "GitLab (Jonli API)",
+                    category: "dev",
+                    icon: "fa-brands fa-gitlab",
+                    color: "#fc6d26",
+                    status: "Jonli Skanerlanmoqda...",
+                    found: false,
+                    directLink: `https://gitlab.com/${encodeURIComponent(username)}`,
+                    note: "GitLab repozitoriylari va profil"
+                },
+                {
+                    name: "Stack Overflow",
+                    category: "dev",
+                    icon: "fa-brands fa-stack-overflow",
+                    color: "#f48024",
+                    status: "Dasturchi Qidiruvi",
+                    found: false,
+                    directLink: `https://www.google.com/search?q=site:stackoverflow.com/users+${encodeURIComponent(username)}`,
+                    note: "Savol-javoblar profili"
+                },
+                {
+                    name: "Docker Hub",
+                    category: "dev",
+                    icon: "fa-brands fa-docker",
+                    color: "#2496ed",
+                    status: "Konteyner Profili",
+                    found: false,
+                    directLink: `https://hub.docker.com/u/${encodeURIComponent(username)}`,
+                    note: "Docker tasvirlari profili"
+                },
+                {
+                    name: "Replit",
+                    category: "dev",
+                    icon: "fa-solid fa-code",
+                    color: "#f26207",
+                    status: "Kod Muhiti Profili",
+                    found: false,
+                    directLink: `https://replit.com/@${encodeURIComponent(username)}`,
+                    note: "Onlayn IDE va loyihalar"
+                },
+                {
+                    name: "Pastebin",
+                    category: "dev",
+                    icon: "fa-solid fa-paste",
+                    color: "#0284c7",
+                    status: "Foydalanuvchi Qaydnomalari",
+                    found: false,
+                    directLink: `https://pastebin.com/u/${encodeURIComponent(username)}`,
+                    note: "Ochiq paste yozuvlari"
+                },
+                {
+                    name: "Hacker News",
+                    category: "dev",
+                    icon: "fa-brands fa-y-combinator",
+                    color: "#ff6600",
+                    status: "Texno Profil",
+                    found: false,
+                    directLink: `https://news.ycombinator.com/user?id=${encodeURIComponent(username)}`,
+                    note: "Y Combinator muhokama profili"
+                },
+
+                // 3. O'yinlar & Ko'ngilochar
+                {
+                    name: "Chess.com (Jonli API)",
+                    category: "games",
+                    icon: "fa-solid fa-chess-knight",
+                    color: "#81b64c",
+                    status: "Jonli Skanerlanmoqda...",
+                    found: false,
+                    directLink: `https://www.chess.com/member/${encodeURIComponent(username)}`,
+                    note: "Shaxmat portali va reyting"
+                },
+                {
+                    name: "Steam Community",
+                    category: "games",
+                    icon: "fa-brands fa-steam",
+                    color: "#1b2838",
+                    status: "Geymer Profili Qidiruvi",
+                    found: false,
+                    directLink: `https://steamcommunity.com/id/${encodeURIComponent(username)}`,
+                    note: "Steam o'yinlar kutubxonasi"
+                },
+                {
+                    name: "Spotify",
+                    category: "games",
+                    icon: "fa-brands fa-spotify",
+                    color: "#1db954",
+                    status: "Musiqiy Profil",
+                    found: false,
+                    directLink: `https://open.spotify.com/search/${encodeURIComponent(username)}`,
+                    note: "Pleyistlar va musiqa tinglovchi"
+                },
+                {
+                    name: "Netflix",
+                    category: "games",
+                    icon: "fa-solid fa-film",
+                    color: "#e50914",
+                    status: "Hisob Tekshiruvi",
+                    found: false,
+                    directLink: `https://www.netflix.com/loginhelp`,
+                    note: "Obuna / akkaunt mavjudligi"
+                },
+                {
+                    name: "Twitch",
+                    category: "games",
+                    icon: "fa-brands fa-twitch",
+                    color: "#9146ff",
+                    status: "Strimer Profili",
+                    found: false,
+                    directLink: `https://www.twitch.tv/${encodeURIComponent(username)}`,
+                    note: "Jonli efirlar va chat profili"
+                },
+                {
+                    name: "SoundCloud",
+                    category: "games",
+                    icon: "fa-brands fa-soundcloud",
+                    color: "#ff5500",
+                    status: "Musiqa Profili",
+                    found: false,
+                    directLink: `https://soundcloud.com/${encodeURIComponent(username)}`,
+                    note: "Audio treklar sahifasi"
+                },
+                {
+                    name: "Epic Games",
+                    category: "games",
+                    icon: "fa-solid fa-gamepad",
+                    color: "#ffffff",
+                    status: "Geymer Akkaunti",
+                    found: false,
+                    directLink: `https://www.epicgames.com/id/login`,
+                    note: "Fortnite va Unreal Engine do'koni"
+                },
+
+                // 4. Google, Ishchi & Bulutli Xizmatlar
+                {
+                    name: "Google Workspace & Play Store",
+                    category: "work",
+                    icon: "fa-brands fa-google",
+                    color: "#ea4335",
+                    status: currentOsintData.isGoogle ? "🟢 Faol (Google Akkaunt)" : "Google ID Bog'lanishi",
+                    found: currentOsintData.isGoogle,
+                    directLink: `https://myaccount.google.com/?email=${encodeURIComponent(email)}`,
+                    note: "YouTube, Play Store va Android tizimi"
+                },
+                {
+                    name: "YouTube Kanali",
+                    category: "work",
+                    icon: "fa-brands fa-youtube",
+                    color: "#ff0000",
+                    status: currentOsintData.isGoogle ? "🟢 Google Video Tizimiga Ulangan" : "Kanal Qidiruvi",
+                    found: currentOsintData.isGoogle,
+                    directLink: `https://www.youtube.com/@${encodeURIComponent(username)}`,
+                    note: "YouTube foydalanuvchi sahifasi"
+                },
+                {
+                    name: "Duolingo (Jonli API)",
+                    category: "work",
+                    icon: "fa-solid fa-feather",
+                    color: "#58cc02",
+                    status: "Jonli Skanerlanmoqda...",
+                    found: false,
+                    directLink: `https://www.duolingo.com/profile/${encodeURIComponent(username)}`,
+                    note: "Xorijiy tillar o'rganish profili"
+                },
+                {
+                    name: "Canva Dizayn",
+                    category: "work",
+                    icon: "fa-solid fa-palette",
+                    color: "#00c4cc",
+                    status: "Dizayn Profili",
+                    found: false,
+                    directLink: `https://www.canva.com/`,
+                    note: "Grafik dizayn vositasi"
+                },
+                {
+                    name: "Adobe Creative Cloud",
+                    category: "work",
+                    icon: "fa-brands fa-adobe",
+                    color: "#ff0000",
+                    status: "Adobe ID Tekshiruvi",
+                    found: false,
+                    directLink: `https://account.adobe.com/`,
+                    note: "Photoshop & Illustrator akkaunti"
+                },
+                {
+                    name: "Microsoft 365 / Xbox Live",
+                    category: "work",
+                    icon: "fa-brands fa-microsoft",
+                    color: "#00a4ef",
+                    status: domain.includes('outlook') || domain.includes('hotmail') ? "🟢 Microsoft Akkaunt" : "Hisob Tekshiruvi",
+                    found: domain.includes('outlook') || domain.includes('hotmail'),
+                    directLink: `https://account.microsoft.com/`,
+                    note: "Windows, Office va Xbox akkaunti"
+                },
+                {
+                    name: "Apple ID & iCloud",
+                    category: "work",
+                    icon: "fa-brands fa-apple",
+                    color: "#a2aaad",
+                    status: domain.includes('icloud') || domain.includes('apple') ? "🟢 Apple ID Faol" : "Hisob Tekshiruvi",
+                    found: domain.includes('icloud') || domain.includes('apple'),
+                    directLink: `https://iforgot.apple.com/appleid`,
+                    note: "iOS & Mac qurilmalari ekotizimi"
+                },
+                {
+                    name: "Notion",
+                    category: "work",
+                    icon: "fa-solid fa-book",
+                    color: "#ffffff",
+                    status: "Ishchi Muhit",
+                    found: false,
+                    directLink: `https://www.notion.so/login`,
+                    note: "Qaydlar va vazifalar tizimi"
+                },
+                {
+                    name: "Zoom Video",
+                    category: "work",
+                    icon: "fa-solid fa-video",
+                    color: "#2d8cff",
+                    status: "Onlayn Majlis Akkaunti",
+                    found: false,
+                    directLink: `https://zoom.us/signin`,
+                    note: "Video aloqa tizimi"
+                },
+
+                // 5. Savdo & E-Commerce
+                {
+                    name: "Amazon",
+                    category: "shop",
+                    icon: "fa-brands fa-amazon",
+                    color: "#ff9900",
+                    status: "Xaridlar Profili",
+                    found: false,
+                    directLink: `https://www.amazon.com/`,
+                    note: "Global onlayn gipermarket"
+                },
+                {
+                    name: "AliExpress",
+                    category: "shop",
+                    icon: "fa-solid fa-cart-shopping",
+                    color: "#ff4747",
+                    status: "Xaridor Profili",
+                    found: false,
+                    directLink: `https://aliexpress.ru/`,
+                    note: "Xalqaro savdo platformasi"
+                },
+                {
+                    name: "Booking.com",
+                    category: "shop",
+                    icon: "fa-solid fa-hotel",
+                    color: "#003580",
+                    status: "Sayohat & Mehmonxona",
+                    found: false,
+                    directLink: `https://www.booking.com/`,
+                    note: "Mehmonxona va aviachiptalar"
+                },
+                {
+                    name: "eBay",
+                    category: "shop",
+                    icon: "fa-brands fa-ebay",
+                    color: "#e53238",
+                    status: "Auksion Profili",
+                    found: false,
+                    directLink: `https://www.ebay.com/usr/${encodeURIComponent(username)}`,
+                    note: "Onlayn auksion va xaridlar"
                 }
             ];
+
+            // ⚡ SIZIB CHIQISHLARDA (BREACHES) QATNASHGANINI MOSLASHTIRISH
+            const breachNames = currentOsintData.breaches.map(b => (b.name || '').toLowerCase());
+            currentOsintData.platforms.forEach(p => {
+                const pLow = p.name.toLowerCase();
+                const matchedBreach = breachNames.find(bn => bn.includes(pLow.split(' ')[0]) || pLow.includes(bn.split(' ')[0]));
+                if (matchedBreach) {
+                    p.found = true;
+                    p.status = "⚠️ Sizib Chiqqan (A'zo Bo'lgan)";
+                }
+            });
+
+            // ⚡ JONLI API SO'ROVLARI (PARALLEL FETCH)
+            const apiPromises = [];
+
+            // 1. GitHub API Jonli Tekshiruv
+            apiPromises.push(
+                fetch(`https://api.github.com/search/users?q=${encodeURIComponent(email)}+in:email`)
+                    .then(r => r.ok ? r.json() : null)
+                    .then(d => {
+                        const gh = currentOsintData.platforms.find(p => p.name.includes("GitHub"));
+                        if (d && d.total_count > 0 && d.items && d.items[0]) {
+                            const user = d.items[0];
+                            if (gh) {
+                                gh.found = true;
+                                gh.status = `🟢 Topildi: ${user.login}`;
+                                gh.directLink = user.html_url;
+                            }
+                        } else {
+                            // Agar email bo'yicha topilmasa, username bo'yicha ham tekshiramiz
+                            return fetch(`https://api.github.com/users/${encodeURIComponent(username)}`)
+                                .then(r2 => r2.ok ? r2.json() : null)
+                                .then(d2 => {
+                                    if (d2 && d2.login && gh) {
+                                        gh.found = true;
+                                        gh.status = `🟢 Topildi: @${d2.login}`;
+                                        gh.directLink = d2.html_url;
+                                    } else if (gh && !gh.found) {
+                                        gh.status = "Qidiruv Havolasi";
+                                    }
+                                });
+                        }
+                    })
+                    .catch(() => {
+                        const gh = currentOsintData.platforms.find(p => p.name.includes("GitHub"));
+                        if (gh && !gh.found) gh.status = "Qidiruv Havolasi";
+                    })
+            );
+
+            // 2. Gravatar API Jonli Tekshiruv
+            apiPromises.push(
+                fetch(`https://en.gravatar.com/${currentOsintData.hash}.json`, { mode: 'cors' })
+                    .then(r => r.ok ? r.json() : null)
+                    .then(d => {
+                        const gr = currentOsintData.platforms.find(p => p.name.includes("Gravatar"));
+                        if (d && d.entry && d.entry[0]) {
+                            if (gr) {
+                                gr.found = true;
+                                gr.status = `🟢 Profil Tasdiqlandi (Gravatar)`;
+                            }
+                        } else if (gr && !gr.found) {
+                            gr.status = "Avatar / Identicon";
+                        }
+                    })
+                    .catch(() => {})
+            );
+
+            // 3. Chess.com Jonli API Tekshiruv
+            apiPromises.push(
+                fetch(`https://api.chess.com/pub/player/${encodeURIComponent(username)}`)
+                    .then(r => r.ok ? r.json() : null)
+                    .then(d => {
+                        const ch = currentOsintData.platforms.find(p => p.name.includes("Chess.com"));
+                        if (d && d.username) {
+                            if (ch) {
+                                ch.found = true;
+                                ch.status = `🟢 Faol O'yinchi: ${d.username}`;
+                                ch.directLink = d.url || ch.directLink;
+                            }
+                        } else if (ch && !ch.found) {
+                            ch.status = "Tekshirildi (Profil Yo'q)";
+                        }
+                    })
+                    .catch(() => {
+                        const ch = currentOsintData.platforms.find(p => p.name.includes("Chess.com"));
+                        if (ch && !ch.found) ch.status = "O'yinchi Qidiruvi";
+                    })
+            );
+
+            // 4. GitLab API Jonli Tekshiruv
+            apiPromises.push(
+                fetch(`https://gitlab.com/api/v4/users?username=${encodeURIComponent(username)}`)
+                    .then(r => r.ok ? r.json() : null)
+                    .then(d => {
+                        const gl = currentOsintData.platforms.find(p => p.name.includes("GitLab"));
+                        if (Array.isArray(d) && d.length > 0) {
+                            if (gl) {
+                                gl.found = true;
+                                gl.status = `🟢 GitLab Akkaunti: @${d[0].username}`;
+                                gl.directLink = d[0].web_url || gl.directLink;
+                            }
+                        } else if (gl && !gl.found) {
+                            gl.status = "Dasturchi Qidiruvi";
+                        }
+                    })
+                    .catch(() => {
+                        const gl = currentOsintData.platforms.find(p => p.name.includes("GitLab"));
+                        if (gl && !gl.found) gl.status = "Dasturchi Qidiruvi";
+                    })
+            );
+
+            // 5. Duolingo API Jonli Tekshiruv
+            apiPromises.push(
+                fetch(`https://www.duolingo.com/2017-06-30/users?username=${encodeURIComponent(username)}`)
+                    .then(r => r.ok ? r.json() : null)
+                    .then(d => {
+                        const duo = currentOsintData.platforms.find(p => p.name.includes("Duolingo"));
+                        if (d && d.users && d.users.length > 0) {
+                            if (duo) {
+                                duo.found = true;
+                                duo.status = `🟢 Faol Duolingo O'rganuvchisi`;
+                            }
+                        } else if (duo && !duo.found) {
+                            duo.status = "Profil Qidiruvi";
+                        }
+                    })
+                    .catch(() => {
+                        const duo = currentOsintData.platforms.find(p => p.name.includes("Duolingo"));
+                        if (duo && !duo.found) duo.status = "Profil Qidiruvi";
+                    })
+            );
+
+            // Barcha API so'rovlarini kuting
+            await Promise.allSettled(apiPromises);
+
+            const foundCount = currentOsintData.platforms.filter(p => p.found).length;
+            const tabEl = document.getElementById('tabPlatformCount');
+            if (tabEl) tabEl.innerText = `${foundCount} / ${currentOsintData.platforms.length}`;
         }
 
         // ==========================================
@@ -1489,40 +1974,58 @@
                     `;
                 }
             } else if (tab === 'platforms') {
-                let cardsHtml = '';
-                currentOsintData.platforms.forEach(p => {
-                    cardsHtml += `
-                        <div class="platform-card">
-                            <div class="platform-info">
-                                <div class="platform-icon" style="background: rgba(255,255,255,0.06); color: ${p.color};">
-                                    <i class="${p.icon}"></i>
-                                </div>
-                                <div>
-                                    <div class="platform-name">${p.name}</div>
-                                    <div class="platform-status ${p.found ? 'status-found' : 'status-clean'}">${p.status}</div>
-                                </div>
-                            </div>
-                            <div>
-                                <a href="${p.directLink}" target="_blank" class="action-link" style="padding: 5px 10px; font-size: 11.5px;">
-                                    Tekshirish &rarr;
-                                </a>
-                            </div>
-                        </div>
-                    `;
-                });
+                const foundCount = currentOsintData.platforms.filter(p => p.found).length;
+                const totalCount = currentOsintData.platforms.length;
 
                 area.innerHTML = `
                     <div class="card-box">
-                        <div class="card-box-header">
-                            <span><i class="fa-solid fa-share-nodes"></i> Bog'langan Ijtimoiy Tarmoqlar va Ochiq Profillar</span>
-                            <span style="font-size: 12px; color: #94a3b8;">Ochiq OSINT Razvedkasi</span>
+                        <div class="card-box-header" style="flex-wrap: wrap; gap: 10px;">
+                            <div>
+                                <i class="fa-solid fa-share-nodes text-sky-400"></i>
+                                <span>Ro'yxatdan O'tgan Saytlar, Ilovalar & Servislar</span>
+                            </div>
+                            <div style="font-size: 12px; color: #34d399; background: #064e3b; padding: 4px 10px; border-radius: 6px; border: 1px solid #059669; font-weight: bold;">
+                                <i class="fa-solid fa-bolt"></i> ${foundCount} ta tasdiqlangan / Jami ${totalCount} ta servis
+                            </div>
                         </div>
-                        <p style="font-size: 12.5px; color: #94a3b8; margin-bottom: 16px;">
-                            Email yoki unga bog'liq foydalanuvchi nomi (username) asosida quyidagi tizimlarda akkaunt mavjudligi tahlil qilindi:
-                        </p>
-                        <div class="platform-grid">${cardsHtml}</div>
+
+                        <!-- Filter Bar -->
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; align-items: center;">
+                            <button onclick="setPlatformFilter('all')" class="sample-chip ${currentPlatformCategory === 'all' ? 'active-cat-btn' : ''}" id="catBtnAll">
+                                🌟 Barchasi (${totalCount})
+                            </button>
+                            <button onclick="setPlatformFilter('found')" class="sample-chip ${currentPlatformCategory === 'found' ? 'active-cat-btn' : ''}" id="catBtnFound" style="color: #34d399; border-color: #059669;">
+                                🟢 Tasdiqlangan (${foundCount})
+                            </button>
+                            <button onclick="setPlatformFilter('social')" class="sample-chip ${currentPlatformCategory === 'social' ? 'active-cat-btn' : ''}" id="catBtnSocial">
+                                📱 Ijtimoiy (12)
+                            </button>
+                            <button onclick="setPlatformFilter('dev')" class="sample-chip ${currentPlatformCategory === 'dev' ? 'active-cat-btn' : ''}" id="catBtnDev">
+                                💻 Dasturlash (8)
+                            </button>
+                            <button onclick="setPlatformFilter('games')" class="sample-chip ${currentPlatformCategory === 'games' ? 'active-cat-btn' : ''}" id="catBtnGames">
+                                🎮 O'yinlar (7)
+                            </button>
+                            <button onclick="setPlatformFilter('work')" class="sample-chip ${currentPlatformCategory === 'work' ? 'active-cat-btn' : ''}" id="catBtnWork">
+                                💼 Ish & Bulut (9)
+                            </button>
+                            <button onclick="setPlatformFilter('shop')" class="sample-chip ${currentPlatformCategory === 'shop' ? 'active-cat-btn' : ''}" id="catBtnShop">
+                                🛒 Savdo (4)
+                            </button>
+                        </div>
+
+                        <!-- Search input within platforms -->
+                        <div style="margin-bottom: 16px;">
+                            <input type="text" id="platformSearchInput" oninput="onPlatformSearchInput(this.value)" placeholder="Ilovalar ichidan qidirish (masalan: steam, telegram, chess, canva)..." style="width: 100%; padding: 10px 14px; background: #1e293b; border: 1px solid var(--border); border-radius: 8px; color: #38bdf8; font-size: 13px; outline: none;">
+                        </div>
+
+                        <div class="platform-grid" id="platformGridContainer">
+                            <!-- Populated by renderPlatformCardsOnly() -->
+                        </div>
                     </div>
                 `;
+
+                renderPlatformCardsOnly();
             } else if (tab === 'devices') {
                 let devCards = '';
                 currentOsintData.devices.forEach(d => {
@@ -1638,6 +2141,102 @@
                     </div>
                 `;
             }
+        }
+
+        function setPlatformFilter(cat) {
+            currentPlatformCategory = cat;
+            const allBtnIds = ['catBtnAll', 'catBtnFound', 'catBtnSocial', 'catBtnDev', 'catBtnGames', 'catBtnWork', 'catBtnShop'];
+            allBtnIds.forEach(id => {
+                const b = document.getElementById(id);
+                if (b) b.classList.remove('active-cat-btn');
+            });
+            const activeMap = {
+                all: 'catBtnAll',
+                found: 'catBtnFound',
+                social: 'catBtnSocial',
+                dev: 'catBtnDev',
+                games: 'catBtnGames',
+                work: 'catBtnWork',
+                shop: 'catBtnShop'
+            };
+            const activeBtn = document.getElementById(activeMap[cat]);
+            if (activeBtn) activeBtn.classList.add('active-cat-btn');
+            renderPlatformCardsOnly();
+        }
+
+        function onPlatformSearchInput(val) {
+            currentPlatformFilterText = (val || '').toLowerCase().trim();
+            renderPlatformCardsOnly();
+        }
+
+        function renderPlatformCardsOnly() {
+            const container = document.getElementById('platformGridContainer');
+            if (!container) return;
+
+            let list = currentOsintData.platforms || [];
+
+            // Category filter
+            if (currentPlatformCategory === 'found') {
+                list = list.filter(p => p.found);
+            } else if (currentPlatformCategory !== 'all') {
+                list = list.filter(p => p.category === currentPlatformCategory);
+            }
+
+            // Search filter
+            if (currentPlatformFilterText) {
+                list = list.filter(p => p.name.toLowerCase().includes(currentPlatformFilterText) || (p.note && p.note.toLowerCase().includes(currentPlatformFilterText)));
+            }
+
+            if (list.length === 0) {
+                container.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; color: #94a3b8; padding: 25px;"><i class="fa-solid fa-magnifying-glass"></i> Ushbu filtr bo\'yicha xizmatlar topilmadi.</div>';
+                return;
+            }
+
+            let cardsHtml = '';
+            list.forEach(p => {
+                let statusColor = '#94a3b8';
+                let cardBorder = 'var(--border)';
+                let bgBadge = 'rgba(255,255,255,0.05)';
+
+                if (p.found) {
+                    if (p.status.includes('Sizib Chiqqan')) {
+                        statusColor = '#f87171';
+                        cardBorder = '#ef4444';
+                        bgBadge = 'rgba(239, 68, 68, 0.15)';
+                    } else {
+                        statusColor = '#34d399';
+                        cardBorder = '#059669';
+                        bgBadge = 'rgba(52, 211, 153, 0.15)';
+                    }
+                }
+
+                cardsHtml += `
+                    <div class="platform-card" style="border-color: ${cardBorder}; background: #1e293b; display: flex; flex-direction: column; justify-content: space-between; gap: 10px; padding: 14px;">
+                        <div style="display: flex; align-items: flex-start; justify-content: space-between; width: 100%;">
+                            <div class="platform-info" style="gap: 12px;">
+                                <div class="platform-icon" style="background: rgba(255,255,255,0.06); color: ${p.color}; width: 38px; height: 38px; font-size: 18px;">
+                                    <i class="${p.icon}"></i>
+                                </div>
+                                <div>
+                                    <div class="platform-name" style="font-size: 13.5px; font-weight: 800; color: #f8fafc;">${p.name}</div>
+                                    <div style="font-size: 11px; color: #94a3b8; margin-top: 2px;">${p.note || ''}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 8px;">
+                            <span style="font-size: 11.5px; font-weight: 700; color: ${statusColor}; background: ${bgBadge}; padding: 3px 8px; border-radius: 4px;">
+                                ${p.status}
+                            </span>
+                            <a href="${p.directLink}" target="_blank" class="action-link" style="padding: 4px 10px; font-size: 11px;">
+                                Tekshirish <i class="fa-solid fa-arrow-up-right-from-square" style="font-size: 10px;"></i>
+                            </a>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = cardsHtml;
         }
 
         // ==========================================
