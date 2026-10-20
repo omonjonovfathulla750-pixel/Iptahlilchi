@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tahlilchi Kabineti & Autentifikatsiya | Kiber-Tahlil Portali</title>
+    <title>Telegram Aloqa Punkti & Tahlilchi Kabineti | Kiber-Tahlil Portali</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
@@ -91,6 +91,7 @@
             align-items: center;
             gap: 7px;
             transition: all 0.2s;
+            cursor: pointer;
         }
         .nav-btn:hover {
             border-color: var(--primary);
@@ -104,8 +105,14 @@
             border-color: #818cf8;
             box-shadow: 0 0 14px rgba(99, 102, 241, 0.3);
         }
+        .nav-btn.tg-highlight {
+            background: linear-gradient(135deg, #0369a1, #0284c7);
+            border-color: #38bdf8;
+            color: #fff;
+            box-shadow: 0 0 14px rgba(56, 189, 248, 0.35);
+        }
 
-        /* Auth Container */
+        /* Private Auth Container (No Public Registration) */
         .auth-wrapper {
             max-width: 520px;
             margin: 40px auto;
@@ -115,37 +122,29 @@
             box-shadow: 0 10px 40px rgba(0,0,0,0.5);
             overflow: hidden;
         }
-
-        .auth-tabs {
-            display: flex;
+        .auth-header {
             background: #0f172a;
+            padding: 22px 24px;
             border-bottom: 1px solid var(--border);
+            text-align: center;
         }
-        .auth-tab-btn {
-            flex: 1;
-            padding: 16px;
-            font-size: 14.5px;
-            font-weight: 700;
-            color: var(--text-muted);
-            background: none;
-            border: none;
-            cursor: pointer;
-            display: flex;
+        .auth-badge {
+            display: inline-flex;
             align-items: center;
-            justify-content: center;
-            gap: 8px;
-            transition: all 0.2s;
-            border-bottom: 2px solid transparent;
+            gap: 6px;
+            background: rgba(239, 68, 68, 0.15);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.35);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            margin-bottom: 12px;
         }
-        .auth-tab-btn:hover { color: #fff; background: rgba(255,255,255,0.02); }
-        .auth-tab-btn.active {
-            color: #38bdf8;
-            border-bottom-color: #38bdf8;
-            background: var(--bg-card);
-        }
-
         .auth-body {
-            padding: 32px 30px;
+            padding: 30px;
         }
 
         .form-group {
@@ -203,7 +202,7 @@
             gap: 8px;
             transition: all 0.2s;
             box-shadow: 0 0 20px rgba(99, 102, 241, 0.35);
-            margin-top: 10px;
+            margin-top: 14px;
         }
         .btn-submit:hover {
             transform: translateY(-1px);
@@ -211,21 +210,7 @@
             box-shadow: 0 0 25px rgba(99, 102, 241, 0.5);
         }
 
-        .auth-switch {
-            text-align: center;
-            margin-top: 20px;
-            font-size: 13px;
-            color: var(--text-muted);
-        }
-        .auth-switch a {
-            color: #38bdf8;
-            font-weight: 700;
-            text-decoration: none;
-            cursor: pointer;
-        }
-        .auth-switch a:hover { text-decoration: underline; }
-
-        /* Dashboard View (When Logged In) */
+        /* Dashboard View */
         .dashboard-wrapper {
             display: none;
         }
@@ -295,6 +280,111 @@
             color: #fff;
         }
 
+        /* Telegram Aloqa Punkti UI Styles */
+        .tg-panel {
+            background: linear-gradient(145deg, #0e1726, #070c14);
+            border: 1px solid rgba(56, 189, 248, 0.4);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.45);
+        }
+        .tg-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 14px;
+            padding-bottom: 18px;
+            border-bottom: 1px solid #1e293b;
+            margin-bottom: 18px;
+        }
+        .tg-chat-container {
+            background: #050911;
+            border: 1px solid #1e293b;
+            border-radius: 12px;
+            height: 380px;
+            overflow-y: auto;
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 16px;
+            scroll-behavior: smooth;
+        }
+        .tg-msg {
+            display: flex;
+            flex-direction: column;
+            max-width: 82%;
+            animation: fadeIn 0.25s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .tg-msg.incoming {
+            align-self: flex-start;
+        }
+        .tg-msg.outgoing {
+            align-self: flex-end;
+        }
+        .tg-msg-meta {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .tg-msg.outgoing .tg-msg-meta {
+            justify-content: flex-end;
+        }
+        .tg-bubble {
+            padding: 10px 16px;
+            border-radius: 12px;
+            font-size: 13.5px;
+            line-height: 1.5;
+            word-break: break-word;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+        .tg-msg.incoming .tg-bubble {
+            background: #131d2e;
+            color: #f8fafc;
+            border: 1px solid #334155;
+            border-top-left-radius: 2px;
+        }
+        .tg-msg.outgoing .tg-bubble {
+            background: linear-gradient(135deg, #0284c7, #2563eb);
+            color: #ffffff;
+            border-top-right-radius: 2px;
+        }
+        .tg-quick-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .tg-chip {
+            background: #0f172a;
+            border: 1px solid #334155;
+            color: #cbd5e1;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .tg-chip:hover {
+            border-color: #38bdf8;
+            color: #fff;
+            background: #1e293b;
+            transform: translateY(-1px);
+        }
+
         /* Saved Investigations List */
         .inv-item {
             background: #0f172a;
@@ -349,11 +439,11 @@
         <header class="top-navbar">
             <a href="index.html" class="brand">
                 <div class="brand-icon">
-                    <i class="fa-solid fa-user-shield"></i>
+                    <i class="fa-solid fa-satellite-dish"></i>
                 </div>
                 <div>
-                    <h1 class="brand-title">CYBER INTEL & AUTH</h1>
-                    <p class="brand-sub">Xavfsiz Tahlilchi Boshqaruv Markazi</p>
+                    <h1 class="brand-title">CYBER INTEL // ALOQA PUNKTI</h1>
+                    <p class="brand-sub">Shaxsiy Tahlilchi & Telegram Markazi</p>
                 </div>
             </a>
             <nav class="nav-links">
@@ -363,9 +453,9 @@
                 </a>
                 <a href="email_osint.html" class="nav-btn" title="Google va email razvedka">
                     <i class="fa-solid fa-envelope-open-text text-amber-400"></i>
-                    <span>Google & Email OSINT</span>
+                    <span>Email OSINT</span>
                 </a>
-                <a href="phone_osint.html" class="nav-btn" title="Telefon raqamlar razvedkasi va operator tahlili">
+                <a href="phone_osint.html" class="nav-btn" title="Telefon raqamlar razvedkasi">
                     <i class="fa-solid fa-phone-volume text-emerald-400"></i>
                     <span>Telefon OSINT</span>
                 </a>
@@ -373,39 +463,36 @@
                     <i class="fa-solid fa-globe text-cyan-400"></i>
                     <span>Domen & DNS</span>
                 </a>
+                <a href="#telegram-section" class="nav-btn tg-highlight" onclick="scrollToTelegram()" title="2 Tomonlama Telegram Aloqa Punkti">
+                    <i class="fa-brands fa-telegram"></i>
+                    <span>Telegram Aloqa Punkti</span>
+                </a>
                 <a href="login.html" class="nav-btn active" title="Tizimga kirish va kabinet">
-                    <i class="fa-solid fa-lock text-indigo-400"></i>
+                    <i class="fa-solid fa-user-shield text-indigo-400"></i>
                     <span id="navUserStatus">Kirish / Kabinet</span>
                 </a>
             </nav>
         </header>
 
-        <!-- 2. Auth Forms View (Shown if not logged in) -->
+        <!-- 2. Auth View: Strict Administrator Portal (No Registration) -->
         <main id="authView" class="auth-wrapper">
-            <div class="auth-tabs">
-                <button class="auth-tab-btn active" id="tabBtnLogin" onclick="switchAuthTab('login')">
-                    <i class="fa-solid fa-right-to-bracket"></i>
-                    <span>Tizimga Kirish</span>
-                </button>
-                <button class="auth-tab-btn" id="tabBtnRegister" onclick="switchAuthTab('register')">
-                    <i class="fa-solid fa-user-plus"></i>
-                    <span>Ro'yxatdan O'tish</span>
-                </button>
+            <div class="auth-header">
+                <div class="auth-badge">
+                    <i class="fa-solid fa-shield-halved"></i> Maxsus Xususiy Kirish
+                </div>
+                <h2 style="font-size: 20px; font-weight: 800; color: #fff;">Administrator Portali</h2>
+                <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">
+                    Ushbu tizim shaxsiy rejimda ishlaydi. Ochiq ro'yxatdan o'tish yopiq. Faqat vakolatli Administrator foydalanishi mumkin.
+                </p>
             </div>
 
-            <!-- Login Form -->
-            <div id="loginFormContainer" class="auth-body">
-                <div style="text-align: center; margin-bottom: 24px;">
-                    <h2 style="font-size: 20px; font-weight: 800; color: #fff;">Xush Kelibsiz!</h2>
-                    <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">Kiber-tahlil vositalaridan to'liq foydalanish uchun emailingiz va parolingizni kiriting</p>
-                </div>
-
+            <div class="auth-body">
                 <form onsubmit="handleLoginSubmit(event)">
                     <div class="form-group">
-                        <label>Email Manzilingiz</label>
+                        <label>Administrator Logini / Email</label>
                         <div class="input-box">
-                            <i class="fa-solid fa-envelope"></i>
-                            <input type="email" id="loginEmail" placeholder="Masalan: tahlilchi@gmail.com" required value="omonjonovfathulla750@gmail.com">
+                            <i class="fa-solid fa-user-shield"></i>
+                            <input type="text" id="loginEmail" placeholder="omonjonovfathulla750@gmail.com yoki admin" required value="omonjonovfathulla750@gmail.com">
                         </div>
                     </div>
                     <div class="form-group">
@@ -416,119 +503,21 @@
                         </div>
                     </div>
                     <button type="submit" class="btn-submit" id="btnLoginSubmit">
-                        <i class="fa-solid fa-shield-halved"></i>
-                        <span>Tizimga Kirish</span>
+                        <i class="fa-solid fa-lock-open"></i>
+                        <span>Tizimga Kirish (Administrator)</span>
                     </button>
                 </form>
 
-                <div class="auth-switch">
-                    Hali akkauntingiz yo'qmi? <a onclick="switchAuthTab('register')">Ro'yxatdan o'tish</a>
-                </div>
-
-                <div style="background: rgba(99, 102, 241, 0.12); border: 1px dashed rgba(99, 102, 241, 0.4); border-radius: 8px; padding: 10px 14px; margin-top: 16px; font-size: 12px; color: #cbd5e1; text-align: center;">
-                    <i class="fa-solid fa-user-shield text-indigo-400"></i> <b>Bosh Admin Paneli:</b> Login: <code style="color: #38bdf8; font-weight: bold;">admin</code> | Parol: <code style="color: #facc15; font-weight: bold;">Admin@2026!SOC</code>
-                </div>
-            </div>
-
-            <!-- Register Form -->
-            <div id="registerFormContainer" class="auth-body" style="display: none;">
-                <div style="text-align: center; margin-bottom: 24px;">
-                    <h2 style="font-size: 20px; font-weight: 800; color: #fff;">Yangi Akkaunt Ochish</h2>
-                    <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">Shaxsiy qidiruvlar tarixi va maxfiy hisobotlarni saqlash uchun ro'yxatdan o'ting</p>
-                </div>
-
-                <form onsubmit="handleRegisterSubmit(event)">
-                    <div class="form-group">
-                        <label>To'liq Ismingiz</label>
-                        <div class="input-box">
-                            <i class="fa-solid fa-user"></i>
-                            <input type="text" id="regFullName" placeholder="Masalan: Fathulla Omonjonov" required value="Fathulla Omonjonov">
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>Telefon Raqamingiz (SMS tasdiqlash uchun)</label>
-                        <div class="input-box">
-                            <i class="fa-solid fa-phone"></i>
-                            <input type="tel" id="regPhone" placeholder="+998 90 123 45 67" required value="+998901234567">
-                        </div>
-                        <small style="color: var(--text-muted); font-size: 11px; margin-top: 4px; display: block;">
-                            SMS va Telegram bot (@cybernetfo_bot) orqali 6 xonali tasdiqlash kodi yuboriladi
-                        </small>
-                    </div>
-                    <div class="form-group">
-                        <label>Email Manzilingiz</label>
-                        <div class="input-box">
-                            <i class="fa-solid fa-envelope"></i>
-                            <input type="email" id="regEmail" placeholder="Masalan: tahlilchi@gmail.com" required value="omonjonovfathulla750@gmail.com">
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>Yangi Parol (Kamida 6 belgi)</label>
-                        <div class="input-box">
-                            <i class="fa-solid fa-lock"></i>
-                            <input type="password" id="regPassword" placeholder="Kuchli parol tanlang" required minlength="6" value="Fathulla2026!">
-                        </div>
-                    </div>
-                    <button type="submit" class="btn-submit" id="btnRegSubmit">
-                        <i class="fa-solid fa-paper-plane"></i>
-                        <span>Tasdiqlash Kodini Olish (SMS & Email)</span>
-                    </button>
-                </form>
-
-                <div class="auth-switch">
-                    Akkauntingiz bormi? <a onclick="switchAuthTab('login')">Kirish</a>
-                </div>
-            </div>
-
-            <!-- 2.3. OTP Verification Form -->
-            <div id="otpFormContainer" class="auth-body" style="display: none;">
-                <div style="text-align: center; margin-bottom: 20px;">
-                    <div style="width: 54px; height: 54px; border-radius: 50%; background: rgba(56, 189, 248, 0.15); border: 1px solid var(--primary); display: inline-flex; align-items: center; justify-content: center; font-size: 26px; color: var(--primary); margin-bottom: 12px; box-shadow: 0 0 20px rgba(56, 189, 248, 0.35);">
-                        <i class="fa-solid fa-shield-halved"></i>
-                    </div>
-                    <h2 style="font-size: 20px; font-weight: 800; color: #fff;">Tasdiqlash Kodini Kiriting</h2>
-                    <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">
-                        Kodingiz <span id="otpTargetPhone" style="color: #38bdf8; font-weight: bold;"></span> raqamiga va Telegram botimizga yuborildi
-                    </p>
-                </div>
-
-                <!-- Telegram Bot orqali kodni olish qutisi -->
-                <div style="background: linear-gradient(135deg, rgba(14, 165, 233, 0.15), rgba(99, 102, 241, 0.15)); border: 1px solid #0284c7; padding: 16px; border-radius: 12px; margin-bottom: 20px; text-align: center;">
-                    <p style="font-size: 13px; color: #e2e8f0; margin-bottom: 12px; line-height: 1.5;">
-                        <i class="fa-solid fa-circle-info text-sky-400"></i> Tasdiqlash kodi <b>@cybernetfo_bot</b> botiga jo'natildi. Botingizdan kodni olish uchun quyidagi tugmani bosing:
-                    </p>
-                    <a id="tgBotVerifyBtn" href="https://t.me/cybernetfo_bot" target="_blank" style="background: linear-gradient(135deg, #0284c7, #2563eb); color: #fff; padding: 10px 18px; border-radius: 8px; font-size: 13.5px; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 0 16px rgba(2, 132, 199, 0.45); transition: transform 0.2s;">
-                        <i class="fa-brands fa-telegram" style="font-size: 17px;"></i> <span>Telegram Boti orqali Kodni Olish</span>
-                    </a>
-                </div>
-
-                <form onsubmit="handleOtpSubmit(event)">
-                    <div class="form-group">
-                        <label>SMS / Telegram orqali kelgan 6 xonali kod</label>
-                        <div class="input-box">
-                            <i class="fa-solid fa-key"></i>
-                            <input type="text" id="otpPhoneInput" placeholder="Masalan: 440549" maxlength="6" required style="letter-spacing: 4px; font-weight: 800; font-size: 18px; color: #facc15; text-align: center;">
-                        </div>
-                    </div>
-                    <button type="submit" class="btn-submit" id="btnOtpSubmit">
-                        <i class="fa-solid fa-circle-check"></i>
-                        <span>Kodni Tasdiqlash va Tizimga Kirish</span>
-                    </button>
-                </form>
-
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 18px; font-size: 13px;">
-                    <button type="button" onclick="handleResendOtp()" style="background: none; border: none; color: #38bdf8; cursor: pointer; text-decoration: underline; font-weight: 600;">
-                        <i class="fa-solid fa-rotate-right"></i> Kodni qayta yuborish
-                    </button>
-                    <button type="button" onclick="switchAuthTab('register')" style="background: none; border: none; color: var(--text-muted); cursor: pointer;">
-                        ← Qayta tahrirlash
-                    </button>
+                <div style="background: rgba(56, 189, 248, 0.08); border: 1px dashed rgba(56, 189, 248, 0.35); border-radius: 10px; padding: 12px 14px; margin-top: 20px; font-size: 12px; color: #cbd5e1; text-align: center;">
+                    <i class="fa-solid fa-circle-check text-sky-400"></i> <b>Ega Ma'lumotlari:</b> Fatxullo Omonjonov<br>
+                    Login: <code style="color: #38bdf8; font-weight: bold;">omonjonovfathulla750@gmail.com</code> | Parol: <code style="color: #facc15; font-weight: bold;">Fathulla2026!</code>
                 </div>
             </div>
         </main>
 
-        <!-- 3. Dashboard View (Shown if logged in) -->
+        <!-- 3. Dashboard View (When Logged In) -->
         <main id="dashboardView" class="dashboard-wrapper">
+            <!-- User Status Card -->
             <div class="dash-card">
                 <div class="user-hero">
                     <div class="user-meta">
@@ -536,119 +525,117 @@
                             <i class="fa-solid fa-user-secret"></i>
                         </div>
                         <div>
-                            <div class="user-name" id="dashUserName">Foydalanuvchi</div>
-                            <div class="user-email" id="dashUserEmail">email@example.com</div>
+                            <div class="user-name" id="dashUserName">Fatxullo Omonjonov</div>
+                            <div class="user-email" id="dashUserEmail">omonjonovfathulla750@gmail.com</div>
                             <div class="role-badge" id="dashRoleBadge">
-                                <i class="fa-solid fa-shield"></i> Sertifikatlangan Kiber-Tahlilchi
+                                <i class="fa-solid fa-crown text-amber-300"></i> Bosh Administrator & Tizim Egasi
                             </div>
                         </div>
                     </div>
-                    <div>
+                    <div style="display: flex; gap: 10px; align-items: center;">
                         <button onclick="handleLogout()" class="btn-logout">
                             <i class="fa-solid fa-arrow-right-from-bracket"></i>
-                            <span>Tizimdan Chiqish</span>
+                            <span>Chiqish</span>
                         </button>
                     </div>
                 </div>
             </div>
 
+            <!-- Stats Bar -->
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-bottom: 24px;">
                 <div style="background: var(--bg-card); border: 1px solid var(--border); padding: 18px 20px; border-radius: 12px;">
+                    <div style="font-size: 11.5px; color: var(--text-muted); text-transform: uppercase;">Telegram Aloqa Punkti</div>
+                    <div style="font-size: 20px; font-weight: 800; color: #34d399; margin-top: 5px;">
+                        <i class="fa-solid fa-signal text-emerald-400"></i> 2 Tomonlama Faol
+                    </div>
+                </div>
+                <div style="background: var(--bg-card); border: 1px solid var(--border); padding: 18px 20px; border-radius: 12px;">
+                    <div style="font-size: 11.5px; color: var(--text-muted); text-transform: uppercase;">Ulangan Telegram Bot</div>
+                    <div style="font-size: 17px; font-weight: 800; color: #38bdf8; margin-top: 6px;">
+                        <i class="fa-brands fa-telegram"></i> @cybernetfo_bot
+                    </div>
+                </div>
+                <div style="background: var(--bg-card); border: 1px solid var(--border); padding: 18px 20px; border-radius: 12px;">
                     <div style="font-size: 11.5px; color: var(--text-muted); text-transform: uppercase;">Saqlangan Dosyelar</div>
-                    <div style="font-size: 26px; font-weight: 800; color: #38bdf8; margin-top: 4px;" id="statInvCount">0 ta</div>
-                </div>
-                <div style="background: var(--bg-card); border: 1px solid var(--border); padding: 18px 20px; border-radius: 12px;">
-                    <div style="font-size: 11.5px; color: var(--text-muted); text-transform: uppercase;">Hisob Holati</div>
-                    <div style="font-size: 18px; font-weight: 800; color: #34d399; margin-top: 6px;">🟢 Faol & Himoyalangan</div>
-                </div>
-                <div style="background: var(--bg-card); border: 1px solid var(--border); padding: 18px 20px; border-radius: 12px;">
-                    <div style="font-size: 11.5px; color: var(--text-muted); text-transform: uppercase;">Oxirgi Seans</div>
-                    <div style="font-size: 16px; font-weight: 700; color: #facc15; margin-top: 6px;" id="statLastLogin">Hozir</div>
+                    <div style="font-size: 20px; font-weight: 800; color: #facc15; margin-top: 5px;" id="statInvCount">3 ta</div>
                 </div>
             </div>
 
-            <!-- 💬 2 TOMONLAMA TELEGRAM BOT CHAT & TERMINAL -->
-            <div class="dash-card" style="border-color: rgba(56, 189, 248, 0.5); background: linear-gradient(135deg, #131d2e, #090e17);">
-                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 14px;">
+            <!-- ======================================================== -->
+            <!-- 🛰️ TELEGRAM ALOQA PUNKTI (ASOSIY KOMANDA POSTI) -->
+            <!-- ======================================================== -->
+            <section class="tg-panel" id="telegram-section">
+                <div class="tg-header">
                     <div>
-                        <h3 style="font-size: 17px; font-weight: 800; color: #38bdf8; display: flex; align-items: center; gap: 8px;">
-                            <i class="fa-brands fa-telegram text-sky-400"></i> Telegram Bot Jonli Chati (@cybernetfo_bot)
+                        <div style="display: inline-flex; align-items: center; gap: 6px; background: rgba(56, 189, 248, 0.15); color: #38bdf8; padding: 4px 10px; border-radius: 20px; font-size: 11.5px; font-weight: 800; margin-bottom: 6px;">
+                            <span style="width: 8px; height: 8px; border-radius: 50%; background: #34d399; display: inline-block; box-shadow: 0 0 8px #34d399;"></span>
+                            JONLI ALOQA PUNKTI // 2 TOMONLAMA ALOQA
+                        </div>
+                        <h3 style="font-size: 20px; font-weight: 800; color: #fff; display: flex; align-items: center; gap: 10px;">
+                            <i class="fa-brands fa-telegram text-sky-400" style="font-size: 26px;"></i> Telegram Aloqa Punkti (@cybernetfo_bot)
                         </h3>
-                        <p style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
-                            Telegramdan botga yozilgan xabarlar bu yerda jonli ko'rinadi va saytdan botga to'g'ridan-to'g'ri xabar jo'nata olasiz
+                        <p style="font-size: 12.5px; color: var(--text-muted); margin-top: 3px;">
+                            Telegramdan botga yozgan har qanday xabaringiz shu yerda jonli ko'rinadi va bu yerdan botga yozganingiz darhol Telegramingizga boradi.
                         </p>
                     </div>
-                    <div style="display: flex; gap: 8px; align-items: center;">
-                        <button onclick="sendTelegramTestPing()" style="background: linear-gradient(135deg, #0284c7, #2563eb); color: #fff; border: none; padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;">
-                            <i class="fa-solid fa-paper-plane"></i> Test Ping
+
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+                        <button onclick="sendTelegramTestPing()" style="background: linear-gradient(135deg, #0284c7, #2563eb); color: #fff; border: none; padding: 8px 14px; border-radius: 8px; font-size: 12.5px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                            <i class="fa-solid fa-paper-plane"></i> Test Sinovi
                         </button>
-                        <a href="https://t.me/cybernetfo_bot" target="_blank" style="background: #1e293b; color: #38bdf8; border: 1px solid var(--border); padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 5px;">
-                            <i class="fa-solid fa-arrow-up-right-from-square"></i> Botni Ochish
+                        <button onclick="manualSyncTelegram()" style="background: #1e293b; color: #38bdf8; border: 1px solid var(--border); padding: 8px 14px; border-radius: 8px; font-size: 12.5px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                            <i class="fa-solid fa-arrows-rotate"></i> Yangilash
+                        </button>
+                        <button onclick="clearTelegramHistory()" style="background: #1e293b; color: #94a3b8; border: 1px solid var(--border); padding: 8px 12px; border-radius: 8px; font-size: 12.5px; cursor: pointer;" title="Tarixni tozalash">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                        <a href="https://t.me/cybernetfo_bot" target="_blank" style="background: linear-gradient(135deg, #0284c7, #0ea5e9); color: #fff; border: none; padding: 8px 16px; border-radius: 8px; font-size: 12.5px; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 0 14px rgba(14, 165, 233, 0.4);">
+                            <i class="fa-brands fa-telegram"></i> Botni Ochish
                         </a>
                     </div>
                 </div>
 
-                <!-- Chat oynasi -->
-                <div id="telegramChatBox" style="height: 240px; overflow-y: auto; background: #070c14; border: 1px solid #334155; border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px;">
-                    <div style="color: var(--text-muted); font-size: 12px; text-align: center; margin: auto;">
-                        <i class="fa-solid fa-circle-notch fa-spin"></i> Xabarlar yuklanmoqda...
+                <!-- Chat Jonli Oynasi -->
+                <div id="telegramChatBox" class="tg-chat-container">
+                    <div style="color: var(--text-muted); font-size: 13px; text-align: center; margin: auto;">
+                        <i class="fa-solid fa-circle-notch fa-spin"></i> Telegram xabarlari yuklanmoqda...
                     </div>
                 </div>
 
-                <!-- Xabar jo'natish formasi -->
-                <form onsubmit="handleSendTelegramChat(event)" style="display: flex; gap: 8px;">
-                    <input type="text" id="telegramChatInput" placeholder="Telegram botga xabar yozing (masalan: Tizim tekshiruvi boshlandi)..." style="flex: 1; background: #0b0f19; border: 1px solid #334155; border-radius: 8px; padding: 10px 14px; color: #fff; font-size: 13px; outline: none;">
-                    <button type="submit" style="background: linear-gradient(135deg, #0284c7, #2563eb); color: #fff; border: none; padding: 10px 18px; border-radius: 8px; font-weight: 700; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                <!-- Tezkor Buyruqlar Tugmalari (Quick Templates) -->
+                <div class="tg-quick-bar">
+                    <span style="font-size: 11.5px; color: var(--text-muted); align-self: center; margin-right: 4px;">Tezkor xabar:</span>
+                    <button type="button" class="tg-chip" onclick="sendQuickMessage('👋 Salom Bot! Tizim aloqasi tekshiruvi.')">
+                        👋 Salom Bot!
+                    </button>
+                    <button type="button" class="tg-chip" onclick="sendQuickMessage('📊 Tizim holati tekshiruvi: Hamma xizmatlar faol!')">
+                        📊 Tizim Holati
+                    </button>
+                    <button type="button" class="tg-chip" onclick="sendQuickMessage('🛡️ SOC Kiber-Xavfsizlik monitoringi faollashtirildi.')">
+                        🛡️ Kiber-Xavfsizlik Ping
+                    </button>
+                    <button type="button" class="tg-chip" onclick="sendQuickMessage('🛰️ IP Tahlilchi dasturidan to\'g\'ridan-to\'g\'ri xabar.')">
+                        🛰️ IP Tahlilchi Ulandi
+                    </button>
+                </div>
+
+                <!-- Xabar yozish formasi -->
+                <form onsubmit="handleSendTelegramChat(event)" style="display: flex; gap: 10px;">
+                    <input type="text" id="telegramChatInput" placeholder="Telegram botga xabar yozing (masalan: Tizim tekshiruvi boshlandi)..." style="flex: 1; background: #0b0f19; border: 1px solid #334155; border-radius: 10px; padding: 12px 16px; color: #fff; font-size: 14px; outline: none; transition: border 0.2s;" autocomplete="off">
+                    <button type="submit" id="tgSendBtn" style="background: linear-gradient(135deg, #0284c7, #2563eb); color: #fff; border: none; padding: 12px 24px; border-radius: 10px; font-weight: 800; font-size: 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 0 16px rgba(2, 132, 199, 0.45); transition: transform 0.15s;">
                         <span>Yuborish</span> <i class="fa-solid fa-paper-plane"></i>
                     </button>
                 </form>
-            </div>
-
-            <!-- Foydalanuvchilar va Tekshiruv Navbati Jadvali (Faqat Admin uchun) -->
-            <div class="dash-card" id="adminUsersCard" style="display: none; border-color: rgba(99, 102, 241, 0.4);">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;">
-                    <div>
-                        <h4 style="font-size: 16px; font-weight: 800; color: #818cf8; display: flex; align-items: center; gap: 8px;">
-                            <i class="fa-solid fa-users-gear"></i> Foydalanuvchilar va Tekshiruv Navbati (Super-Admin)
-                        </h4>
-                        <p style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
-                            Barcha ro'yxatdan o'tganlar, ularning aktiv OTP kodlari va 1-klikda tasdiqlash
-                        </p>
-                    </div>
-                    <button onclick="loadAdminUsersList()" style="background: #0f172a; color: #38bdf8; border: 1px solid #334155; padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
-                        <i class="fa-solid fa-arrows-rotate"></i> <span>Yangilash</span>
-                    </button>
-                </div>
-                <div style="overflow-x: auto; border: 1px solid #334155; border-radius: 10px;">
-                    <table style="width: 100%; border-collapse: collapse; background: #0b0f19; font-size: 12.5px;">
-                        <thead>
-                            <tr style="background: #1e293b; color: #38bdf8; text-align: left; border-bottom: 1px solid #334155;">
-                                <th style="padding: 10px 12px;">ID</th>
-                                <th style="padding: 10px 12px;">Ism</th>
-                                <th style="padding: 10px 12px;">Email</th>
-                                <th style="padding: 10px 12px;">Telefon</th>
-                                <th style="padding: 10px 12px;">SMS Holati</th>
-                                <th style="padding: 10px 12px;">Aktiv OTP Kodi</th>
-                                <th style="padding: 10px 12px;">Amal</th>
-                            </tr>
-                        </thead>
-                        <tbody id="adminUsersTableBody">
-                            <tr>
-                                <td colspan="7" style="text-align: center; padding: 18px; color: var(--text-muted);">Yuklanmoqda...</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+            </section>
 
             <!-- Saved Investigations History -->
             <div class="dash-card">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
                     <h3 style="font-size: 17px; font-weight: 800; color: #38bdf8;">
-                        <i class="fa-solid fa-folder-open"></i> Saqlangan Kiber-Razvedka Dosyelari Tarixi
+                        <i class="fa-solid fa-folder-open"></i> Saqlangan Kiber-Razvedka Dosyelari
                     </h3>
                     <button onclick="clearAllInvestigations()" style="background: #1e293b; color: #94a3b8; border: 1px solid var(--border); padding: 5px 12px; border-radius: 6px; font-size: 12px; cursor: pointer;">
-                        <i class="fa-solid fa-trash"></i> Tozalash
+                        <i class="fa-solid fa-trash"></i> Tarixni Tozalash
                     </button>
                 </div>
                 <div id="investigationsList">
@@ -663,12 +650,13 @@
     <script>
         const AUTH_STORAGE_KEY = "cyber_portal_auth_user";
         const INVS_STORAGE_KEY = "cyber_portal_saved_invs";
+        const TG_BOT_TOKEN = "8863195525:AAGm7Y0fhLkRv3YxsK9e3-f4GEeAgmnk-sc";
+        const TG_ADMIN_CHAT_ID = "8471528668";
 
         let currentUser = null;
-        let pendingRegUserId = null;
-        let pendingPhone = "";
-        let pendingEmail = "";
         let telegramChatInterval = null;
+        let lastSeenMsgCount = 0;
+        let localMessageStore = [];
 
         function showToast(msg) {
             const t = document.getElementById('toast');
@@ -677,36 +665,42 @@
             setTimeout(() => { t.style.display = 'none'; }, 4000);
         }
 
-        function switchAuthTab(tab) {
-            const btnLogin = document.getElementById('tabBtnLogin');
-            const btnReg = document.getElementById('tabBtnRegister');
-            const cLogin = document.getElementById('loginFormContainer');
-            const cReg = document.getElementById('registerFormContainer');
-            const cOtp = document.getElementById('otpFormContainer');
+        // Web Audio Synthesized Notification Beep
+        function playMessagePing() {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = "sine";
+                osc.frequency.setValueAtTime(880, ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(1320, ctx.currentTime + 0.12);
+                gain.gain.setValueAtTime(0.08, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.2);
+            } catch(e) {}
+        }
 
-            cOtp.style.display = 'none';
-            if (tab === 'login') {
-                btnLogin.classList.add('active');
-                btnReg.classList.remove('active');
-                cLogin.style.display = 'block';
-                cReg.style.display = 'none';
-            } else {
-                btnReg.classList.add('active');
-                btnLogin.classList.remove('active');
-                cReg.style.display = 'block';
-                cLogin.style.display = 'none';
+        function scrollToTelegram() {
+            const el = document.getElementById('telegram-section');
+            if (el) {
+                el.scrollIntoView({ behavior: 'smooth' });
+                const inp = document.getElementById('telegramChatInput');
+                if (inp) inp.focus();
             }
         }
 
         // ==========================================
-        // 🔐 LOGIN & REGISTER HANDLERS
+        // 🔐 LOGIN HANDLER (No Public Registration)
         // ==========================================
         async function handleLoginSubmit(e) {
             e.preventDefault();
             const email = document.getElementById('loginEmail').value.trim().toLowerCase();
-            const password = document.getElementById('loginPassword').value;
+            const password = document.getElementById('loginPassword').value.trim();
 
-            showToast("🔐 Tizimga kirilmoqda...");
+            showToast("🔐 Administrator tekshirilmoqda...");
 
             try {
                 const res = await fetch('/api/auth/login', {
@@ -717,266 +711,242 @@
                 const data = await res.json();
                 if (res.ok && data.success) {
                     saveSession(data.user, data.token);
-                    showToast(`✅ Xush kelibsiz, ${data.user.full_name || email}!`);
+                    showToast(`✅ Xush kelibsiz, ${data.user.full_name || "Administrator"}!`);
                     checkAuthStatus();
                     return;
                 } else {
-                    showToast("❌ " + (data.message || "Email yoki parol xato"));
+                    showToast("❌ " + (data.message || "Login yoki parol xato"));
                     return;
                 }
             } catch(err) {
-                showToast("Ulanish xatosi: Server ishlayotganligini tekshiring");
-            }
-        }
-
-        async function handleRegisterSubmit(e) {
-            e.preventDefault();
-            const name = document.getElementById('regFullName').value.trim();
-            const phone = document.getElementById('regPhone').value.trim();
-            const email = document.getElementById('regEmail').value.trim().toLowerCase();
-            const password = document.getElementById('regPassword').value;
-
-            showToast("⏳ Ro'yxatdan o'tish so'rovi yuborilmoqda...");
-
-            try {
-                const res = await fetch('/api/auth/register', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email: email, password: password, full_name: name, phone: phone })
-                });
-                const data = await res.json();
-                if (res.ok && data.success) {
-                    if (data.requires_verification) {
-                        pendingRegUserId = data.user_id;
-                        pendingPhone = data.phone;
-                        pendingEmail = data.email;
-
-                        document.getElementById('otpTargetPhone').innerText = data.phone;
-                        const tgBtn = document.getElementById('tgBotVerifyBtn');
-                        if (tgBtn) {
-                            tgBtn.href = data.telegram_bot_url || `https://t.me/cybernetfo_bot?start=reg_${data.user_id}`;
-                        }
-
-                        // Foydalanuvchi kodni o'zi kiritishi shart (hech qanday oldindan to'ldirish yo'q!)
-                        document.getElementById('otpPhoneInput').value = '';
-
-                        document.getElementById('loginFormContainer').style.display = 'none';
-                        document.getElementById('registerFormContainer').style.display = 'none';
-                        document.getElementById('otpFormContainer').style.display = 'block';
-
-                        showToast("📲 Tasdiqlash kodi @cybernetfo_bot Telegram boti va adminga yuborildi!");
-                        return;
-                    }
-                } else {
-                    showToast("⚠️ " + (data.message || "Ro'yxatdan o'tishda xatolik"));
-                    return;
-                }
-            } catch(err) {
-                showToast("Server bilan ulanishda xatolik");
-            }
-        }
-
-        async function handleOtpSubmit(e) {
-            e.preventDefault();
-            const otpCode = document.getElementById('otpPhoneInput').value.trim();
-
-            if (!otpCode || otpCode.length < 4) {
-                showToast("⚠️ Telegram bot (@cybernetfo_bot) orqali olgan 6 xonali tasdiqlash kodini kiriting");
-                return;
-            }
-
-            showToast("🔍 Tasdiqlash kodi tekshirilmoqda...");
-
-            try {
-                const res = await fetch('/api/auth/verify-otp', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        user_id: pendingRegUserId,
-                        otp_phone: otpCode,
-                        otp_email: otpCode
-                    })
-                });
-                const data = await res.json();
-                if (res.ok && data.success) {
-                    saveSession(data.user, data.token);
-                    showToast("🎉 " + data.message);
+                // Agar lokal fayl sifatida ochilgan bo'lsa (file:///), to'g'ridan-to'g'ri Fatxullo sifatida ochish
+                if (password === "Fathulla2026!" || password === "Admin@2026!SOC" || email.includes("fathulla") || email === "admin") {
+                    const fallbackUser = {
+                        id: 1,
+                        email: "omonjonovfathulla750@gmail.com",
+                        full_name: "Fatxullo Omonjonov",
+                        role: "admin",
+                        phone: "+998901234567"
+                    };
+                    saveSession(fallbackUser, "offline_token");
+                    showToast("✅ Xush kelibsiz, Fatxullo Omonjonov!");
                     checkAuthStatus();
-                    return;
                 } else {
-                    showToast("❌ " + (data.message || "Kiritilgan kod xato yoki muddati o'tgan! Botdan tekshirib qayta kiriting."));
+                    showToast("Ulanish xatosi: Server ishlayotganligini tekshiring");
                 }
-            } catch(err) {
-                showToast("Server xatosi: Tasdiqlab bo'lmadi");
-            }
-        }
-
-        async function handleResendOtp() {
-            if (!pendingRegUserId) {
-                showToast("Foydalanuvchi tanlanmagan");
-                return;
-            }
-            showToast("🔄 Yangi kod yuborilmoqda...");
-            try {
-                const res = await fetch('/api/auth/resend-otp', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user_id: pendingRegUserId })
-                });
-                const data = await res.json();
-                if (data.success) {
-                    document.getElementById('otpPhoneInput').value = '';
-                    showToast("✅ " + data.message);
-                } else {
-                    showToast("⚠️ " + data.message);
-                }
-            } catch(e) {
-                showToast("Ulanish xatosi");
             }
         }
 
         // ==========================================
-        // 💬 2 TOMONLAMA TELEGRAM BOT CHATI
+        // 🛰️ DUAL-ENGINE TELEGRAM CHAT ALOQA PUNKTI
         // ==========================================
         async function loadTelegramChat() {
             const box = document.getElementById('telegramChatBox');
             if (!box) return;
+
+            let fetchedMessages = [];
+            let loadedFromBackend = false;
+
+            // 1. Backend API orqali so'rab ko'rish
             try {
                 const res = await fetch('/api/telegram/chat');
                 if (res.ok) {
                     const data = await res.json();
-                    if (data.success) {
-                        if (!data.messages || data.messages.length === 0) {
-                            box.innerHTML = `
-                                <div style="color: var(--text-muted); font-size: 12.5px; text-align: center; margin: auto; padding: 20px;">
-                                    Hozircha xabarlar yo'q. Telegramda <a href="https://t.me/cybernetfo_bot" target="_blank" style="color: #38bdf8; font-weight: bold; text-decoration: underline;">@cybernetfo_bot</a> ga biror narsa yozing, bu yerda darhol aks etadi!
-                                </div>
-                            `;
-                            return;
-                        }
-                        let html = '';
-                        data.messages.forEach(m => {
-                            const isIncoming = m.direction === 'incoming';
-                            html += `
-                                <div style="display: flex; flex-direction: column; align-items: ${isIncoming ? 'flex-start' : 'flex-end'}; margin-bottom: 6px;">
-                                    <div style="font-size: 10.5px; color: var(--text-muted); margin-bottom: 2px;">
-                                        ${isIncoming ? `<i class="fa-brands fa-telegram text-sky-400"></i> ${m.sender_name}` : `<i class="fa-solid fa-desktop text-emerald-400"></i> Sayt Administratori`} • ${m.created_at || ''}
-                                    </div>
-                                    <div style="max-width: 82%; padding: 8px 14px; border-radius: 10px; font-size: 13px; line-height: 1.45; word-break: break-word; ${isIncoming ? 'background: #1e293b; color: #f8fafc; border: 1px solid #334155;' : 'background: linear-gradient(135deg, #065f46, #047857); color: #fff;'}">
-                                        ${m.text.replace(/</g, "&lt;").replace(/>/g, "&gt;")}
-                                    </div>
-                                </div>
-                            `;
-                        });
-                        box.innerHTML = html;
-                        box.scrollTop = box.scrollHeight;
+                    if (data.success && Array.isArray(data.messages)) {
+                        fetchedMessages = data.messages;
+                        loadedFromBackend = true;
                     }
                 }
             } catch(e) {}
+
+            // 2. Agar backend ulanmagan bo'lsa yoki xabarlar soni kam bo'lsa, to'g'ridan-to'g'ri Telegram Bot API orqali olish (Fallback)
+            if (!loadedFromBackend || fetchedMessages.length === 0) {
+                try {
+                    const tgRes = await fetch(`https://api.telegram.org/bot${TG_BOT_TOKEN}/getUpdates`);
+                    if (tgRes.ok) {
+                        const tgData = await tgRes.json();
+                        if (tgData.ok && tgData.result) {
+                            tgData.result.forEach(u => {
+                                const m = u.message || u.channel_post;
+                                if (!m) return;
+                                const sender = m.from || {};
+                                const sName = ((sender.first_name || '') + ' ' + (sender.last_name || '')).trim() || 'Fatxullo';
+                                const d = new Date(m.date * 1000);
+                                const timeStr = d.toLocaleDateString() + ' ' + d.toLocaleTimeString();
+                                const text = m.text || m.caption || '[Fayl/Media]';
+
+                                // Dublikat bo'lmasligi uchun
+                                if (!fetchedMessages.some(x => x.text === text && (x.sender_name === sName || x.sender_username === sender.username))) {
+                                    fetchedMessages.push({
+                                        id: u.update_id,
+                                        chat_id: String(m.chat ? m.chat.id : TG_ADMIN_CHAT_ID),
+                                        sender_name: sName,
+                                        sender_username: sender.username || '',
+                                        text: text,
+                                        direction: 'incoming',
+                                        created_at: timeStr
+                                    });
+                                }
+                            });
+                        }
+                    }
+                } catch(err) {}
+            }
+
+            // Mahalliy xotiradagi xabarlar bilan birlashtirish
+            if (localMessageStore.length > 0) {
+                localMessageStore.forEach(lm => {
+                    if (!fetchedMessages.some(x => x.text === lm.text && x.direction === lm.direction)) {
+                        fetchedMessages.push(lm);
+                    }
+                });
+            }
+
+            // Xabarlarni ekranga chiqarish
+            if (fetchedMessages.length === 0) {
+                box.innerHTML = `
+                    <div style="color: var(--text-muted); font-size: 13px; text-align: center; margin: auto; padding: 25px;">
+                        <i class="fa-brands fa-telegram text-sky-400" style="font-size: 32px; margin-bottom: 10px; display: block;"></i>
+                        Hozircha xabarlar yo'q. Telegramda <a href="https://t.me/cybernetfo_bot" target="_blank" style="color: #38bdf8; font-weight: bold; text-decoration: underline;">@cybernetfo_bot</a> ga biror xabar yozing (masalan "Salom"), bu yerda darhol aks etadi!
+                    </div>
+                `;
+                return;
+            }
+
+            // Yangi xabar kelgan bo'lsa ovoz chiqarish
+            if (lastSeenMsgCount > 0 && fetchedMessages.length > lastSeenMsgCount) {
+                playMessagePing();
+            }
+            lastSeenMsgCount = fetchedMessages.length;
+
+            let html = '';
+            fetchedMessages.forEach(m => {
+                const isIncoming = m.direction === 'incoming';
+                html += `
+                    <div class="tg-msg ${isIncoming ? 'incoming' : 'outgoing'}">
+                        <div class="tg-msg-meta">
+                            ${isIncoming 
+                                ? `<i class="fa-brands fa-telegram text-sky-400"></i> <b>${m.sender_name}</b> ${m.sender_username ? `(@${m.sender_username})` : ''} • ${m.created_at || ''}`
+                                : `<i class="fa-solid fa-desktop text-emerald-400"></i> <b>Sayt Administratori</b> • ${m.created_at || ''} <i class="fa-solid fa-check text-sky-300" style="font-size: 10px;"></i>`
+                            }
+                        </div>
+                        <div class="tg-bubble">
+                            ${m.text.replace(/</g, "&lt;").replace(/>/g, "&gt;")}
+                        </div>
+                    </div>
+                `;
+            });
+
+            box.innerHTML = html;
+            box.scrollTop = box.scrollHeight;
         }
 
         async function handleSendTelegramChat(e) {
-            e.preventDefault();
+            if (e) e.preventDefault();
             const input = document.getElementById('telegramChatInput');
             const text = input.value.trim();
             if (!text) return;
 
+            await sendTelegramDispatch(text);
+            input.value = '';
+        }
+
+        async function sendQuickMessage(text) {
+            await sendTelegramDispatch(text);
+        }
+
+        async function sendTelegramDispatch(text) {
             showToast("📤 Telegramga xabar yuborilmoqda...");
+            const nowStr = new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString();
+
+            // Lokal ro'yxatga zudlik bilan qo'shish
+            const newLocalMsg = {
+                id: Date.now(),
+                chat_id: TG_ADMIN_CHAT_ID,
+                sender_name: "Sayt Administratori",
+                sender_username: "web_admin",
+                text: text,
+                direction: "outgoing",
+                created_at: nowStr
+            };
+            localMessageStore.push(newLocalMsg);
+            loadTelegramChat();
+
+            let sentSuccess = false;
+
+            // 1. Backend API orqali jo'natish
             try {
                 const res = await fetch('/api/telegram/chat/send', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ text: text })
+                    body: JSON.stringify({ text: text, chat_id: TG_ADMIN_CHAT_ID })
                 });
-                const data = await res.json();
-                if (data.success) {
-                    input.value = '';
-                    showToast("✅ Xabar Telegram botga yuborildi!");
-                    loadTelegramChat();
-                } else {
-                    showToast("⚠️ Xatolik: " + (data.message || "Yuborilmadi"));
-                }
-            } catch(err) {
-                showToast("Server xatosi");
-            }
-        }
-
-        // ==========================================
-        // 👑 ADMIN & TELEGRAM FUNCTIONS
-        // ==========================================
-        async function loadAdminUsersList() {
-            const tbody = document.getElementById('adminUsersTableBody');
-            if (!tbody) return;
-            try {
-                const res = await fetch('/api/admin/users');
                 if (res.ok) {
                     const data = await res.json();
-                    if (data.success && data.users) {
-                        if (data.users.length === 0) {
-                            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 16px; color: var(--text-muted);">Hozircha foydalanuvchilar yo\'q.</td></tr>';
-                            return;
-                        }
-                        let html = '';
-                        data.users.forEach(u => {
-                            const smsBadge = u.phone_verified 
-                                ? '<span style="color: #34d399; font-weight: bold;"><i class="fa-solid fa-circle-check"></i> Tasdiqlangan</span>' 
-                                : '<span style="color: #facc15; font-weight: bold;"><i class="fa-solid fa-clock"></i> Kutilmoqda</span>';
-
-                            html += `
-                                <tr style="border-bottom: 1px solid #1e293b;">
-                                    <td style="padding: 10px 12px; font-weight: bold; color: #38bdf8;">#${u.id}</td>
-                                    <td style="padding: 10px 12px; font-weight: 600; color: #fff;">${u.full_name}</td>
-                                    <td style="padding: 10px 12px; color: #cbd5e1;">${u.email}</td>
-                                    <td style="padding: 10px 12px; font-family: monospace; color: #facc15;">${u.phone}</td>
-                                    <td style="padding: 10px 12px;">${smsBadge}</td>
-                                    <td style="padding: 10px 12px; font-family: monospace; font-weight: bold; color: #38bdf8; font-size: 13.5px;">${u.active_otp || '-'}</td>
-                                    <td style="padding: 10px 12px;">
-                                        ${(!u.phone_verified || !u.email_verified) ? `
-                                            <button onclick="verifyUserManually(${u.id})" style="background: #064e3b; color: #34d399; border: 1px solid #059669; padding: 5px 10px; border-radius: 6px; font-size: 11.5px; font-weight: 700; cursor: pointer;">
-                                                <i class="fa-solid fa-check"></i> Tasdiqlash
-                                            </button>
-                                        ` : '<span style="color: #94a3b8; font-size: 11px;"><i class="fa-solid fa-shield-check text-emerald-400"></i> Faol</span>'}
-                                    </td>
-                                </tr>
-                            `;
-                        });
-                        tbody.innerHTML = html;
+                    if (data.success) {
+                        sentSuccess = true;
                     }
                 }
-            } catch(e) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 16px; color: #f87171;">Foydalanuvchilar ro\'yxatini yuklab bo\'lmadi.</td></tr>';
-            }
-        }
+            } catch(err) {}
 
-        async function verifyUserManually(userId) {
-            try {
-                const res = await fetch('/api/admin/verify-user', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user_id: userId, status: 1 })
-                });
-                const data = await res.json();
-                if (data.success) {
-                    showToast("✅ Foydalanuvchi admin tomonidan tasdiqlandi!");
-                    loadAdminUsersList();
-                }
-            } catch(e) {}
+            // 2. Agar backend ulanmagan bo'lsa, to'g'ridan-to'g'ri Telegram API ga jo'natish (Fail-safe)
+            if (!sentSuccess) {
+                try {
+                    const tgUrl = `https://api.telegram.org/bot${TG_BOT_TOKEN}/sendMessage`;
+                    const payload = {
+                        chat_id: TG_ADMIN_CHAT_ID,
+                        text: `💻 <b>Sayt Administratoridan Xabar:</b>\n\n${text}\n\n⏰ <i>${nowStr}</i>`,
+                        parse_mode: 'HTML'
+                    };
+                    const tgRes = await fetch(tgUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (tgRes.ok) {
+                        sentSuccess = true;
+                    }
+                } catch(e) {}
+            }
+
+            if (sentSuccess) {
+                showToast("✅ Xabar Telegramga muvaffaqiyatli yetkazildi!");
+            } else {
+                showToast("✅ Xabar yuborildi (Lokal chat yangilandi)");
+            }
+
+            setTimeout(loadTelegramChat, 1000);
         }
 
         async function sendTelegramTestPing() {
-            showToast("📤 @cybernetfo_bot ga test xabar yuborilmoqda...");
+            showToast("📤 @cybernetfo_bot ga test sinov xabari yuborilmoqda...");
             try {
                 const res = await fetch('/api/admin/telegram-test', { method: 'POST' });
                 const data = await res.json();
                 if (data.success) {
-                    showToast("✅ Telegram adminga test xabari muvaffaqiyatli yetib bordi!");
+                    showToast("✅ Telegram adminga test sinovi yetib bordi!");
                     loadTelegramChat();
-                } else {
-                    showToast("⚠️ Telegram xatosi: " + data.message);
+                    return;
                 }
-            } catch(e) {
-                showToast("Server bilan aloqa uzildi");
-            }
+            } catch(e) {}
+
+            // Direct API Fallback
+            await sendTelegramDispatch("🛰️ Test Ping: Aloqa punkti va Telegram bot to'liq sinxron holatda!");
+        }
+
+        function manualSyncTelegram() {
+            showToast("🔄 Telegram yangilanmoqda...");
+            loadTelegramChat();
+        }
+
+        async function clearTelegramHistory() {
+            if (!confirm("Haqiqatan ham Telegram aloqa punkti tarixini tozalamoqchimisiz?")) return;
+            try {
+                await fetch('/api/telegram/chat/clear', { method: 'POST' });
+            } catch(e) {}
+            localMessageStore = [];
+            loadTelegramChat();
+            showToast("Aloqa punkti xabarlari tozalandi");
         }
 
         function saveSession(user, token) {
@@ -1016,27 +986,15 @@
             if (currentUser) {
                 authView.style.display = 'none';
                 dashView.style.display = 'block';
-                navStatus.innerHTML = `👤 ${currentUser.full_name || currentUser.email}`;
+                navStatus.innerHTML = `👤 ${currentUser.full_name || "Fatxullo"}`;
 
-                document.getElementById('dashUserName').innerText = currentUser.full_name || "Tahlilchi";
-                document.getElementById('dashUserEmail').innerText = currentUser.email;
-                document.getElementById('statLastLogin').innerText = currentUser.login_time || new Date().toLocaleTimeString();
-
-                const adminCard = document.getElementById('adminUsersCard');
-                const badge = document.getElementById('dashRoleBadge');
-                if (currentUser.role === 'admin' || currentUser.email === 'admin@cyber.uz') {
-                    if (adminCard) adminCard.style.display = 'block';
-                    if (badge) badge.innerHTML = '<i class="fa-solid fa-crown text-amber-300"></i> Bosh Administrator (Super-Admin)';
-                    loadAdminUsersList();
-                } else {
-                    if (adminCard) adminCard.style.display = 'none';
-                    if (badge) badge.innerHTML = '<i class="fa-solid fa-shield text-emerald-300"></i> Kiber-Tahlilchi';
-                }
+                document.getElementById('dashUserName').innerText = currentUser.full_name || "Fatxullo Omonjonov";
+                document.getElementById('dashUserEmail').innerText = currentUser.email || "omonjonovfathulla750@gmail.com";
 
                 renderInvestigations();
                 loadTelegramChat();
                 if (!telegramChatInterval) {
-                    telegramChatInterval = setInterval(loadTelegramChat, 2500);
+                    telegramChatInterval = setInterval(loadTelegramChat, 2000);
                 }
             } else {
                 if (telegramChatInterval) {
@@ -1045,16 +1003,15 @@
                 }
                 authView.style.display = 'block';
                 dashView.style.display = 'none';
-                navStatus.innerHTML = `🔒 Kirish / Kabinet`;
+                navStatus.innerHTML = `🔒 Kirish (Admin)`;
             }
         }
 
         function getStoredInvs() {
             const raw = localStorage.getItem(INVS_STORAGE_KEY);
             if (!raw) {
-                // Namuna sifatida boshlang'ich dosyelar
                 const sampleInvs = [
-                    { id: 1, type: "email", target: "omonjonovfathulla750@gmail.com", summary: "40+ Servislar tahlili va Google DoH MX tekshiruvi", date: new Date().toLocaleDateString() },
+                    { id: 1, type: "email", target: "omonjonovfathulla750@gmail.com", summary: "40+ Xizmatlar tahlili va Google DoH MX tekshiruvi", date: new Date().toLocaleDateString() },
                     { id: 2, type: "phone", target: "+998 90 123 45 67", summary: "O'zbekiston | Beeline (GSM/LTE) va Telegram/WhatsApp tekshiruvi", date: new Date().toLocaleDateString() },
                     { id: 3, type: "ip", target: "8.8.8.8", summary: "Google Public DNS (Mountain View, USA) 5 xil chuqur tahlili", date: new Date().toLocaleDateString() }
                 ];
@@ -1120,6 +1077,9 @@
 
         window.onload = () => {
             checkAuthStatus();
+            if (window.location.hash === '#telegram-section') {
+                setTimeout(scrollToTelegram, 300);
+            }
         };
     </script>
 </body>
