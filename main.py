@@ -293,9 +293,12 @@ def background_scanner_thread():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Fon skanerni darhol ishga tushirish
-    t = threading.Thread(target=background_scanner_thread, daemon=True)
-    t.start()
+    # 1. Lokal tarmoqni avtomatik skanerlash fon jarayoni
+    t1 = threading.Thread(target=background_scanner_thread, daemon=True)
+    t1.start()
+    # 2. Telegram bot (@cybernetfo_bot) bilan 2 tomonlama aloqa eshitish jarayoni
+    t2 = threading.Thread(target=telegram_poller_thread, daemon=True)
+    t2.start()
     yield
 
 
@@ -509,6 +512,11 @@ AUTH_DB_PATH = os.path.join(os.path.dirname(__file__), "auth_database.db")
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "8863195525:AAGm7Y0fhLkRv3YxsK9e3-f4GEeAgmnk-sc")
 ADMIN_CHAT_ID = os.getenv("ADMIN_CHAT_ID", "8471528668")
 
+# 2 tomonlama Telegram xabarlar keshi va qulfi
+telegram_messages_lock = threading.Lock()
+telegram_messages_cache = []
+last_telegram_update_id = 0
+
 
 def send_telegram_alert(text: str, chat_id: str = None) -> bool:
     token = TELEGRAM_BOT_TOKEN
@@ -528,6 +536,108 @@ def send_telegram_alert(text: str, chat_id: str = None) -> bool:
     except Exception as e:
         print(f"[Telegram Alert Xatosi] {e}")
         return False
+
+
+def telegram_poller_thread():
+    """Telegram bot (@cybernetfo_bot) ga kelgan barcha xabarlarni doimiy eshitib, sayt bilan 2 tomonlama sinxronlashtirish"""
+    global last_telegram_update_id, telegram_messages_cache
+    time.sleep(2)
+    while True:
+        token = TELEGRAM_BOT_TOKEN
+        if not token:
+            time.sleep(4)
+            continue
+        try:
+            url = f"https://api.telegram.org/bot{token}/getUpdates?offset={last_telegram_update_id + 1}&timeout=3"
+            req = urllib.request.Request(url, headers={"User-Agent": "CyberNetSOC/2.0"})
+            with urllib.request.urlopen(req, timeout=6) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+                if data.get("ok") and data.get("result"):
+                    for update in data["result"]:
+                        uid = update.get("update_id", 0)
+                        if uid > last_telegram_update_id:
+                            last_telegram_update_id = uid
+
+                        msg = update.get("message") or update.get("channel_post")
+                        if not msg:
+                            continue
+
+                        chat_id = str(msg.get("chat", {}).get("id", ""))
+                        sender = msg.get("from", {})
+                        first_name = sender.get("first_name", "")
+                        last_name = sender.get("last_name", "")
+                        sender_name = (first_name + " " + last_name).strip() or "Telegram Foydalanuvchi"
+                        sender_username = sender.get("username", "")
+                        text = msg.get("text", "")
+                        now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+                        # Ma'lumotlar bazasiga yozish
+                        conn = sqlite3.connect(AUTH_DB_PATH)
+                        cur = conn.cursor()
+                        cur.execute("""
+                            INSERT INTO telegram_messages (chat_id, sender_name, sender_username, text, direction, created_at)
+                            VALUES (?, ?, ?, ?, 'incoming', ?)
+                        """, (chat_id, sender_name, sender_username, text, now_str))
+                        msg_id = cur.lastrowid
+                        conn.commit()
+
+                        # Agar foydalanuvchi tasdiqlash kodi so'rayotgan bo'lsa
+                        if text.startswith("/start") or "kod" in text.lower() or "otp" in text.lower():
+                            otp_found = None
+                            user_label = ""
+                            if "reg_" in text:
+                                try:
+                                    u_id = int(text.split("reg_")[1].split()[0])
+                                    cur.execute("SELECT otp_phone, otp_email, full_name FROM users WHERE id = ?", (u_id,))
+                                    u_row = cur.fetchone()
+                                    if u_row:
+                                        otp_found = u_row[0] or u_row[1]
+                                        user_label = u_row[2] or ""
+                                except Exception:
+                                    pass
+
+                            if not otp_found:
+                                cur.execute("SELECT otp_phone, otp_email, full_name, phone FROM users WHERE phone_verified = 0 ORDER BY id DESC LIMIT 1")
+                                pending_user = cur.fetchone()
+                                if pending_user:
+                                    otp_found = pending_user[0] or pending_user[1]
+                                    user_label = pending_user[2] or pending_user[3] or ""
+
+                            if otp_found:
+                                reply_msg = (
+                                    f"🛡️ <b>KIBER-TAHLIL TIZIMI // TASDIQLASH KODI</b>\n\n"
+                                    f"Assalomu alaykum, <b>{sender_name}</b>!\n"
+                                    f"Sizning bir martalik tasdiqlash kodingiz:\n\n"
+                                    f"🔑 <code>{otp_found}</code>\n\n"
+                                    f"Ushbu kodni saytga kiriting va tizimga to'liq kiring."
+                                )
+                                send_telegram_alert(reply_msg, chat_id=chat_id)
+                            else:
+                                reply_msg = (
+                                    f"🛡️ <b>KIBER-TAHLIL // @cybernetfo_bot</b>\n\n"
+                                    f"Assalomu alaykum, <b>{sender_name}</b>!\n"
+                                    f"Xabaringiz sayt boshqaruv panelida qabul qilindi.\n"
+                                    f"Sayt orqali to'g'ridan-to'g'ri aloqa faol."
+                                )
+                                send_telegram_alert(reply_msg, chat_id=chat_id)
+
+                        conn.close()
+
+                        with telegram_messages_lock:
+                            telegram_messages_cache.insert(0, {
+                                "id": msg_id,
+                                "chat_id": chat_id,
+                                "sender_name": sender_name,
+                                "sender_username": sender_username,
+                                "text": text,
+                                "direction": "incoming",
+                                "created_at": now_str
+                            })
+                            if len(telegram_messages_cache) > 80:
+                                telegram_messages_cache.pop()
+        except Exception:
+            time.sleep(2)
+        time.sleep(1.5)
 
 
 def init_auth_db():
@@ -567,6 +677,18 @@ def init_auth_db():
             created_at TEXT
         )
     """)
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS telegram_messages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            chat_id TEXT,
+            sender_name TEXT,
+            sender_username TEXT,
+            text TEXT,
+            direction TEXT,
+            created_at TEXT
+        )
+    """)
+
     # Migratsiya: mavjud jadvalga yangi ustunlarni qo'shish
     cur.execute("PRAGMA table_info(users)")
     existing_cols = [r[1] for r in cur.fetchall()]
@@ -584,6 +706,18 @@ def init_auth_db():
                 cur.execute(f"ALTER TABLE users ADD COLUMN {col_name} {col_type}")
             except Exception:
                 pass
+
+    # Alohida Super-Admin akkauntini tekshirish va yaratish
+    cur.execute("SELECT id FROM users WHERE email = 'admin@cyber.uz' OR role = 'admin'")
+    admin_row = cur.fetchone()
+    if not admin_row:
+        admin_salt = secrets.token_hex(16)
+        admin_pwd_hash = hashlib.sha256(("Admin@2026!SOC" + admin_salt).encode("utf-8")).hexdigest()
+        now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        cur.execute("""
+            INSERT INTO users (email, password_hash, salt, full_name, phone, phone_verified, email_verified, role, created_at)
+            VALUES (?, ?, ?, ?, ?, 1, 1, 'admin', ?)
+        """, ("admin@cyber.uz", admin_pwd_hash, admin_salt, "Bosh Administrator (Admin)", "+998901234567", now_str))
 
     conn.commit()
     conn.close()
@@ -614,6 +748,11 @@ class VerifyOtpModel(BaseModel):
 
 class ResendOtpModel(BaseModel):
     user_id: int
+
+
+class TelegramSendMessageModel(BaseModel):
+    text: str
+    chat_id: str = None
 
 
 class AdminVerifyModel(BaseModel):
@@ -716,9 +855,8 @@ def register_user(data: RegisterModel):
         "user_id": user_id,
         "email": email,
         "phone": phone,
-        "mock_email_otp": otp_email,
-        "mock_sms_otp": otp_phone,
-        "message": "Tasdiqlash kodi Email va SMS orqali yuborildi! Shuningdek @cybernetfo_bot orqali adminga uzatildi."
+        "telegram_bot_url": f"https://t.me/cybernetfo_bot?start=reg_{user_id}",
+        "message": "Tasdiqlash kodi @cybernetfo_bot Telegram boti va adminga yuborildi. Telegram bot orqali kodni oling!"
     }
 
 
@@ -839,21 +977,19 @@ def resend_otp_endpoint(data: ResendOtpModel):
 
     return {
         "success": True,
-        "mock_email_otp": otp_email,
-        "mock_sms_otp": otp_phone,
-        "message": "Yangi tasdiqlash kodlari yuborildi!"
+        "message": "Yangi tasdiqlash kodi Telegram botimiz (@cybernetfo_bot) orqali yuborildi!"
     }
 
 
 # ========================================================
-# 👑 ADMIN BOSHQARUV VA TELEGRAM BOT INTEGRATSIYASI
+# 👑 ADMIN BOSHQARUV VA 2 TOMONLAMA TELEGRAM BOT INTEGRATSIYASI
 # ========================================================
 @app.get("/api/admin/users")
 def admin_list_users():
     conn = sqlite3.connect(AUTH_DB_PATH)
     cur = conn.cursor()
     cur.execute("""
-        SELECT id, email, full_name, phone, phone_verified, email_verified, role, created_at
+        SELECT id, email, full_name, phone, phone_verified, email_verified, role, created_at, otp_phone, otp_email
         FROM users
         ORDER BY id DESC
     """)
@@ -869,7 +1005,8 @@ def admin_list_users():
             "phone_verified": bool(r[4]),
             "email_verified": bool(r[5]),
             "role": r[6] or "analyst",
-            "created_at": r[7] or ""
+            "created_at": r[7] or "",
+            "active_otp": r[8] or r[9] or "-"
         })
     return {
         "success": True,
@@ -877,7 +1014,7 @@ def admin_list_users():
         "telegram_bot": {
             "username": "@cybernetfo_bot",
             "admin_chat_id": ADMIN_CHAT_ID,
-            "status": "Online (Ulangan)"
+            "status": "Online (2 tomonlama jonli sinxron)"
         }
     }
 
@@ -903,15 +1040,76 @@ def admin_verify_user(data: AdminVerifyModel):
     return {"success": True, "message": "Foydalanuvchi holati yangilandi"}
 
 
+@app.get("/api/telegram/chat")
+def get_telegram_chat():
+    """Sayt va Telegram bot o'rtasidagi so'nggi 50 ta xabarni qaytarish (2 tomonlama chat)"""
+    conn = sqlite3.connect(AUTH_DB_PATH)
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT id, chat_id, sender_name, sender_username, text, direction, created_at
+        FROM telegram_messages
+        ORDER BY id DESC LIMIT 50
+    """)
+    rows = cur.fetchall()
+    conn.close()
+    msgs = []
+    for r in reversed(rows):
+        msgs.append({
+            "id": r[0],
+            "chat_id": r[1],
+            "sender_name": r[2],
+            "sender_username": r[3],
+            "text": r[4],
+            "direction": r[5],
+            "created_at": r[6]
+        })
+    return {"success": True, "messages": msgs}
+
+
+@app.post("/api/telegram/chat/send")
+def send_telegram_chat_msg(data: TelegramSendMessageModel):
+    """Saytdan Telegram botga yoki adminga to'g'ridan-to'g'ri xabar jo'natish"""
+    text = (data.text or "").strip()
+    if not text:
+        return JSONResponse(status_code=400, content={"success": False, "message": "Xabar matni bo'sh bo'lmasligi kerak"})
+    target = data.chat_id or ADMIN_CHAT_ID
+    ok = send_telegram_alert(text, chat_id=target)
+    now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    conn = sqlite3.connect(AUTH_DB_PATH)
+    cur = conn.cursor()
+    cur.execute("""
+        INSERT INTO telegram_messages (chat_id, sender_name, sender_username, text, direction, created_at)
+        VALUES (?, 'Sayt Administratori', 'web_admin', ?, 'outgoing', ?)
+    """, (target, text, now_str))
+    msg_id = cur.lastrowid
+    conn.commit()
+    conn.close()
+
+    new_msg = {
+        "id": msg_id,
+        "chat_id": target,
+        "sender_name": "Sayt Administratori",
+        "sender_username": "web_admin",
+        "text": text,
+        "direction": "outgoing",
+        "created_at": now_str
+    }
+    with telegram_messages_lock:
+        telegram_messages_cache.insert(0, new_msg)
+
+    return {"success": ok, "message": new_msg}
+
+
 @app.post("/api/admin/telegram-test")
 def admin_telegram_test():
     now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     msg = (
-        f"🛡️ <b>KIBER-TAHLIL TIZIMI // SINOV XABARI</b>\n\n"
-        f"✅ Telegram bot (@cybernetfo_bot) va Admin paneli integratsiyasi 100% faol!\n"
+        f"🛡️ <b>KIBER-TAHLIL TIZIMI // 2 TOMONLAMA SINOV XABARI</b>\n\n"
+        f"✅ Telegram bot (@cybernetfo_bot) va Sayt boshqaruv paneli to'liq sinxron holatda!\n"
         f"🆔 <b>Admin Chat ID:</b> <code>{ADMIN_CHAT_ID}</code>\n"
         f"⏰ <b>Vaqt:</b> {now_str}\n"
-        f"Status: Barcha ogohlantirishlar va OTP xabarlari to'g'ridan-to'g'ri yetkazilmoqda."
+        f"Endi botga yozgan har qanday xabaringiz saytda ham ko'rinadi va saytdan botga ham xabar jo'nata olasiz."
     )
     ok = send_telegram_alert(msg)
     return {
@@ -925,6 +1123,10 @@ def admin_telegram_test():
 @app.post("/api/auth/login")
 def login_user(data: LoginModel):
     email = data.email.strip().lower()
+    # Alohida super-admin qisqartmasi ('admin' deb kiritilsa ham qabul qilinadi)
+    if email == "admin":
+        email = "admin@cyber.uz"
+
     conn = sqlite3.connect(AUTH_DB_PATH)
     cur = conn.cursor()
     cur.execute("SELECT id, password_hash, salt, full_name, role, phone, phone_verified, email_verified FROM users WHERE email = ?", (email,))
