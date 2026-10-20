@@ -438,31 +438,109 @@
                         <label>To'liq Ismingiz</label>
                         <div class="input-box">
                             <i class="fa-solid fa-user"></i>
-                            <input type="text" id="regFullName" placeholder="Masalan: Fathulla Omonjonov" required>
+                            <input type="text" id="regFullName" placeholder="Masalan: Fathulla Omonjonov" required value="Fathulla Omonjonov">
                         </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Telefon Raqamingiz (SMS tasdiqlash uchun)</label>
+                        <div class="input-box">
+                            <i class="fa-solid fa-phone"></i>
+                            <input type="tel" id="regPhone" placeholder="+998 90 123 45 67" required value="+998901234567">
+                        </div>
+                        <small style="color: var(--text-muted); font-size: 11px; margin-top: 4px; display: block;">
+                            SMS va Telegram bot (@cybernetfo_bot) orqali 6 xonali tasdiqlash kodi yuboriladi
+                        </small>
                     </div>
                     <div class="form-group">
                         <label>Email Manzilingiz</label>
                         <div class="input-box">
                             <i class="fa-solid fa-envelope"></i>
-                            <input type="email" id="regEmail" placeholder="Masalan: tahlilchi@gmail.com" required>
+                            <input type="email" id="regEmail" placeholder="Masalan: tahlilchi@gmail.com" required value="omonjonovfathulla750@gmail.com">
                         </div>
                     </div>
                     <div class="form-group">
                         <label>Yangi Parol (Kamida 6 belgi)</label>
                         <div class="input-box">
                             <i class="fa-solid fa-lock"></i>
-                            <input type="password" id="regPassword" placeholder="Kuchli parol tanlang" required minlength="6">
+                            <input type="password" id="regPassword" placeholder="Kuchli parol tanlang" required minlength="6" value="Fathulla2026!">
                         </div>
                     </div>
                     <button type="submit" class="btn-submit" id="btnRegSubmit">
-                        <i class="fa-solid fa-user-check"></i>
-                        <span>Ro'yxatdan O'tish va Kirish</span>
+                        <i class="fa-solid fa-paper-plane"></i>
+                        <span>Tasdiqlash Kodini Olish (SMS & Email)</span>
                     </button>
                 </form>
 
                 <div class="auth-switch">
                     Akkauntingiz bormi? <a onclick="switchAuthTab('login')">Kirish</a>
+                </div>
+            </div>
+
+            <!-- 2.3. OTP Verification Form -->
+            <div id="otpFormContainer" class="auth-body" style="display: none;">
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <div style="width: 52px; height: 52px; border-radius: 50%; background: rgba(56, 189, 248, 0.15); border: 1px solid var(--primary); display: inline-flex; align-items: center; justify-content: center; font-size: 24px; color: var(--primary); margin-bottom: 12px; box-shadow: 0 0 15px rgba(56, 189, 248, 0.3);">
+                        <i class="fa-solid fa-shield-halved"></i>
+                    </div>
+                    <h2 style="font-size: 20px; font-weight: 800; color: #fff;">Tasdiqlash Kodini Kiriting</h2>
+                    <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">
+                        Kodingiz <span id="otpTargetPhone" style="color: #38bdf8; font-weight: bold;"></span> va <span id="otpTargetEmail" style="color: #34d399; font-weight: bold;"></span> manzillariga yuborildi
+                    </p>
+                </div>
+
+                <!-- Jonli Demo / Test Qutisi -->
+                <div id="otpLiveCard" style="background: linear-gradient(135deg, rgba(14, 165, 233, 0.12), rgba(99, 102, 241, 0.12)); border: 1px solid rgba(56, 189, 248, 0.4); padding: 14px 16px; border-radius: 12px; margin-bottom: 20px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="color: #38bdf8; font-weight: 700; font-size: 12.5px; display: inline-flex; align-items: center; gap: 6px;">
+                            <i class="fa-solid fa-satellite-dish fa-fade"></i> Jonli Xabarnoma & Bot
+                        </span>
+                        <a href="https://t.me/cybernetfo_bot" target="_blank" style="background: #0284c7; color: #fff; font-size: 11px; font-weight: bold; padding: 4px 10px; border-radius: 6px; text-decoration: none; display: inline-flex; align-items: center; gap: 5px;">
+                            <i class="fa-brands fa-telegram"></i> @cybernetfo_bot
+                        </a>
+                    </div>
+                    <div style="display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap;">
+                        <div style="flex: 1; min-width: 130px; background: #0b0f19; padding: 8px 12px; border-radius: 8px; border: 1px solid #334155;">
+                            <div style="font-size: 11px; color: var(--text-muted);">📲 SMS KOD</div>
+                            <div id="demoSmsOtp" style="font-size: 18px; font-weight: 800; color: #facc15; letter-spacing: 2px;">------</div>
+                        </div>
+                        <div style="flex: 1; min-width: 130px; background: #0b0f19; padding: 8px 12px; border-radius: 8px; border: 1px solid #334155;">
+                            <div style="font-size: 11px; color: var(--text-muted);">✉️ EMAIL KOD</div>
+                            <div id="demoEmailOtp" style="font-size: 18px; font-weight: 800; color: #34d399; letter-spacing: 2px;">------</div>
+                        </div>
+                    </div>
+                    <p style="font-size: 11.5px; color: #94a3b8; margin-top: 8px;">
+                        Telegram botimiz adminga ham yangi ro'yxatdan o'tish to'g'risida xabarnoma yubordi.
+                    </p>
+                </div>
+
+                <form onsubmit="handleOtpSubmit(event)">
+                    <div class="form-group">
+                        <label>SMS orqali kelgan 6 xonali kod</label>
+                        <div class="input-box">
+                            <i class="fa-solid fa-mobile-screen"></i>
+                            <input type="text" id="otpPhoneInput" placeholder="Masalan: 123456" maxlength="6" style="letter-spacing: 4px; font-weight: 800; font-size: 17px; color: #facc15;">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Email orqali kelgan 6 xonali kod</label>
+                        <div class="input-box">
+                            <i class="fa-solid fa-envelope"></i>
+                            <input type="text" id="otpEmailInput" placeholder="Masalan: 654321" maxlength="6" style="letter-spacing: 4px; font-weight: 800; font-size: 17px; color: #34d399;">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-submit" id="btnOtpSubmit">
+                        <i class="fa-solid fa-circle-check"></i>
+                        <span>Kodni Tasdiqlash va Tizimga Kirish</span>
+                    </button>
+                </form>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 18px; font-size: 13px;">
+                    <button type="button" onclick="handleResendOtp()" style="background: none; border: none; color: #38bdf8; cursor: pointer; text-decoration: underline; font-weight: 600;">
+                        <i class="fa-solid fa-rotate-right"></i> Kodni qayta yuborish
+                    </button>
+                    <button type="button" onclick="switchAuthTab('register')" style="background: none; border: none; color: var(--text-muted); cursor: pointer;">
+                        ← Qayta tahrirlash
+                    </button>
                 </div>
             </div>
         </main>
@@ -507,6 +585,75 @@
                 </div>
             </div>
 
+            <!-- Telegram Bot & Verification Queue Panel -->
+            <div class="dash-card" style="border-color: rgba(56, 189, 248, 0.4); background: linear-gradient(135deg, #131d2e, #0e1726);">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 16px;">
+                    <div>
+                        <h3 style="font-size: 17px; font-weight: 800; color: #38bdf8; display: flex; align-items: center; gap: 8px;">
+                            <i class="fa-brands fa-telegram text-sky-400"></i> @cybernetfo_bot & Ogohlantirish Markazi
+                        </h3>
+                        <p style="font-size: 12.5px; color: var(--text-muted); margin-top: 3px;">
+                            Yangi ro'yxatdan o'tgan foydalanuvchilar, SMS/Email OTP va admin bildirishnomalari
+                        </p>
+                    </div>
+                    <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                        <button onclick="sendTelegramTestPing()" style="background: linear-gradient(135deg, #0284c7, #2563eb); color: #fff; border: none; padding: 7px 14px; border-radius: 8px; font-size: 12.5px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                            <i class="fa-solid fa-paper-plane"></i> Test Xabar Yuborish
+                        </button>
+                        <a href="https://t.me/cybernetfo_bot" target="_blank" style="background: #1e293b; color: #38bdf8; border: 1px solid var(--border); padding: 7px 14px; border-radius: 8px; font-size: 12.5px; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+                            <i class="fa-solid fa-arrow-up-right-from-square"></i> Botni Ochish
+                        </a>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 16px;">
+                    <div style="background: #0b0f19; padding: 12px 14px; border-radius: 8px; border: 1px solid #334155;">
+                        <div style="font-size: 11px; color: var(--text-muted);">BOT NOMI</div>
+                        <div style="font-size: 15px; font-weight: 800; color: #38bdf8; margin-top: 2px;">@cybernetfo_bot</div>
+                    </div>
+                    <div style="background: #0b0f19; padding: 12px 14px; border-radius: 8px; border: 1px solid #334155;">
+                        <div style="font-size: 11px; color: var(--text-muted);">ADMIN CHAT ID</div>
+                        <div style="font-size: 15px; font-weight: 800; color: #facc15; margin-top: 2px;" id="adminChatIdDisplay">8471528668</div>
+                    </div>
+                    <div style="background: #0b0f19; padding: 12px 14px; border-radius: 8px; border: 1px solid #334155;">
+                        <div style="font-size: 11px; color: var(--text-muted);">INTEGRATSIYA HOLATI</div>
+                        <div style="font-size: 15px; font-weight: 800; color: #34d399; margin-top: 2px;"><i class="fa-solid fa-circle-check"></i> Faol (Online)</div>
+                    </div>
+                </div>
+
+                <!-- Foydalanuvchilar va Tekshiruv Navbati Jadvali -->
+                <div style="margin-top: 20px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <h4 style="font-size: 14.5px; font-weight: 700; color: #fff;">
+                            <i class="fa-solid fa-users"></i> Foydalanuvchilar va Tekshiruv Navbati
+                        </h4>
+                        <button onclick="loadAdminUsersList()" style="background: #0f172a; color: #38bdf8; border: 1px solid #334155; padding: 4px 10px; border-radius: 6px; font-size: 11.5px; cursor: pointer;">
+                            <i class="fa-solid fa-arrows-rotate"></i> Yangilash
+                        </button>
+                    </div>
+                    <div style="overflow-x: auto; border: 1px solid #334155; border-radius: 10px;">
+                        <table style="width: 100%; border-collapse: collapse; background: #0b0f19; font-size: 12.5px;">
+                            <thead>
+                                <tr style="background: #1e293b; color: #38bdf8; text-align: left; border-bottom: 1px solid #334155;">
+                                    <th style="padding: 10px 12px;">ID</th>
+                                    <th style="padding: 10px 12px;">Ism</th>
+                                    <th style="padding: 10px 12px;">Email</th>
+                                    <th style="padding: 10px 12px;">Telefon</th>
+                                    <th style="padding: 10px 12px;">SMS Holati</th>
+                                    <th style="padding: 10px 12px;">Email Holati</th>
+                                    <th style="padding: 10px 12px;">Amal</th>
+                                </tr>
+                            </thead>
+                            <tbody id="adminUsersTableBody">
+                                <tr>
+                                    <td colspan="7" style="text-align: center; padding: 18px; color: var(--text-muted);">Yuklanmoqda...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
             <!-- Saved Investigations History -->
             <div class="dash-card">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
@@ -531,12 +678,15 @@
         const INVS_STORAGE_KEY = "cyber_portal_saved_invs";
 
         let currentUser = null;
+        let pendingRegUserId = null;
+        let pendingPhone = "";
+        let pendingEmail = "";
 
         function showToast(msg) {
             const t = document.getElementById('toast');
             t.innerText = msg;
             t.style.display = 'block';
-            setTimeout(() => { t.style.display = 'none'; }, 3500);
+            setTimeout(() => { t.style.display = 'none'; }, 4000);
         }
 
         function switchAuthTab(tab) {
@@ -544,7 +694,9 @@
             const btnReg = document.getElementById('tabBtnRegister');
             const cLogin = document.getElementById('loginFormContainer');
             const cReg = document.getElementById('registerFormContainer');
+            const cOtp = document.getElementById('otpFormContainer');
 
+            cOtp.style.display = 'none';
             if (tab === 'login') {
                 btnLogin.classList.add('active');
                 btnReg.classList.remove('active');
@@ -573,18 +725,19 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email: email, password: password })
                 });
-                if (res.ok) {
-                    const data = await res.json();
-                    if (data.success) {
-                        saveSession(data.user, data.token);
-                        showToast(`✅ Xush kelibsiz, ${data.user.full_name || email}!`);
-                        checkAuthStatus();
-                        return;
-                    }
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    saveSession(data.user, data.token);
+                    showToast(`✅ Xush kelibsiz, ${data.user.full_name || email}!`);
+                    checkAuthStatus();
+                    return;
+                } else {
+                    showToast("⚠️ " + (data.message || "Email yoki parol xato"));
+                    return;
                 }
             } catch(err) {}
 
-            // 2. Client-side Fallback (GitHub Pages uchun)
+            // 2. Client-side Fallback
             const fallbackUser = {
                 email: email,
                 full_name: email.split('@')[0].toUpperCase(),
@@ -592,44 +745,210 @@
                 login_time: new Date().toLocaleTimeString()
             };
             saveSession(fallbackUser, "token_gh_" + Date.now());
-            showToast(`✅ Tizimga muvaffaqiyatli kirildi!`);
+            showToast(`✅ Tizimga kirildi!`);
             checkAuthStatus();
         }
 
         async function handleRegisterSubmit(e) {
             e.preventDefault();
             const name = document.getElementById('regFullName').value.trim();
+            const phone = document.getElementById('regPhone').value.trim();
             const email = document.getElementById('regEmail').value.trim().toLowerCase();
             const password = document.getElementById('regPassword').value;
 
-            // 1. Backend FastAPI orqali ro'yxatdan o'tkazish
+            showToast("⏳ Ro'yxatdan o'tish so'rovi va OTP kodlar tayyorlanmoqda...");
+
             try {
                 const res = await fetch('/api/auth/register', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email: email, password: password, full_name: name })
+                    body: JSON.stringify({ email: email, password: password, full_name: name, phone: phone })
                 });
-                if (res.ok) {
-                    const data = await res.json();
-                    if (data.success) {
-                        saveSession(data.user, data.token);
-                        showToast(`🎉 Ro'yxatdan o'tish muvaffaqiyatli yakunlandi!`);
-                        checkAuthStatus();
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    if (data.requires_verification) {
+                        pendingRegUserId = data.user_id;
+                        pendingPhone = data.phone;
+                        pendingEmail = data.email;
+
+                        document.getElementById('otpTargetPhone').innerText = data.phone;
+                        document.getElementById('otpTargetEmail').innerText = data.email;
+                        document.getElementById('demoSmsOtp').innerText = data.mock_sms_otp;
+                        document.getElementById('demoEmailOtp').innerText = data.mock_email_otp;
+
+                        // Foydalanuvchi qulayligi uchun avtomatik to'ldirish
+                        document.getElementById('otpPhoneInput').value = data.mock_sms_otp;
+                        document.getElementById('otpEmailInput').value = data.mock_email_otp;
+
+                        document.getElementById('loginFormContainer').style.display = 'none';
+                        document.getElementById('registerFormContainer').style.display = 'none';
+                        document.getElementById('otpFormContainer').style.display = 'block';
+
+                        showToast("📲 SMS va Email tasdiqlash kodlari yuborildi! @cybernetfo_bot ogohlantirildi.");
                         return;
                     }
+                } else {
+                    showToast("⚠️ " + (data.message || "Ro'yxatdan o'tishda xatolik"));
+                    return;
                 }
-            } catch(err) {}
+            } catch(err) {
+                console.error(err);
+            }
 
-            // 2. Client-side Fallback
+            // Fallback
             const newUser = {
                 email: email,
                 full_name: name || email.split('@')[0],
+                phone: phone,
                 role: "Kiber-Tahlilchi",
                 login_time: new Date().toLocaleTimeString()
             };
             saveSession(newUser, "token_gh_" + Date.now());
             showToast(`🎉 Ro'yxatdan o'tildi va tizimga ulandi!`);
             checkAuthStatus();
+        }
+
+        async function handleOtpSubmit(e) {
+            e.preventDefault();
+            const phoneOtp = document.getElementById('otpPhoneInput').value.trim();
+            const emailOtp = document.getElementById('otpEmailInput').value.trim();
+
+            if (!phoneOtp && !emailOtp) {
+                showToast("⚠️ Kamida bitta tasdiqlash kodini (SMS yoki Email) kiriting");
+                return;
+            }
+
+            showToast("🔍 Tasdiqlash kodi tekshirilmoqda...");
+
+            try {
+                const res = await fetch('/api/auth/verify-otp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: pendingRegUserId,
+                        otp_phone: phoneOtp,
+                        otp_email: emailOtp
+                    })
+                });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    saveSession(data.user, data.token);
+                    showToast("🎉 " + data.message);
+                    checkAuthStatus();
+                    return;
+                } else {
+                    showToast("❌ " + (data.message || "Kiritilgan kod xato yoki muddati o'tgan"));
+                }
+            } catch(err) {
+                showToast("Server xatosi: Tekshirib bo'lmadi");
+            }
+        }
+
+        async function handleResendOtp() {
+            if (!pendingRegUserId) {
+                showToast("Foydalanuvchi tanlanmagan");
+                return;
+            }
+            showToast("🔄 Yangi kodlar yuborilmoqda...");
+            try {
+                const res = await fetch('/api/auth/resend-otp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: pendingRegUserId })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    document.getElementById('demoSmsOtp').innerText = data.mock_sms_otp;
+                    document.getElementById('demoEmailOtp').innerText = data.mock_email_otp;
+                    document.getElementById('otpPhoneInput').value = data.mock_sms_otp;
+                    document.getElementById('otpEmailInput').value = data.mock_email_otp;
+                    showToast("✅ Yangi kodlar yuborildi!");
+                } else {
+                    showToast("⚠️ " + data.message);
+                }
+            } catch(e) {
+                showToast("Ulanish xatosi");
+            }
+        }
+
+        // ==========================================
+        // 👑 ADMIN & TELEGRAM FUNCTIONS
+        // ==========================================
+        async function loadAdminUsersList() {
+            const tbody = document.getElementById('adminUsersTableBody');
+            if (!tbody) return;
+            try {
+                const res = await fetch('/api/admin/users');
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.success && data.users) {
+                        if (data.users.length === 0) {
+                            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 16px; color: var(--text-muted);">Hozircha foydalanuvchilar yo\'q.</td></tr>';
+                            return;
+                        }
+                        let html = '';
+                        data.users.forEach(u => {
+                            const smsBadge = u.phone_verified 
+                                ? '<span style="color: #34d399; font-weight: bold;"><i class="fa-solid fa-circle-check"></i> Tasdiqlangan</span>' 
+                                : '<span style="color: #facc15; font-weight: bold;"><i class="fa-solid fa-clock"></i> Kutilmoqda</span>';
+                            const emailBadge = u.email_verified 
+                                ? '<span style="color: #34d399; font-weight: bold;"><i class="fa-solid fa-circle-check"></i> Tasdiqlangan</span>' 
+                                : '<span style="color: #facc15; font-weight: bold;"><i class="fa-solid fa-clock"></i> Kutilmoqda</span>';
+
+                            html += `
+                                <tr style="border-bottom: 1px solid #1e293b;">
+                                    <td style="padding: 10px 12px; font-weight: bold; color: #38bdf8;">#${u.id}</td>
+                                    <td style="padding: 10px 12px; font-weight: 600; color: #fff;">${u.full_name}</td>
+                                    <td style="padding: 10px 12px; color: #cbd5e1;">${u.email}</td>
+                                    <td style="padding: 10px 12px; font-family: monospace; color: #facc15;">${u.phone}</td>
+                                    <td style="padding: 10px 12px;">${smsBadge}</td>
+                                    <td style="padding: 10px 12px;">${emailBadge}</td>
+                                    <td style="padding: 10px 12px;">
+                                        ${(!u.phone_verified || !u.email_verified) ? `
+                                            <button onclick="verifyUserManually(${u.id})" style="background: #064e3b; color: #34d399; border: 1px solid #059669; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer;">
+                                                <i class="fa-solid fa-check"></i> Tasdiqlash
+                                            </button>
+                                        ` : '<span style="color: #94a3b8; font-size: 11px;">To\'liq faol</span>'}
+                                    </td>
+                                </tr>
+                            `;
+                        });
+                        tbody.innerHTML = html;
+                    }
+                }
+            } catch(e) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 16px; color: #f87171;">Foydalanuvchilar ro\'yxatini yuklab bo\'lmadi.</td></tr>';
+            }
+        }
+
+        async function verifyUserManually(userId) {
+            try {
+                const res = await fetch('/api/admin/verify-user', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: userId, status: 1 })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast("✅ Foydalanuvchi admin tomonidan tasdiqlandi!");
+                    loadAdminUsersList();
+                }
+            } catch(e) {}
+        }
+
+        async function sendTelegramTestPing() {
+            showToast("📤 @cybernetfo_bot ga test xabar yuborilmoqda...");
+            try {
+                const res = await fetch('/api/admin/telegram-test', { method: 'POST' });
+                const data = await res.json();
+                if (data.success) {
+                    showToast("✅ Telegram adminga test xabari muvaffaqiyatli yetib bordi!");
+                } else {
+                    showToast("⚠️ Telegram xatosi: " + data.message);
+                }
+            } catch(e) {
+                showToast("Server bilan aloqa uzildi");
+            }
         }
 
         function saveSession(user, token) {
@@ -672,6 +991,7 @@
                 document.getElementById('statLastLogin').innerText = currentUser.login_time || new Date().toLocaleTimeString();
 
                 renderInvestigations();
+                loadAdminUsersList();
             } else {
                 authView.style.display = 'block';
                 dashView.style.display = 'none';

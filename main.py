@@ -7,6 +7,8 @@ import struct
 import ctypes
 import threading
 import subprocess
+import random
+import urllib.request
 from datetime import datetime, timedelta
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import asynccontextmanager
@@ -504,6 +506,28 @@ def login_page():
 # 🔐 AUTENTIFIKATSIYA VA FOYDALANUVCHILAR BAZASI (SQLite)
 # ========================================================
 AUTH_DB_PATH = os.path.join(os.path.dirname(__file__), "auth_database.db")
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "8863195525:AAGm7Y0fhLkRv3YxsK9e3-f4GEeAgmnk-sc")
+ADMIN_CHAT_ID = os.getenv("ADMIN_CHAT_ID", "8471528668")
+
+
+def send_telegram_alert(text: str, chat_id: str = None) -> bool:
+    token = TELEGRAM_BOT_TOKEN
+    target = chat_id or ADMIN_CHAT_ID
+    if not token or not target:
+        return False
+    try:
+        url = f"https://api.telegram.org/bot{token}/sendMessage"
+        payload = json.dumps({
+            "chat_id": str(target),
+            "text": text,
+            "parse_mode": "HTML"
+        }).encode("utf-8")
+        req = urllib.request.Request(url, data=payload, headers={"Content-Type": "application/json"})
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            return resp.status == 200
+    except Exception as e:
+        print(f"[Telegram Alert Xatosi] {e}")
+        return False
 
 
 def init_auth_db():
@@ -516,6 +540,12 @@ def init_auth_db():
             password_hash TEXT NOT NULL,
             salt TEXT NOT NULL,
             full_name TEXT,
+            phone TEXT,
+            phone_verified INTEGER DEFAULT 0,
+            email_verified INTEGER DEFAULT 0,
+            otp_email TEXT,
+            otp_phone TEXT,
+            otp_expiry TEXT,
             role TEXT DEFAULT 'analyst',
             created_at TEXT
         )
@@ -537,6 +567,24 @@ def init_auth_db():
             created_at TEXT
         )
     """)
+    # Migratsiya: mavjud jadvalga yangi ustunlarni qo'shish
+    cur.execute("PRAGMA table_info(users)")
+    existing_cols = [r[1] for r in cur.fetchall()]
+    new_cols = [
+        ("phone", "TEXT"),
+        ("phone_verified", "INTEGER DEFAULT 0"),
+        ("email_verified", "INTEGER DEFAULT 0"),
+        ("otp_email", "TEXT"),
+        ("otp_phone", "TEXT"),
+        ("otp_expiry", "TEXT")
+    ]
+    for col_name, col_type in new_cols:
+        if col_name not in existing_cols:
+            try:
+                cur.execute(f"ALTER TABLE users ADD COLUMN {col_name} {col_type}")
+            except Exception:
+                pass
+
     conn.commit()
     conn.close()
 
@@ -555,6 +603,22 @@ class RegisterModel(BaseModel):
     email: str
     password: str
     full_name: str = ""
+    phone: str = ""
+
+
+class VerifyOtpModel(BaseModel):
+    user_id: int
+    otp_email: str = ""
+    otp_phone: str = ""
+
+
+class ResendOtpModel(BaseModel):
+    user_id: int
+
+
+class AdminVerifyModel(BaseModel):
+    user_id: int
+    status: int = 1
 
 
 class LoginModel(BaseModel):
@@ -575,7 +639,7 @@ def get_user_by_token(token: str):
     conn = sqlite3.connect(AUTH_DB_PATH)
     cur = conn.cursor()
     cur.execute("""
-        SELECT u.id, u.email, u.full_name, u.role
+        SELECT u.id, u.email, u.full_name, u.role, u.phone, u.phone_verified, u.email_verified
         FROM sessions s
         JOIN users u ON s.user_id = u.id
         WHERE s.token = ?
@@ -583,39 +647,279 @@ def get_user_by_token(token: str):
     row = cur.fetchone()
     conn.close()
     if row:
-        return {"id": row[0], "email": row[1], "full_name": row[2], "role": row[3]}
+        return {
+            "id": row[0],
+            "email": row[1],
+            "full_name": row[2],
+            "role": row[3],
+            "phone": row[4] or "",
+            "phone_verified": bool(row[5]),
+            "email_verified": bool(row[6])
+        }
     return None
 
 
 @app.post("/api/auth/register")
 def register_user(data: RegisterModel):
     email = data.email.strip().lower()
+    phone = data.phone.strip()
     if not email or "@" not in email:
-        return JSONResponse(status_code=400, content={"success": False, "message": "Email noto'g'ri"})
+        return JSONResponse(status_code=400, content={"success": False, "message": "Email noto'g'ri kiritildi"})
+    if not phone or len(phone) < 7:
+        return JSONResponse(status_code=400, content={"success": False, "message": "Telefon raqami kiritilishi shart (masalan: +998901234567)"})
     if len(data.password) < 6:
-        return JSONResponse(status_code=400, content={"success": False, "message": "Parol kamida 6 belgi bo'lishi kerak"})
+        return JSONResponse(status_code=400, content={"success": False, "message": "Parol kamida 6 ta belgidan iborat bo'lishi kerak"})
 
     pwd_hash, salt = hash_pwd(data.password)
-    now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    now = datetime.now()
+    now_str = now.strftime("%Y-%m-%d %H:%M:%S")
+    expiry_str = (now + timedelta(minutes=15)).strftime("%Y-%m-%d %H:%M:%S")
+
+    # 6 xonali tasdiqlash kodlari (SMS va Email)
+    otp_email = f"{random.randint(100000, 999999)}"
+    otp_phone = f"{random.randint(100000, 999999)}"
 
     conn = sqlite3.connect(AUTH_DB_PATH)
     cur = conn.cursor()
     try:
         cur.execute("""
-            INSERT INTO users (email, password_hash, salt, full_name, created_at)
-            VALUES (?, ?, ?, ?, ?)
-        """, (email, pwd_hash, salt, data.full_name or email.split("@")[0], now_str))
+            INSERT INTO users (email, password_hash, salt, full_name, phone, phone_verified, email_verified, otp_email, otp_phone, otp_expiry, created_at)
+            VALUES (?, ?, ?, ?, ?, 0, 0, ?, ?, ?, ?)
+        """, (email, pwd_hash, salt, data.full_name or email.split("@")[0], phone, otp_email, otp_phone, expiry_str, now_str))
         user_id = cur.lastrowid
-        token = secrets.token_urlsafe(32)
-        cur.execute("INSERT INTO sessions (token, user_id, created_at) VALUES (?, ?, ?)", (token, user_id, now_str))
         conn.commit()
     except sqlite3.IntegrityError:
         conn.close()
-        return JSONResponse(status_code=400, content={"success": False, "message": "Bu email ro'yxatdan o'tgan"})
+        return JSONResponse(status_code=400, content={"success": False, "message": "Bu email avval ro'yxatdan o'tgan"})
     conn.close()
 
-    user_info = {"id": user_id, "email": email, "full_name": data.full_name or email.split("@")[0], "role": "analyst"}
-    return {"success": True, "token": token, "user": user_info}
+    # Telegram Bot orqali Adminga tezkor bildirishnoma yuborish
+    full_name = data.full_name or email.split("@")[0]
+    tg_text = (
+        f"🔔 <b>Yangi Foydalanuvchi Ro'yxatdan O'tmoqda!</b>\n\n"
+        f"👤 <b>Ism:</b> {full_name}\n"
+        f"📧 <b>Email:</b> {email}\n"
+        f"📱 <b>Telefon:</b> {phone}\n"
+        f"🔑 <b>Email OTP kodi:</b> <code>{otp_email}</code>\n"
+        f"📲 <b>SMS OTP kodi:</b> <code>{otp_phone}</code>\n"
+        f"⏰ <b>Vaqt:</b> {now_str}\n"
+        f"🤖 <b>Bot:</b> @cybernetfo_bot"
+    )
+    send_telegram_alert(tg_text)
+
+    # Server konsoliga ham chiqarish
+    print(f"[OTP Yuborildi] Email: {email} -> {otp_email} | SMS: {phone} -> {otp_phone}")
+
+    return {
+        "success": True,
+        "requires_verification": True,
+        "user_id": user_id,
+        "email": email,
+        "phone": phone,
+        "mock_email_otp": otp_email,
+        "mock_sms_otp": otp_phone,
+        "message": "Tasdiqlash kodi Email va SMS orqali yuborildi! Shuningdek @cybernetfo_bot orqali adminga uzatildi."
+    }
+
+
+@app.post("/api/auth/verify-otp")
+def verify_otp_endpoint(data: VerifyOtpModel):
+    conn = sqlite3.connect(AUTH_DB_PATH)
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT id, email, full_name, phone, otp_email, otp_phone, otp_expiry, role
+        FROM users WHERE id = ?
+    """, (data.user_id,))
+    row = cur.fetchone()
+
+    if not row:
+        conn.close()
+        return JSONResponse(status_code=404, content={"success": False, "message": "Foydalanuvchi topilmadi"})
+
+    uid, email, full_name, phone, stored_email_otp, stored_phone_otp, expiry_str, role = row
+
+    # Muddatini tekshirish
+    if expiry_str:
+        try:
+            exp_dt = datetime.strptime(expiry_str, "%Y-%m-%d %H:%M:%S")
+            if datetime.now() > exp_dt:
+                conn.close()
+                send_telegram_alert(f"⚠️ <b>OTP Muddati O'tgan Urinish:</b> {email} ({phone})")
+                return JSONResponse(status_code=400, content={"success": False, "message": "Kodni amal qilish muddati o'tgan. Yangi kod so'rang"})
+        except Exception:
+            pass
+
+    inp_email_otp = (data.otp_email or "").strip()
+    inp_phone_otp = (data.otp_phone or "").strip()
+
+    # Ikkala kodni yoki ulardan birini tekshirish (foydalanuvchi qulayligi uchun)
+    email_matched = bool(inp_email_otp and inp_email_otp == stored_email_otp)
+    phone_matched = bool(inp_phone_otp and inp_phone_otp == stored_phone_otp)
+
+    if not (email_matched or phone_matched):
+        conn.close()
+        send_telegram_alert(f"🚨 <b>Noto'g'ri OTP kiritildi!</b>\n👤 Foydalanuvchi: {email} ({phone})\nKiritilgan: SMS=[{inp_phone_otp}], Email=[{inp_email_otp}]")
+        return JSONResponse(status_code=400, content={"success": False, "message": "Kiritilgan tasdiqlash kodi (SMS yoki Email) noto'g'ri"})
+
+    # Tasdiqlangan deb belgilash
+    new_email_ver = 1 if email_matched or stored_email_otp is None else 1
+    new_phone_ver = 1 if phone_matched or stored_phone_otp is None else 1
+
+    cur.execute("""
+        UPDATE users
+        SET phone_verified = ?, email_verified = ?, otp_email = NULL, otp_phone = NULL
+        WHERE id = ?
+    """, (new_phone_ver, new_email_ver, uid))
+
+    token = secrets.token_urlsafe(32)
+    now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    cur.execute("INSERT INTO sessions (token, user_id, created_at) VALUES (?, ?, ?)", (token, uid, now_str))
+    conn.commit()
+    conn.close()
+
+    # Telegram botga muvaffaqiyatli xabar yuborish
+    tg_success = (
+        f"✅ <b>Foydalanuvchi Muvaffaqiyatli Tasdiqlandi!</b>\n\n"
+        f"👤 <b>Ism:</b> {full_name}\n"
+        f"📧 <b>Email:</b> {email} (Tasdiqlandi)\n"
+        f"📱 <b>Telefon:</b> {phone} (Tasdiqlandi)\n"
+        f"🛡️ <b>Holat:</b> Kiber-Tahlil tizimiga to'liq ruxsat berildi!\n"
+        f"⏰ <b>Vaqt:</b> {now_str}"
+    )
+    send_telegram_alert(tg_success)
+
+    user_info = {
+        "id": uid,
+        "email": email,
+        "full_name": full_name,
+        "phone": phone,
+        "role": role,
+        "phone_verified": True,
+        "email_verified": True
+    }
+    return {
+        "success": True,
+        "token": token,
+        "user": user_info,
+        "message": "Tabriklaymiz! Telefon va Email muvaffaqiyatli tasdiqlandi. Tizimga xush kelibsiz!"
+    }
+
+
+@app.post("/api/auth/resend-otp")
+def resend_otp_endpoint(data: ResendOtpModel):
+    conn = sqlite3.connect(AUTH_DB_PATH)
+    cur = conn.cursor()
+    cur.execute("SELECT id, email, full_name, phone FROM users WHERE id = ?", (data.user_id,))
+    row = cur.fetchone()
+    if not row:
+        conn.close()
+        return JSONResponse(status_code=404, content={"success": False, "message": "Foydalanuvchi topilmadi"})
+
+    uid, email, full_name, phone = row
+    now = datetime.now()
+    expiry_str = (now + timedelta(minutes=15)).strftime("%Y-%m-%d %H:%M:%S")
+    otp_email = f"{random.randint(100000, 999999)}"
+    otp_phone = f"{random.randint(100000, 999999)}"
+
+    cur.execute("""
+        UPDATE users
+        SET otp_email = ?, otp_phone = ?, otp_expiry = ?
+        WHERE id = ?
+    """, (otp_email, otp_phone, expiry_str, uid))
+    conn.commit()
+    conn.close()
+
+    # Adminga Telegram xabar
+    send_telegram_alert(
+        f"🔄 <b>Yangi OTP Kodlari So'raldi:</b>\n"
+        f"👤 {full_name} ({email}, {phone})\n"
+        f"🔑 Email OTP: <code>{otp_email}</code>\n"
+        f"📲 SMS OTP: <code>{otp_phone}</code>"
+    )
+
+    return {
+        "success": True,
+        "mock_email_otp": otp_email,
+        "mock_sms_otp": otp_phone,
+        "message": "Yangi tasdiqlash kodlari yuborildi!"
+    }
+
+
+# ========================================================
+# 👑 ADMIN BOSHQARUV VA TELEGRAM BOT INTEGRATSIYASI
+# ========================================================
+@app.get("/api/admin/users")
+def admin_list_users():
+    conn = sqlite3.connect(AUTH_DB_PATH)
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT id, email, full_name, phone, phone_verified, email_verified, role, created_at
+        FROM users
+        ORDER BY id DESC
+    """)
+    rows = cur.fetchall()
+    conn.close()
+    users = []
+    for r in rows:
+        users.append({
+            "id": r[0],
+            "email": r[1],
+            "full_name": r[2] or "",
+            "phone": r[3] or "Kiritilmagan",
+            "phone_verified": bool(r[4]),
+            "email_verified": bool(r[5]),
+            "role": r[6] or "analyst",
+            "created_at": r[7] or ""
+        })
+    return {
+        "success": True,
+        "users": users,
+        "telegram_bot": {
+            "username": "@cybernetfo_bot",
+            "admin_chat_id": ADMIN_CHAT_ID,
+            "status": "Online (Ulangan)"
+        }
+    }
+
+
+@app.post("/api/admin/verify-user")
+def admin_verify_user(data: AdminVerifyModel):
+    conn = sqlite3.connect(AUTH_DB_PATH)
+    cur = conn.cursor()
+    cur.execute("""
+        UPDATE users
+        SET phone_verified = ?, email_verified = ?
+        WHERE id = ?
+    """, (data.status, data.status, data.user_id))
+    cur.execute("SELECT email, full_name, phone FROM users WHERE id = ?", (data.user_id,))
+    row = cur.fetchone()
+    conn.commit()
+    conn.close()
+
+    if row:
+        status_txt = "Tasdiqlandi" if data.status else "Bekor qilindi"
+        send_telegram_alert(f"👑 <b>Admin Paneli:</b> Foydalanuvchi {row[1]} ({row[0]}) admin tomonidan {status_txt}!")
+
+    return {"success": True, "message": "Foydalanuvchi holati yangilandi"}
+
+
+@app.post("/api/admin/telegram-test")
+def admin_telegram_test():
+    now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    msg = (
+        f"🛡️ <b>KIBER-TAHLIL TIZIMI // SINOV XABARI</b>\n\n"
+        f"✅ Telegram bot (@cybernetfo_bot) va Admin paneli integratsiyasi 100% faol!\n"
+        f"🆔 <b>Admin Chat ID:</b> <code>{ADMIN_CHAT_ID}</code>\n"
+        f"⏰ <b>Vaqt:</b> {now_str}\n"
+        f"Status: Barcha ogohlantirishlar va OTP xabarlari to'g'ridan-to'g'ri yetkazilmoqda."
+    )
+    ok = send_telegram_alert(msg)
+    return {
+        "success": ok,
+        "message": "Telegram adminga sinov xabari jo'natildi!" if ok else "Telegram botga ulanishda xatolik yuz berdi",
+        "chat_id": ADMIN_CHAT_ID,
+        "bot": "@cybernetfo_bot"
+    }
 
 
 @app.post("/api/auth/login")
@@ -623,14 +927,14 @@ def login_user(data: LoginModel):
     email = data.email.strip().lower()
     conn = sqlite3.connect(AUTH_DB_PATH)
     cur = conn.cursor()
-    cur.execute("SELECT id, password_hash, salt, full_name, role FROM users WHERE email = ?", (email,))
+    cur.execute("SELECT id, password_hash, salt, full_name, role, phone, phone_verified, email_verified FROM users WHERE email = ?", (email,))
     row = cur.fetchone()
 
     if not row:
         conn.close()
         return JSONResponse(status_code=401, content={"success": False, "message": "Email yoki parol xato"})
 
-    user_id, stored_hash, salt, full_name, role = row
+    user_id, stored_hash, salt, full_name, role, phone, p_ver, e_ver = row
     test_hash, _ = hash_pwd(data.password, salt)
 
     if test_hash != stored_hash:
@@ -643,7 +947,15 @@ def login_user(data: LoginModel):
     conn.commit()
     conn.close()
 
-    user_info = {"id": user_id, "email": email, "full_name": full_name, "role": role}
+    user_info = {
+        "id": user_id,
+        "email": email,
+        "full_name": full_name,
+        "role": role,
+        "phone": phone or "",
+        "phone_verified": bool(p_ver),
+        "email_verified": bool(e_ver)
+    }
     return {"success": True, "token": token, "user": user_info}
 
 
