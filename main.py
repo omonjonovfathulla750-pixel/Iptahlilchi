@@ -1078,104 +1078,79 @@ def send_telegram_alert(text: str, chat_id: str = None) -> bool:
 
 
 
+def delete_telegram_webhook_if_any():
+    """Begona yoki zararli webhooklarni (masalan panel.void.ltd) majburiy o'chirib, botni erkin holatga qaytarish"""
+    token = TELEGRAM_BOT_TOKEN
+    if not token:
+        return
+    try:
+        url = f"https://api.telegram.org/bot{token}/deleteWebhook?drop_pending_updates=True"
+        req = urllib.request.Request(url, headers={"User-Agent": "CyberNetSOC/2.0"})
+        with urllib.request.urlopen(req, timeout=6) as resp:
+            pass
+    except Exception:
+        pass
+
+
 def telegram_poller_thread():
-
-    """Telegram bot (@cybernetfo_bot) ga kelgan barcha xabarlarni doimiy eshitib, sayt bilan 2 tomonlama sinxronlashtirish"""
-
+    """Telegram bot (@cybernetfo_bot) ga kelgan xabarlarni faqat tasdiqlangan Admin (Fatxullo) bilan 2 tomonlama sinxronlashtirish"""
     global last_telegram_update_id, telegram_messages_cache
 
-    time.sleep(2)
+    time.sleep(1)
+    delete_telegram_webhook_if_any()
 
     while True:
-
         token = TELEGRAM_BOT_TOKEN
-
         if not token:
-
             time.sleep(4)
-
             continue
 
         try:
-
             url = f"https://api.telegram.org/bot{token}/getUpdates?offset={last_telegram_update_id + 1}&timeout=3"
-
             req = urllib.request.Request(url, headers={"User-Agent": "CyberNetSOC/2.0"})
-
             with urllib.request.urlopen(req, timeout=6) as resp:
-
                 data = json.loads(resp.read().decode("utf-8"))
-
                 if data.get("ok") and data.get("result"):
-
                     for update in data["result"]:
-
                         uid = update.get("update_id", 0)
-
                         if uid > last_telegram_update_id:
-
                             last_telegram_update_id = uid
 
-
-
                         msg = update.get("message") or update.get("channel_post")
-
                         if not msg:
-
                             continue
 
-
-
                         chat_id = str(msg.get("chat", {}).get("id", ""))
+                        # 🛡️ XAVFSIZLIK VA SPAM HIMOYA:
+                        # Faqat tasdiqlangan Admin (Fatxullo: 8471528668) xabarlari qabul qilinadi
+                        # Begona saytlar, spam botlar yoki reklama tarqatuvchilar mutlaqo bloklanadi
+                        if chat_id != str(ADMIN_CHAT_ID):
+                            continue
 
                         sender = msg.get("from") or {}
-
                         first_name = sender.get("first_name", "")
-
                         last_name = sender.get("last_name", "")
-
-                        sender_name = (first_name + " " + last_name).strip() or "Telegram Foydalanuvchi"
-
+                        sender_name = (first_name + " " + last_name).strip() or "Fatxullo Omonjonov"
                         sender_username = sender.get("username", "")
-
                         text_content = msg.get("text") or msg.get("caption") or "[Media/Fayl]"
-
                         msg_date = msg.get("date", 0)
-
                         now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-
-
                         # Ma'lumotlar bazasiga yozish
-
                         try:
-
                             conn = sqlite3.connect(AUTH_DB_PATH, timeout=10)
-
                             cur = conn.cursor()
-
                             cur.execute("""
-
                                 INSERT INTO telegram_messages (chat_id, sender_name, sender_username, text, direction, created_at)
-
                                 VALUES (?, ?, ?, ?, 'incoming', ?)
-
                             """, (chat_id, sender_name, sender_username, text_content, now_str))
-
                             msg_id = cur.lastrowid
-
                             conn.commit()
-
                             conn.close()
-
                         except Exception as db_err:
-
                             msg_id = int(time.time())
 
-
-
                         # Agar xabar yangi kelgan bo'lsa (oxirgi 60 soniya ichida), bot orqali tasdiq qaytarish
-
                         if time.time() - msg_date < 60:
                             reply_lines = [
                                 "🛰️ <b>KIBER-TAHLIL // ALOQA PUNKTI</b>",
@@ -1188,34 +1163,25 @@ def telegram_poller_thread():
                             ]
                             send_telegram_alert(chr(10).join(reply_lines), chat_id=chat_id)
 
-
-
                         with telegram_messages_lock:
-
                             telegram_messages_cache.append({
-
                                 "id": msg_id,
-
                                 "chat_id": chat_id,
-
                                 "sender_name": sender_name,
-
                                 "sender_username": sender_username,
-
                                 "text": text_content,
-
                                 "direction": "incoming",
-
                                 "created_at": now_str
-
                             })
-
                             if len(telegram_messages_cache) > 100:
-
                                 telegram_messages_cache.pop(0)
 
+        except urllib.error.HTTPError as he:
+            # Agar 409 Conflict (webhook faol) bo'lsa, avtomatik tozalash
+            if he.code == 409:
+                delete_telegram_webhook_if_any()
+            time.sleep(2)
         except Exception:
-
             time.sleep(2)
 
         time.sleep(1.2)
