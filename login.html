@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Telegram Aloqa Punkti & Tahlilchi Kabineti | Kiber-Tahlil Portali</title>
+    <title>Telegram Aloqa Punkti & Kiber-Tahlil Markazi</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
@@ -463,60 +463,15 @@
                     <i class="fa-solid fa-globe text-cyan-400"></i>
                     <span>Domen & DNS</span>
                 </a>
-                <a href="#telegram-section" class="nav-btn tg-highlight" onclick="scrollToTelegram()" title="2 Tomonlama Telegram Aloqa Punkti">
+                <a href="#telegram-section" class="nav-btn active tg-highlight" onclick="scrollToTelegram()" title="2 Tomonlama Telegram Aloqa Punkti">
                     <i class="fa-brands fa-telegram"></i>
                     <span>Telegram Aloqa Punkti</span>
-                </a>
-                <a href="login.html" class="nav-btn active" title="Tizimga kirish va kabinet">
-                    <i class="fa-solid fa-user-shield text-indigo-400"></i>
-                    <span id="navUserStatus">Kirish / Kabinet</span>
                 </a>
             </nav>
         </header>
 
-        <!-- 2. Auth View: Strict Administrator Portal (No Registration) -->
-        <main id="authView" class="auth-wrapper">
-            <div class="auth-header">
-                <div class="auth-badge">
-                    <i class="fa-solid fa-shield-halved"></i> Maxsus Xususiy Kirish
-                </div>
-                <h2 style="font-size: 20px; font-weight: 800; color: #fff;">Administrator Portali</h2>
-                <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">
-                    Ushbu tizim shaxsiy rejimda ishlaydi. Ochiq ro'yxatdan o'tish yopiq. Faqat vakolatli Administrator foydalanishi mumkin.
-                </p>
-            </div>
-
-            <div class="auth-body">
-                <form onsubmit="handleLoginSubmit(event)">
-                    <div class="form-group">
-                        <label>Administrator Logini / Email</label>
-                        <div class="input-box">
-                            <i class="fa-solid fa-user-shield"></i>
-                            <input type="text" id="loginEmail" placeholder="omonjonovfathulla750@gmail.com yoki admin" required value="omonjonovfathulla750@gmail.com">
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>Maxfiy Parol</label>
-                        <div class="input-box">
-                            <i class="fa-solid fa-key"></i>
-                            <input type="password" id="loginPassword" placeholder="Parolingizni kiriting" required value="Fathulla2026!">
-                        </div>
-                    </div>
-                    <button type="submit" class="btn-submit" id="btnLoginSubmit">
-                        <i class="fa-solid fa-lock-open"></i>
-                        <span>Tizimga Kirish (Administrator)</span>
-                    </button>
-                </form>
-
-                <div style="background: rgba(56, 189, 248, 0.08); border: 1px dashed rgba(56, 189, 248, 0.35); border-radius: 10px; padding: 12px 14px; margin-top: 20px; font-size: 12px; color: #cbd5e1; text-align: center;">
-                    <i class="fa-solid fa-circle-check text-sky-400"></i> <b>Ega Ma'lumotlari:</b> Fatxullo Omonjonov<br>
-                    Login: <code style="color: #38bdf8; font-weight: bold;">omonjonovfathulla750@gmail.com</code> | Parol: <code style="color: #facc15; font-weight: bold;">Fathulla2026!</code>
-                </div>
-            </div>
-        </main>
-
-        <!-- 3. Dashboard View (When Logged In) -->
-        <main id="dashboardView" class="dashboard-wrapper">
+        <!-- Asosiy Dashboard & Aloqa Punkti (Erkin kirish, hech qanday login/parol so'ralmaydi) -->
+        <main id="dashboardView" class="dashboard-wrapper" style="display: block;">
             <!-- User Status Card -->
             <div class="dash-card">
                 <div class="user-hero">
@@ -533,10 +488,9 @@
                         </div>
                     </div>
                     <div style="display: flex; gap: 10px; align-items: center;">
-                        <button onclick="handleLogout()" class="btn-logout">
-                            <i class="fa-solid fa-arrow-right-from-bracket"></i>
-                            <span>Chiqish</span>
-                        </button>
+                        <span style="font-size: 12.5px; color: #34d399; background: rgba(52, 211, 153, 0.15); border: 1px solid #059669; padding: 6px 14px; border-radius: 20px; font-weight: 700;">
+                            <i class="fa-solid fa-circle-check"></i> To'liq Erkin Kirish Faol
+                        </span>
                     </div>
                 </div>
             </div>
@@ -689,51 +643,6 @@
                 el.scrollIntoView({ behavior: 'smooth' });
                 const inp = document.getElementById('telegramChatInput');
                 if (inp) inp.focus();
-            }
-        }
-
-        // ==========================================
-        // 🔐 LOGIN HANDLER (No Public Registration)
-        // ==========================================
-        async function handleLoginSubmit(e) {
-            e.preventDefault();
-            const email = document.getElementById('loginEmail').value.trim().toLowerCase();
-            const password = document.getElementById('loginPassword').value.trim();
-
-            showToast("🔐 Administrator tekshirilmoqda...");
-
-            try {
-                const res = await fetch('/api/auth/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email: email, password: password })
-                });
-                const data = await res.json();
-                if (res.ok && data.success) {
-                    saveSession(data.user, data.token);
-                    showToast(`✅ Xush kelibsiz, ${data.user.full_name || "Administrator"}!`);
-                    checkAuthStatus();
-                    return;
-                } else {
-                    showToast("❌ " + (data.message || "Login yoki parol xato"));
-                    return;
-                }
-            } catch(err) {
-                // Agar lokal fayl sifatida ochilgan bo'lsa (file:///), to'g'ridan-to'g'ri Fatxullo sifatida ochish
-                if (password === "Fathulla2026!" || password === "Admin@2026!SOC" || email.includes("fathulla") || email === "admin") {
-                    const fallbackUser = {
-                        id: 1,
-                        email: "omonjonovfathulla750@gmail.com",
-                        full_name: "Fatxullo Omonjonov",
-                        role: "admin",
-                        phone: "+998901234567"
-                    };
-                    saveSession(fallbackUser, "offline_token");
-                    showToast("✅ Xush kelibsiz, Fatxullo Omonjonov!");
-                    checkAuthStatus();
-                } else {
-                    showToast("Ulanish xatosi: Server ishlayotganligini tekshiring");
-                }
             }
         }
 
@@ -951,61 +860,30 @@
             showToast("Aloqa punkti xabarlari tozalandi");
         }
 
-        function saveSession(user, token) {
-            currentUser = user;
-            localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify({ user: user, token: token }));
-        }
-
-        function handleLogout() {
-            if (telegramChatInterval) {
-                clearInterval(telegramChatInterval);
-                telegramChatInterval = null;
-            }
-            localStorage.removeItem(AUTH_STORAGE_KEY);
-            currentUser = null;
-            showToast("👋 Tizimdan chiqildi");
-            checkAuthStatus();
-        }
+        currentUser = {
+            id: 1,
+            email: "omonjonovfathulla750@gmail.com",
+            full_name: "Fatxullo Omonjonov",
+            role: "admin",
+            phone: "+998901234567"
+        };
 
         // ==========================================
         // 📊 DASHBOARD & INVESTIGATIONS
         // ==========================================
         function checkAuthStatus() {
-            const raw = localStorage.getItem(AUTH_STORAGE_KEY);
-            const authView = document.getElementById('authView');
             const dashView = document.getElementById('dashboardView');
-            const navStatus = document.getElementById('navUserStatus');
+            if (dashView) dashView.style.display = 'block';
 
-            if (raw) {
-                try {
-                    const parsed = JSON.parse(raw);
-                    currentUser = parsed.user;
-                } catch(e) { currentUser = null; }
-            } else {
-                currentUser = null;
-            }
+            const uName = document.getElementById('dashUserName');
+            if (uName) uName.innerText = "Fatxullo Omonjonov";
+            const uMail = document.getElementById('dashUserEmail');
+            if (uMail) uMail.innerText = "omonjonovfathulla750@gmail.com";
 
-            if (currentUser) {
-                authView.style.display = 'none';
-                dashView.style.display = 'block';
-                navStatus.innerHTML = `👤 ${currentUser.full_name || "Fatxullo"}`;
-
-                document.getElementById('dashUserName').innerText = currentUser.full_name || "Fatxullo Omonjonov";
-                document.getElementById('dashUserEmail').innerText = currentUser.email || "omonjonovfathulla750@gmail.com";
-
-                renderInvestigations();
-                loadTelegramChat();
-                if (!telegramChatInterval) {
-                    telegramChatInterval = setInterval(loadTelegramChat, 2000);
-                }
-            } else {
-                if (telegramChatInterval) {
-                    clearInterval(telegramChatInterval);
-                    telegramChatInterval = null;
-                }
-                authView.style.display = 'block';
-                dashView.style.display = 'none';
-                navStatus.innerHTML = `🔒 Kirish (Admin)`;
+            renderInvestigations();
+            loadTelegramChat();
+            if (!telegramChatInterval) {
+                telegramChatInterval = setInterval(loadTelegramChat, 2000);
             }
         }
 

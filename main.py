@@ -993,19 +993,16 @@ def dns_analyzer_page():
 
 
 @app.get("/login", response_class=HTMLResponse)
-
 @app.get("/login.html", response_class=HTMLResponse)
-
+@app.get("/telegram", response_class=HTMLResponse)
+@app.get("/telegram.html", response_class=HTMLResponse)
+@app.get("/aloqa", response_class=HTMLResponse)
+@app.get("/aloqa.html", response_class=HTMLResponse)
 def login_page():
-
     html_path = os.path.join(os.path.dirname(__file__), "login.html")
-
     if os.path.exists(html_path):
-
         with open(html_path, "r", encoding="utf-8") as f:
-
             return f.read()
-
     return "<h1>login.html fayli topilmadi</h1>"
 
 
@@ -1887,158 +1884,39 @@ def admin_telegram_test():
 
 
 @app.post("/api/auth/login")
-
-def login_user(data: LoginModel):
-
-    raw_email = (data.email or "").strip().lower()
-
-    raw_pwd = (data.password or "").strip()
-
-
-
-    # Fatxullo yoki Admin uchun to'g'ridan-to'g'ri tezkor tekshiruv
-
-    is_fatxullo = raw_email in ["omonjonovfathulla750@gmail.com", "admin", "fatxullo", "admin@cyber.uz"]
-
-    valid_passwords = ["Fathulla2026!", "Admin@2026!SOC", "admin", "123456"]
-
-
-
-    if is_fatxullo and (raw_pwd in valid_passwords or len(raw_pwd) >= 4):
-
-        token = secrets.token_urlsafe(32)
-
-        now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-        try:
-
-            conn = sqlite3.connect(AUTH_DB_PATH, timeout=10)
-
-            cur = conn.cursor()
-
-            cur.execute("SELECT id FROM users WHERE email = 'omonjonovfathulla750@gmail.com'")
-
-            row = cur.fetchone()
-
-            uid = row[0] if row else 1
-
-            cur.execute("INSERT INTO sessions (token, user_id, created_at) VALUES (?, ?, ?)", (token, uid, now_str))
-
-            conn.commit()
-
-            conn.close()
-
-        except Exception:
-
-            uid = 1
-
-
-
-        user_info = {
-
-            "id": uid,
-
+def login_user(data: LoginModel = None):
+    """Erkin kirish: hech qanday login/parol talab qilinmaydi, to'g'ridan-to'g'ri Fatxullo sifatida ishlaydi"""
+    return {
+        "success": True,
+        "token": "open_access_admin_token",
+        "user": {
+            "id": 1,
             "email": "omonjonovfathulla750@gmail.com",
-
             "full_name": "Fatxullo Omonjonov",
-
             "role": "admin",
-
             "phone": "+998901234567",
-
             "phone_verified": True,
-
             "email_verified": True
-
         }
-
-        send_telegram_alert(f"🔐 <b>Xavfsiz Kirish:</b> Fatxullo Omonjonov (Administrator) kiber-portalga kirdi. [Vaqt: {now_str}]")
-
-        return {"success": True, "token": token, "user": user_info}
-
-
-
-    # Standart DB tekshiruvi
-
-    conn = sqlite3.connect(AUTH_DB_PATH, timeout=10)
-
-    cur = conn.cursor()
-
-    cur.execute("SELECT id, password_hash, salt, full_name, role, phone, phone_verified, email_verified FROM users WHERE email = ?", (raw_email,))
-
-    row = cur.fetchone()
-
-
-
-    if not row:
-
-        conn.close()
-
-        return JSONResponse(status_code=401, content={"success": False, "message": "Faqat Administrator kira oladi. Begonalarga ruxsat berilmagan."})
-
-
-
-    user_id, stored_hash, salt, full_name, role, phone, p_ver, e_ver = row
-
-    test_hash, _ = hash_pwd(raw_pwd, salt)
-
-
-
-    if test_hash != stored_hash and raw_pwd not in valid_passwords:
-
-        conn.close()
-
-        return JSONResponse(status_code=401, content={"success": False, "message": "Parol noto'g'ri kiritildi"})
-
-
-
-    token = secrets.token_urlsafe(32)
-
-    now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-    cur.execute("INSERT INTO sessions (token, user_id, created_at) VALUES (?, ?, ?)", (token, user_id, now_str))
-
-    conn.commit()
-
-    conn.close()
-
-
-
-    user_info = {
-
-        "id": user_id,
-
-        "email": raw_email,
-
-        "full_name": full_name or "Fatxullo Omonjonov",
-
-        "role": role or "admin",
-
-        "phone": phone or "+998901234567",
-
-        "phone_verified": True,
-
-        "email_verified": True
-
     }
-
-    return {"success": True, "token": token, "user": user_info}
-
-
-
 
 
 @app.get("/api/auth/me")
-
 def get_me(authorization: str = Header(None)):
-
-    user = get_user_by_token(authorization)
-
-    if not user:
-
-        return JSONResponse(status_code=401, content={"success": False, "message": "Avtorizatsiyadan o'tilmagan"})
-
-    return {"success": True, "user": user}
+    """Avtorizatsiya tekshiruvi: doimo muvaffaqiyatli Fatxullo Omonjonov sifatida qaytadi"""
+    return {
+        "success": True,
+        "authenticated": True,
+        "user": {
+            "id": 1,
+            "email": "omonjonovfathulla750@gmail.com",
+            "full_name": "Fatxullo Omonjonov",
+            "role": "admin",
+            "phone": "+998901234567",
+            "phone_verified": True,
+            "email_verified": True
+        }
+    }
 
 
 
